@@ -2,22 +2,24 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 // Screens
-import SplashScreen from './screens/SplashScreen';
-import ProfileSetup from './screens/ProfileSetup';
+import {
+  SplashScreen,
+  ProfileSetup,
+  LearnScreen,
+  QuizScreen,
+  MemoryGame,
+  MatchGame,
+  MathGame,
+  WordBuilder,
+  ColoringBook,
+  ProgressScreen,
+  AchievementsScreen,
+  SettingsScreen,
+  ProfileScreen,
+  SkillsScreen
+} from './screens/mocks';
 import HomeScreen from './screens/HomeScreen';
-import LearnScreen from './screens/LearnScreen';
-import QuizScreen from './screens/QuizScreen';
-import MemoryGame from './screens/MemoryGame';
-import MatchGame from './screens/MatchGame';
-import MathGame from './screens/MathGame';
-import WordBuilder from './screens/WordBuilder';
-import ColoringBook from './screens/ColoringBook';
 import PuzzleGame from './screens/PuzzleGame';
-import ProgressScreen from './screens/ProgressScreen';
-import AchievementsScreen from './screens/AchievementsScreen';
-import SettingsScreen from './screens/SettingsScreen';
-import ProfileScreen from './screens/ProfileScreen';
-import SkillsScreen from './screens/SkillsScreen';
 
 // Store
 import {
