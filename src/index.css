@@ -1,0 +1,218 @@
+@import "tailwindcss";
+
+@theme {
+  --color-sky-light: #e0f2fe;
+  --color-kid-blue: #4fc3f7;
+  --color-kid-purple: #ab47bc;
+  --color-kid-pink: #f06292;
+  --color-kid-green: #66bb6a;
+  --color-kid-yellow: #ffee58;
+  --color-kid-orange: #ffa726;
+  --color-kid-red: #ef5350;
+  --font-fredoka: 'Fredoka', sans-serif;
+  --font-bubble: 'Bubblegum One', cursive;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Fredoka', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.3);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(171, 71, 188, 0.4);
+  border-radius: 10px;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  25% { transform: translateY(-8px) translateX(4px); }
+  50% { transform: translateY(-16px) translateX(0px); }
+  75% { transform: translateY(-8px) translateX(-4px); }
+}
+
+@keyframes bounce-gentle {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0; transform: scale(0); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.5); }
+  70% { transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes rainbow {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+@keyframes cloud-drift {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(calc(100vw + 100%)); }
+}
+
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-float-slow { animation: float-slow 5s ease-in-out infinite; }
+.animate-bounce-gentle { animation: bounce-gentle 2s ease-in-out infinite; }
+.animate-wiggle { animation: wiggle 1s ease-in-out infinite; }
+.animate-sparkle { animation: sparkle 1.5s ease-in-out infinite; }
+.animate-slide-up { animation: slide-up 0.6s ease-out; }
+.animate-pop-in { animation: pop-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+.animate-cloud { animation: cloud-drift 30s linear infinite; }
+.animate-star { animation: star-twinkle 2s ease-in-out infinite; }
+
+/* Game card styles */
+.game-card {
+  border-radius: 24px;
+  background: white;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+}
+.game-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+}
+.game-card:active {
+  transform: scale(0.98);
+}
+
+/* Button styles */
+.btn-primary {
+  background: linear-gradient(135deg, #4fc3f7, #29b6f6);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 14px 32px;
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(79, 195, 247, 0.4);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(79, 195, 247, 0.5);
+}
+
+.btn-game {
+  border-radius: 20px;
+  padding: 16px 28px;
+  font-family: 'Fredoka', sans-serif;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 3px solid transparent;
+}
+.btn-game:hover {
+  transform: scale(1.05);
+}
+.btn-game:active {
+  transform: scale(0.95);
+}
+
+/* Background patterns */
+.bg-dots {
+  background-image: radial-gradient(circle, rgba(171,71,188,0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.bg-game {
+  background: linear-gradient(180deg, #e3f2fd 0%, #f3e5f5 50%, #fce4ec 100%);
+  min-height: 100vh;
+}
+
+/* Card flip for memory game */
+.card-flip {
+  perspective: 1000px;
+}
+.card-flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.card-flip-inner.flipped {
+  transform: rotateY(180deg);
+}
+.card-flip-front, .card-flip-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 16px;
+}
+.card-flip-back {
+  transform: rotateY(180deg);
+}
+
+/* Drag and drop */
+.dragging {
+  opacity: 0.7;
+  transform: scale(1.1);
+  z-index: 100;
+}
+
+.drop-target {
+  border: 3px dashed rgba(102, 187, 106, 0.6);
+  background: rgba(102, 187, 106, 0.1);
+}
+
+.drop-target-active {
+  border-color: #66bb6a;
+  background: rgba(102, 187, 106, 0.2);
+  transform: scale(1.05);
+}

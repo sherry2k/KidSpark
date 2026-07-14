@@ -1,0 +1,11 @@
+id,name,emoji,description,funFact,step1,step2,step3
+basiccode,Basic Coding,💻,Write simple code,Ada Lovelace was the first programmer in 1843!,Think of a goal,Write step by step,Test your code!
+robotcontrol,Control Robots,🤖,Command a robot,Robots can explore Mars!,Give instructions,Watch it move,Adjust commands!
+buildrobot,Build Robots,🦾,Assemble robot parts,Robot comes from a Czech word!,Connect body parts,Add motors,Program brain!
+logic,Logic Puzzles,🧩,Solve coding puzzles,Coding is like solving puzzles!,Read the problem,Find the pattern,Apply the solution!
+animation,Create Animations,🎬,Make things move,Animation uses 24 pictures per second!,Draw frames,Set timing,Play animation!
+movement,Program Movement,🎮,Make characters move,Video game characters use code to move!,Set start position,Code direction,Add speed!
+loops,Using Loops,🔁,Make code repeat,Loops save time in coding!,Find repeating action,Create the loop,Set how many times!
+debugging,Bug Fixing,🐛,Find and fix errors,The first bug was an actual moth!,Find the problem,Understand why,Fix the code!
+gamedesign,Game Design,🎮,Design simple games,The first video game was Pong!,Create characters,Design levels,Add challenges!
+appinventor,App Invention,📱,Invent simple apps,There are over 2 million apps!,Decide app purpose,Design screens,Add buttons!

@@ -1,0 +1,62 @@
+question,emoji,option1,option2,option3,option4,correctAnswer,category
+Which animal is this?,🦁,Cat,Lion,Tiger,Dog,2,animals
+Which animal is this?,🐘,Horse,Cow,Elephant,Rhino,3,animals
+Which animal is this?,🐧,Penguin,Duck,Chicken,Owl,1,animals
+Which animal is this?,🦒,Zebra,Horse,Giraffe,Deer,3,animals
+Which animal is this?,🐬,Shark,Whale,Fish,Dolphin,4,animals
+Which animal is this?,🐻,Dog,Bear,Wolf,Tiger,2,animals
+Which animal is this?,🐼,Polar Bear,Panda,Koala,Raccoon,2,animals
+Which animal is this?,🦊,Dog,Wolf,Fox,Cat,3,animals
+Which animal is this?,🐨,Bear,Panda,Koala,Sloth,3,animals
+Which animal is this?,🐸,Toad,Lizard,Frog,Snake,3,animals
+Which fruit is this?,🍎,Cherry,Strawberry,Apple,Tomato,3,fruits
+Which fruit is this?,🍌,Corn,Banana,Pineapple,Mango,2,fruits
+Which fruit is this?,🍇,Blueberry,Plum,Grapes,Fig,3,fruits
+Which fruit is this?,🍊,Peach,Orange,Lemon,Mango,2,fruits
+Which fruit is this?,🍓,Cherry,Raspberry,Strawberry,Apple,3,fruits
+Which fruit is this?,🍉,Melon,Apple,Watermelon,Pumpkin,3,fruits
+Which fruit is this?,🍍,Lemon,Durian,Pineapple,Jackfruit,3,fruits
+Which fruit is this?,🥭,Papaya,Mango,Peach,Apricot,2,fruits
+Which vegetable is this?,🥕,Radish,Carrot,Beet,Parsnip,2,vegetables
+Which vegetable is this?,🥦,Lettuce,Spinach,Broccoli,Cabbage,3,vegetables
+Which vegetable is this?,🌽,Wheat,Rice,Corn,Barley,3,vegetables
+Which vegetable is this?,🍅,Apple,Strawberry,Tomato,Cherry,3,vegetables
+Which vegetable is this?,🥔,Onion,Garlic,Potato,Turnip,3,vegetables
+What color is a fire truck?,🚒,Blue,Green,Red,Yellow,3,colors
+What color is the sun?,☀️,Red,Yellow,Orange,White,2,colors
+What color is grass?,🌿,Blue,Yellow,Green,Brown,3,colors
+What color is the sky?,🌤️,Blue,Green,Red,Purple,1,colors
+What color is a banana?,🍌,Red,Yellow,Green,Orange,2,colors
+What color is an orange?,🍊,Red,Yellow,Orange,Pink,3,colors
+What color is chocolate?,🍫,Black,Brown,Red,Yellow,2,colors
+How many legs does a dog have?,🐶,2,3,4,6,3,numbers
+How many eyes do you have?,👀,1,2,3,4,2,numbers
+How many fingers on one hand?,✋,3,4,5,6,3,numbers
+How many wheels does a bicycle have?,🚲,1,2,3,4,2,numbers
+How many legs does a spider have?,🕷️,4,6,8,10,3,numbers
+How many days in a week?,📅,5,6,7,8,3,numbers
+How many sides does a triangle have?,🔺,2,3,4,5,2,shapes
+What shape is a ball?,⚽,Square,Triangle,Circle,Star,3,shapes
+What shape is a dice?,🎲,Circle,Cube,Triangle,Pyramid,2,shapes
+What shape has 4 equal sides?,🟧,Circle,Rectangle,Square,Triangle,3,shapes
+Which vehicle flies?,✈️,Car,Boat,Airplane,Bus,3,vehicles
+Which vehicle sails on water?,⛵,Boat,Car,Train,Bus,1,vehicles
+Which vehicle has two wheels?,🚲,Car,Bicycle,Bus,Truck,2,vehicles
+Which vehicle goes to space?,🚀,Airplane,Helicopter,Rocket,Jet,3,vehicles
+What is 1 + 1?,🧮,1,2,3,4,2,math
+What is 2 + 3?,🧮,4,5,6,7,2,math
+What is 5 - 2?,🧮,1,2,3,4,3,math
+What is 3 + 4?,🧮,5,6,7,8,3,math
+What is 10 - 5?,🧮,3,4,5,6,3,math
+What is 6 + 2?,🧮,7,8,9,10,2,math
+What is 4 + 4?,🧮,6,7,8,9,3,math
+What is 9 - 3?,🧮,4,5,6,7,3,math
+What is 2 x 3?,🧮,4,5,6,7,3,math
+What is 5 x 2?,🧮,8,9,10,11,3,math
+Which bird cannot fly?,🐧,Eagle,Penguin,Sparrow,Crow,2,birds
+Which bird can talk?,🦜,Owl,Parrot,Duck,Eagle,2,birds
+Which bird is pink?,🦩,Swan,Dove,Flamingo,Pelican,3,birds
+What sound does a cat make?,🐱,Woof,Meow,Moo,Oink,2,sounds
+What sound does a dog make?,🐶,Woof,Meow,Quack,Roar,1,sounds
+What sound does a cow make?,🐄,Woof,Neigh,Moo,Baa,3,sounds
+What sound does a lion make?,🦁,Meow,Bark,Roar,Hiss,3,sounds
