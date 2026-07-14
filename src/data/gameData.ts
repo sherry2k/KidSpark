@@ -1,7 +1,3 @@
-// ============================================================
-// GAME DATA - All content for the educational game
-// ============================================================
-
 export interface LearnItem {
   id: string;
   name: string;
@@ -485,7 +481,7 @@ export const factorySkills: SkillItem[] = [
   { id: 'carfactory', name: 'Car Factory', emoji: '🚗', description: 'Assemble cars', funFact: 'One car has about 30000 parts!', steps: ['Build the frame', 'Add the engine', 'Attach wheels!'] },
   { id: 'furniture', name: 'Furniture Workshop', emoji: '🪑', description: 'Build furniture pieces', funFact: 'IKEA sells furniture in 50 countries!', steps: ['Cut the wood', 'Assemble parts', 'Add finishing!'] },
   { id: 'recycle', name: 'Recycling Center', emoji: '♻️', description: 'Sort and recycle materials', funFact: 'Recycling saves trees and energy!', steps: ['Sort by material', 'Clean the items', 'Process for reuse!'] },
-  { id: 'assembly', name: 'Assembly Line', emoji: '�icing️', description: 'Work on assembly line', funFact: 'Henry Ford invented the assembly line!', steps: ['Wait for item', 'Add your part', 'Pass it on!'] },
+  { id: 'assembly', name: 'Assembly Line', emoji: '⚙️', description: 'Work on assembly line', funFact: 'Henry Ford invented the assembly line!', steps: ['Wait for item', 'Add your part', 'Pass it on!'] },
   { id: 'packing', name: 'Package Sorting', emoji: '📦', description: 'Sort and pack boxes', funFact: 'Amazon ships 1.6 million packages per day!', steps: ['Check the label', 'Sort by destination', 'Stack neatly!'] },
   { id: 'quality', name: 'Quality Check', emoji: '✅', description: 'Inspect products for quality', funFact: 'Quality control keeps products safe!', steps: ['Look carefully', 'Check for defects', 'Approve or reject!'] },
 ];
@@ -695,7 +691,7 @@ export const gameModes: GameMode[] = [
   { id: 'math', name: 'Math', emoji: '🧮', description: 'Fun with numbers!', color: '#ef5350', gradient: 'from-red-400 to-pink-400' },
   { id: 'wordbuilder', name: 'Words', emoji: '📝', description: 'Build words letter by letter!', color: '#29b6f6', gradient: 'from-sky-400 to-blue-400' },
   { id: 'coloring', name: 'Coloring', emoji: '🎨', description: 'Color beautiful pictures!', color: '#f06292', gradient: 'from-pink-400 to-rose-400' },
-  { id: 'puzzle', name: 'Puzzle', emoji: '🧩', description: 'Solve fun puzzles!', color: '#7e57c2', gradient: 'from-violet-400 to-purple-400' },
+  { id: 'puzzle', name: 'Puzzle World', emoji: '🧩', description: 'Solve fun puzzles!', color: '#7e57c2', gradient: 'from-violet-400 to-purple-400' },
   { id: 'skills', name: 'Skills', emoji: '🌟', description: 'Learn fun real-world skills!', color: '#f59e0b', gradient: 'from-amber-400 to-yellow-400' },
 ];
 
