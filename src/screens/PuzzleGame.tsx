@@ -1,9 +1,24 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { GameBackground } from '../components/Background';
 import Navigation from '../components/Navigation';
-import Celebration from '../components/Celebration';
 import { GameProgress } from '../store/gameStore';
+
+// Import all 14 mini-games
+import ShadowMatch from '../games/ShadowMatch';
+import MemoryMatch from '../games/MemoryMatch';
+import PatternPuzzle from '../games/PatternPuzzle';
+import OddOneOut from '../games/OddOneOut';
+import ShapeBuilder from '../games/ShapeBuilder';
+import StorySequence from '../games/StorySequence';
+import ObjectSorting from '../games/ObjectSorting';
+import SpotDifference from '../games/SpotDifference';
+import MissingItem from '../games/MissingItem';
+import MazeAdventure from '../games/MazeAdventure';
+import CompleteScene from '../games/CompleteScene';
+import BuildPicture from '../games/BuildPicture';
+import HalfHalf from '../games/HalfHalf';
+import ConnectDots from '../games/ConnectDots';
 
 interface PuzzleGameProps {
   progress: GameProgress;
@@ -11,230 +26,243 @@ interface PuzzleGameProps {
   onComplete: (stars: number) => void;
 }
 
-const PUZZLE_SETS = [
-  { id: 'animals', name: 'Animals', emojis: ['🦁', '🐘', '🐒', '🐧', '🐬', '🦒', '🐻', '🐯', '🐼', '🦊', '🐨', '🐰', '🦉', '🐱', '🐶', '🦋'] },
-  { id: 'ocean', name: 'Ocean', emojis: ['🐙', '🐠', '🐳', '🦀', '🐬', '🐡', '🦈', '🐚', '🪸', '🦭', '🐟', '🦑', '🪼', '🐢', '🌊', '⚓'] },
-  { id: 'space', name: 'Space', emojis: ['🚀', '🌙', '⭐', '🪐', '☄️', '🌎', '🛸', '👽', '🌟', '🔭', '🛰️', '🌌', '☀️', '💫', '🌠', '🌕'] },
-  { id: 'food', name: 'Food', emojis: ['🍎', '🍕', '🍔', '🌮', '🍦', '🧁', '🍩', '🍪', '🎂', '🍇', '🍌', '🍉', '🥕', '🌽', '🍓', '🥝'] },
-  { id: 'nature', name: 'Nature', emojis: ['🌸', '🌺', '🌻', '🌹', '🌷', '🌳', '🍀', '🌿', '🍂', '🍁', '🌵', '🌴', '🎋', '🍄', '🌾', '🪻'] },
-  { id: 'vehicles', name: 'Vehicles', emojis: ['🚗', '🚌', '🚂', '✈️', '🚁', '🚀', '⛵', '🚲', '🚒', '🚑', '🚜', '🏎️', '🛻', '🚎', '🛩️', '🚢'] },
+type GameType =
+  | 'shadow-match'
+  | 'memory-match'
+  | 'pattern-puzzle'
+  | 'odd-one-out'
+  | 'shape-builder'
+  | 'story-sequence'
+  | 'object-sorting'
+  | 'spot-difference'
+  | 'missing-item'
+  | 'maze-adventure'
+  | 'complete-scene'
+  | 'build-picture'
+  | 'half-half'
+  | 'connect-dots';
+
+interface GameInfo {
+  id: GameType;
+  name: string;
+  emoji: string;
+  description: string;
+  color: string;
+  skills: string[];
+}
+
+const games: GameInfo[] = [
+  {
+    id: 'shadow-match',
+    name: 'Shadow Match',
+    emoji: '🔦',
+    description: 'Match objects to their shadows',
+    color: 'from-violet-500 to-purple-600',
+    skills: ['Observation', 'Shape Recognition'],
+  },
+  {
+    id: 'memory-match',
+    name: 'Memory Match',
+    emoji: '🧠',
+    description: 'Find matching card pairs',
+    color: 'from-pink-500 to-rose-600',
+    skills: ['Memory', 'Concentration'],
+  },
+  {
+    id: 'pattern-puzzle',
+    name: 'Pattern Puzzle',
+    emoji: '🔢',
+    description: 'Complete the pattern sequence',
+    color: 'from-amber-500 to-orange-600',
+    skills: ['Logic', 'Pattern Recognition'],
+  },
+  {
+    id: 'odd-one-out',
+    name: 'Odd One Out',
+    emoji: '🔍',
+    description: 'Find what doesn\'t belong',
+    color: 'from-emerald-500 to-green-600',
+    skills: ['Critical Thinking', 'Classification'],
+  },
+  {
+    id: 'shape-builder',
+    name: 'Shape Builder',
+    emoji: '🧱',
+    description: 'Build objects with shapes',
+    color: 'from-blue-500 to-indigo-600',
+    skills: ['Spatial Reasoning', 'Creativity'],
+  },
+  {
+    id: 'story-sequence',
+    name: 'Story Sequence',
+    emoji: '📚',
+    description: 'Arrange the story in order',
+    color: 'from-teal-500 to-cyan-600',
+    skills: ['Sequencing', 'Comprehension'],
+  },
+  {
+    id: 'object-sorting',
+    name: 'Object Sorting',
+    emoji: '📦',
+    description: 'Sort items into groups',
+    color: 'from-lime-500 to-green-600',
+    skills: ['Classification', 'Logic'],
+  },
+  {
+    id: 'spot-difference',
+    name: 'Spot Difference',
+    emoji: '👀',
+    description: 'Find differences between pictures',
+    color: 'from-red-500 to-pink-600',
+    skills: ['Attention to Detail', 'Observation'],
+  },
+  {
+    id: 'missing-item',
+    name: 'Missing Item',
+    emoji: '🔎',
+    description: 'Find the missing piece',
+    color: 'from-sky-500 to-blue-600',
+    skills: ['Deduction', 'Pattern Recognition'],
+  },
+  {
+    id: 'maze-adventure',
+    name: 'Maze Adventure',
+    emoji: '🧭',
+    description: 'Navigate through the maze',
+    color: 'from-yellow-500 to-amber-600',
+    skills: ['Problem Solving', 'Planning'],
+  },
+  {
+    id: 'complete-scene',
+    name: 'Complete Scene',
+    emoji: '🎨',
+    description: 'Add missing items to the scene',
+    color: 'from-fuchsia-500 to-purple-600',
+    skills: ['Visual Perception', 'Association'],
+  },
+  {
+    id: 'build-picture',
+    name: 'Build Picture',
+    emoji: '🖼️',
+    description: 'Assemble the picture pieces',
+    color: 'from-orange-500 to-red-600',
+    skills: ['Spatial Reasoning', 'Sequencing'],
+  },
+  {
+    id: 'half-half',
+    name: 'Half & Half',
+    emoji: '🧩',
+    description: 'Connect matching halves',
+    color: 'from-cyan-500 to-teal-600',
+    skills: ['Matching', 'Visual Perception'],
+  },
+  {
+    id: 'connect-dots',
+    name: 'Connect Dots',
+    emoji: '✏️',
+    description: 'Connect numbered dots to reveal pictures',
+    color: 'from-indigo-500 to-violet-600',
+    skills: ['Number Order', 'Fine Motor'],
+  },
 ];
 
-const GRID_SIZES = [
-  { label: '2×2', size: 4, cols: 2 },
-  { label: '3×3', size: 9, cols: 3 },
-  { label: '4×4', size: 16, cols: 4 },
-];
+const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete: _onComplete }) => {
+  const [currentGame, setCurrentGame] = useState<GameType | null>(null);
 
-const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete }) => {
-  const [selectedSet, setSelectedSet] = useState<typeof PUZZLE_SETS[0] | null>(null);
-  const [gridSize, setGridSize] = useState<typeof GRID_SIZES[0] | null>(null);
-  const [tiles, setTiles] = useState<number[]>([]);
-  const [selectedTile, setSelectedTile] = useState<number | null>(null);
-  const [moves, setMoves] = useState(0);
-  const [showCelebration, setShowCelebration] = useState(false);
+  const goBackToPuzzleHub = () => setCurrentGame(null);
 
-  const initPuzzle = useCallback((set: typeof PUZZLE_SETS[0], grid: typeof GRID_SIZES[0]) => {
-    setSelectedSet(set);
-    setGridSize(grid);
-    setMoves(0);
-    setShowCelebration(false);
-    setSelectedTile(null);
+  // If a mini-game is selected, render it
+  if (currentGame) {
+    const gameMap: Record<GameType, React.ReactNode> = {
+      'shadow-match': <ShadowMatch onBack={goBackToPuzzleHub} />,
+      'memory-match': <MemoryMatch onBack={goBackToPuzzleHub} />,
+      'pattern-puzzle': <PatternPuzzle onBack={goBackToPuzzleHub} />,
+      'odd-one-out': <OddOneOut onBack={goBackToPuzzleHub} />,
+      'shape-builder': <ShapeBuilder onBack={goBackToPuzzleHub} />,
+      'story-sequence': <StorySequence onBack={goBackToPuzzleHub} />,
+      'object-sorting': <ObjectSorting onBack={goBackToPuzzleHub} />,
+      'spot-difference': <SpotDifference onBack={goBackToPuzzleHub} />,
+      'missing-item': <MissingItem onBack={goBackToPuzzleHub} />,
+      'maze-adventure': <MazeAdventure onBack={goBackToPuzzleHub} />,
+      'complete-scene': <CompleteScene onBack={goBackToPuzzleHub} />,
+      'build-picture': <BuildPicture onBack={goBackToPuzzleHub} />,
+      'half-half': <HalfHalf onBack={goBackToPuzzleHub} />,
+      'connect-dots': <ConnectDots onBack={goBackToPuzzleHub} />,
+    };
 
-    // Create shuffled tiles (0 to size-1, where order is the solution)
-    const ordered = Array.from({ length: grid.size }, (_, i) => i);
-    const shuffled = [...ordered];
-    // Fisher-Yates shuffle, ensure it's not already solved
-    do {
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-    } while (shuffled.every((v, i) => v === i));
-
-    setTiles(shuffled);
-  }, []);
-
-  const handleTileClick = useCallback((index: number) => {
-    if (showCelebration) return;
-
-    if (selectedTile === null) {
-      setSelectedTile(index);
-    } else {
-      // Swap tiles
-      const newTiles = [...tiles];
-      [newTiles[selectedTile], newTiles[index]] = [newTiles[index], newTiles[selectedTile]];
-      setTiles(newTiles);
-      setSelectedTile(null);
-      setMoves((m) => m + 1);
-
-      // Check if solved
-      if (newTiles.every((v, i) => v === i)) {
-        setShowCelebration(true);
-        const stars = moves < gridSize!.size * 2 ? 3 : moves < gridSize!.size * 4 ? 2 : 1;
-        onComplete(stars);
-      }
-    }
-  }, [selectedTile, tiles, showCelebration, moves, gridSize, onComplete]);
-
-  // Selection screen
-  if (!selectedSet || !gridSize) {
+    // The individual games handle their own state, stars, and celebration screens.
+    // They are fully self-contained. 
+    // If you want them to talk to the global store, you'd modify them to call onComplete.
+    // But since they are wrapped here, we just render them over the background.
     return (
-      <GameBackground variant="game">
-        <div className="h-full flex flex-col">
-          <Navigation title="🧩 Puzzle Game" onBack={onBack} stars={progress.stars} />
-          <div className="flex-1 overflow-y-auto px-4 pb-8 flex flex-col items-center justify-center">
-            {!selectedSet ? (
-              <>
-                <motion.h2
-                  className="text-xl md:text-2xl font-bold text-gray-800 mb-4"
-                  style={{ fontFamily: "'Bubblegum One', cursive" }}
-                  initial={{ y: -20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                >
-                  Choose a puzzle! 🧩
-                </motion.h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-w-lg w-full">
-                  {PUZZLE_SETS.map((set, i) => (
-                    <motion.button
-                      key={set.id}
-                      onClick={() => setSelectedSet(set)}
-                      className="game-card p-4 text-center"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: i * 0.05 }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <div className="flex justify-center gap-0.5 text-xl mb-2 flex-wrap">
-                        {set.emojis.slice(0, 4).map((e, j) => (
-                          <span key={j}>{e}</span>
-                        ))}
-                      </div>
-                      <span className="font-bold text-gray-700 text-sm">{set.name}</span>
-                    </motion.button>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <>
-                <motion.h2
-                  className="text-xl md:text-2xl font-bold text-gray-800 mb-4"
-                  style={{ fontFamily: "'Bubblegum One', cursive" }}
-                  initial={{ y: -20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                >
-                  Choose difficulty! 📐
-                </motion.h2>
-                <div className="flex gap-4">
-                  {GRID_SIZES.map((g, i) => (
-                    <motion.button
-                      key={g.label}
-                      onClick={() => initPuzzle(selectedSet, g)}
-                      className="game-card p-6 text-center"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: i * 0.1 }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <span className="text-3xl block mb-2">{['🌱', '🌿', '🌳'][i]}</span>
-                      <span className="font-bold text-gray-700">{g.label}</span>
-                      <span className="text-xs text-gray-400 block">{g.size} pieces</span>
-                    </motion.button>
-                  ))}
-                </div>
-                <motion.button
-                  onClick={() => setSelectedSet(null)}
-                  className="mt-4 text-gray-400 text-sm"
-                  whileTap={{ scale: 0.95 }}
-                >
-                  ← Choose another set
-                </motion.button>
-              </>
-            )}
-          </div>
-        </div>
-      </GameBackground>
+      <div className="absolute inset-0 z-50 overflow-auto bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400">
+        {gameMap[currentGame]}
+      </div>
     );
   }
 
-  if (showCelebration) {
-    const stars = moves < gridSize.size * 2 ? 3 : moves < gridSize.size * 4 ? 2 : 1;
-    return (
-      <GameBackground variant="game">
-        <div className="h-full flex flex-col items-center justify-center px-4">
-          <Celebration show={true} message="Puzzle Complete!" stars={stars} />
-          <motion.div
-            className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-2xl max-w-md w-full text-center"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.5, type: 'spring' }}
-          >
-            <h2 className="text-3xl font-bold text-gray-800 mb-4" style={{ fontFamily: "'Bubblegum One', cursive" }}>
-              🧩 Solved! 🎉
-            </h2>
-            <p className="text-gray-500 mb-6">Moves: {moves}</p>
-            <div className="flex gap-3">
-              <motion.button onClick={onBack} className="flex-1 bg-gray-100 text-gray-600 rounded-2xl py-3 font-bold" whileTap={{ scale: 0.98 }}>
-                🏠 Home
-              </motion.button>
-              <motion.button
-                onClick={() => initPuzzle(selectedSet, gridSize)}
-                className="flex-1 bg-gradient-to-r from-violet-400 to-purple-400 text-white rounded-2xl py-3 font-bold shadow-lg"
-                whileTap={{ scale: 0.98 }}
-              >
-                🔄 Again
-              </motion.button>
-            </div>
-          </motion.div>
-        </div>
-      </GameBackground>
-    );
-  }
-
+  // Otherwise, render the Hub selection screen
   return (
     <GameBackground variant="game">
-      <div className="h-full flex flex-col">
-        <Navigation title="🧩 Puzzle" onBack={onBack} stars={progress.stars} />
+      <div className="h-full flex flex-col pb-8">
+        <Navigation title="🧩 Puzzle World" onBack={onBack} stars={progress.stars} />
+        
+        <div className="flex-1 overflow-y-auto px-4 mt-2 max-w-5xl mx-auto w-full">
+          <div className="text-center mb-6">
+            <motion.h2
+              className="text-2xl md:text-3xl font-bold text-gray-800 font-heading mb-2"
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+            >
+              Choose a mini-game! 🎮
+            </motion.h2>
+            <motion.p 
+              className="text-gray-600 text-sm md:text-base font-medium"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              14 fun ways to build your brain power 🧠
+            </motion.p>
+          </div>
 
-        <div className="text-center mb-2">
-          <span className="bg-white/80 rounded-full px-4 py-1 text-sm font-bold text-gray-600 shadow-sm">
-            Moves: {moves} • Tap two tiles to swap!
-          </span>
-        </div>
-
-        <div className="flex-1 flex items-center justify-center px-4 pb-4">
-          <div
-            className="grid gap-2 w-full max-w-sm"
-            style={{ gridTemplateColumns: `repeat(${gridSize.cols}, 1fr)` }}
-          >
-            {tiles.map((tileIndex, i) => {
-              const emoji = selectedSet.emojis[tileIndex];
-              const isSelected = selectedTile === i;
-              const isCorrect = tileIndex === i;
-
-              return (
-                <motion.button
-                  key={i}
-                  onClick={() => handleTileClick(i)}
-                  className={`aspect-square rounded-2xl flex items-center justify-center shadow-lg text-3xl md:text-5xl transition-all ${
-                    isSelected
-                      ? 'bg-yellow-200 ring-4 ring-yellow-400 scale-105'
-                      : isCorrect
-                      ? 'bg-green-100 border-2 border-green-300'
-                      : 'bg-white hover:bg-gray-50'
-                  }`}
-                  initial={{ scale: 0, rotate: Math.random() * 20 - 10 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ delay: i * 0.03, type: 'spring' }}
-                  whileHover={{ scale: isSelected ? 1.05 : 1.03 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  {emoji}
-                </motion.button>
-              );
-            })}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 pb-12">
+            {games.map((game, index) => (
+              <motion.button
+                key={game.id}
+                onClick={() => setCurrentGame(game.id)}
+                className="game-card p-4 sm:p-5 text-left relative overflow-hidden group"
+                initial={{ y: 30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: index * 0.05 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${game.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+                
+                <div className="relative z-10">
+                  <div className="text-4xl sm:text-5xl mb-2 group-hover:animate-wiggle transition-all">
+                    {game.emoji}
+                  </div>
+                  <h3 className="font-bold text-gray-800 text-sm sm:text-base leading-tight mb-1">
+                    {game.name}
+                  </h3>
+                  <p className="text-gray-500 text-xs leading-tight mb-2 hidden sm:block">
+                    {game.description}
+                  </p>
+                  <div className="flex flex-wrap gap-1 mt-auto">
+                    {game.skills.map((skill) => (
+                      <span
+                        key={skill}
+                        className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </motion.button>
+            ))}
           </div>
         </div>
       </div>
