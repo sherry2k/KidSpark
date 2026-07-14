@@ -73,8 +73,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
           {letters.map((letter, i) => (
             <motion.span
               key={i}
-              className="text-4xl md:text-7xl font-bold text-white drop-shadow-lg"
-              style={{ fontFamily: "'Bubblegum One', cursive" }}
+              className="text-4xl md:text-7xl font-bold text-white drop-shadow-lg font-heading"
               initial={{ y: 50, opacity: 0, rotate: -20 }}
               animate={{ y: 0, opacity: 1, rotate: 0 }}
               transition={{

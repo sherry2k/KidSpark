@@ -31,8 +31,7 @@ const Navigation: React.FC<NavigationProps> = ({ title, onBack, stars, coins, sh
 
       {/* Title */}
       <motion.h1
-        className="text-lg md:text-2xl font-bold text-gray-800 bg-white/60 backdrop-blur-sm rounded-full px-4 py-2 md:px-8 md:py-3 shadow-md"
-        style={{ fontFamily: "'Bubblegum One', cursive" }}
+        className="text-lg md:text-2xl font-bold text-gray-800 bg-white/60 backdrop-blur-sm rounded-full px-4 py-2 md:px-8 md:py-3 shadow-md font-heading"
       >
         {title}
       </motion.h1>

@@ -84,8 +84,7 @@ const Celebration: React.FC<CelebrationProps> = ({ show, message = '🎉 Amazing
                 🏆
               </motion.div>
               <h2
-                className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-yellow-500 via-orange-500 to-pink-500 bg-clip-text text-transparent mb-4"
-                style={{ fontFamily: "'Bubblegum One', cursive" }}
+                className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-yellow-500 via-orange-500 to-pink-500 bg-clip-text text-transparent mb-4 font-heading"
               >
                 {message}
               </h2>

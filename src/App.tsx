@@ -327,8 +327,8 @@ const App: React.FC = () => {
       className={`w-full h-full ${settings.highContrast ? 'contrast-125' : ''}`}
       style={{
         fontFamily: settings.dyslexiaFont
-          ? "'OpenDyslexic', 'Fredoka', sans-serif"
-          : "'Fredoka', sans-serif",
+          ? "'OpenDyslexic', 'Fredoka', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+          : "'Fredoka', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
       }}
     >
       <AnimatePresence mode="wait">
