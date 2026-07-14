@@ -21,7 +21,7 @@ const Navigation: React.FC<NavigationProps> = ({ title, onBack, stars, coins, sh
       {/* Back button */}
       <motion.button
         onClick={onBack}
-        className="flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full px-3 py-2 md:px-5 md:py-3 shadow-lg hover:shadow-xl transition-all z-10"
+        className="flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full px-3 py-2 md:px-5 md:py-3 shadow-lg hover:shadow-xl transition-all"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
@@ -31,13 +31,13 @@ const Navigation: React.FC<NavigationProps> = ({ title, onBack, stars, coins, sh
 
       {/* Title */}
       <motion.h1
-        className="text-lg md:text-2xl font-bold text-gray-800 bg-white/60 backdrop-blur-sm rounded-full px-4 py-2 md:px-8 md:py-3 shadow-md font-heading absolute left-1/2 -translate-x-1/2"
+        className="text-lg md:text-2xl font-bold text-gray-800 bg-white/60 backdrop-blur-sm rounded-full px-4 py-2 md:px-8 md:py-3 shadow-md font-heading"
       >
         {title}
       </motion.h1>
 
       {/* Stats */}
-      <div className="flex items-center gap-2 md:gap-4 z-10">
+      <div className="flex items-center gap-2 md:gap-4">
         {stars !== undefined && (
           <motion.div
             className="flex items-center gap-1 bg-yellow-100/80 backdrop-blur-sm rounded-full px-3 py-2 shadow-md"

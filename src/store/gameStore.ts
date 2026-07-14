@@ -1,3 +1,7 @@
+// ============================================================
+// GAME STORE - State management using localStorage
+// ============================================================
+
 export interface PlayerProfile {
   name: string;
   avatar: string;

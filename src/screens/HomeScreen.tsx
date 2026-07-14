@@ -42,7 +42,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
           {/* Profile */}
           <motion.button
             onClick={onOpenProfile}
-            className="flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full pl-2 pr-4 py-2 shadow-lg z-10"
+            className="flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full pl-2 pr-4 py-2 shadow-lg"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -54,7 +54,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
           </motion.button>
 
           {/* Stats */}
-          <div className="flex items-center gap-2 z-10">
+          <div className="flex items-center gap-2">
             <motion.div
               className="flex items-center gap-1 bg-yellow-100/90 backdrop-blur-sm rounded-full px-3 py-2 shadow-md"
               whileHover={{ scale: 1.05 }}
@@ -97,7 +97,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
               🦄
             </motion.div>
             <h2
-              className="text-xl md:text-2xl font-bold mb-1 font-heading"
+              className="text-xl md:text-2xl font-bold mb-1"
+              style={{ fontFamily: "'Bubblegum One', cursive" }}
             >
               Welcome back, {profile.name || 'Little Star'}! 🎉
             </h2>
@@ -143,7 +144,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* Game Modes Grid */}
         <div className="px-4 md:px-6 mb-4">
           <h3
-            className="text-lg md:text-xl font-bold text-gray-700 mb-3 font-heading"
+            className="text-lg md:text-xl font-bold text-gray-700 mb-3"
+            style={{ fontFamily: "'Bubblegum One', cursive" }}
           >
             🎮 Let's Play!
           </h3>
@@ -179,7 +181,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* Quick Actions */}
         <div className="px-4 md:px-6 mb-4">
           <h3
-            className="text-lg md:text-xl font-bold text-gray-700 mb-3 font-heading"
+            className="text-lg md:text-xl font-bold text-gray-700 mb-3"
+            style={{ fontFamily: "'Bubblegum One', cursive" }}
           >
             📊 Your Journey
           </h3>
