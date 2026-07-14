@@ -1,9 +1,9 @@
 {
-  "name": "KidSpark - Fun Learning Adventure for Kids",
+  "name": "KidSpark",
   "short_name": "KidSpark",
   "description": "A premium educational game for children aged 4-8. Learn letters, numbers, shapes, colors, animals and more through fun interactive games! Features quizzes, memory games, puzzles, coloring, math adventures, and real-world skills.",
   "start_url": "/",
-  "id": "/",
+  "id": "/kid-spark",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#a855f7",
@@ -11,7 +11,11 @@
   "scope": "/",
   "lang": "en",
   "dir": "ltr",
-  "categories": ["education", "kids", "games"],
+  "categories": [
+    "education",
+    "kids",
+    "games"
+  ],
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -48,7 +52,12 @@
       "short_name": "Learn",
       "description": "Jump into learning mode",
       "url": "/",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }
