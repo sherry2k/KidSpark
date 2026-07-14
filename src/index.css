@@ -119,6 +119,17 @@ body {
   50% { opacity: 1; transform: scale(1.2); }
 }
 
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(255,107,157,0.5); }
+  50% { box-shadow: 0 0 20px rgba(255,107,157,0.8), 0 0 40px rgba(255,107,157,0.4); }
+}
+
 .animate-float { animation: float 3s ease-in-out infinite; }
 .animate-float-slow { animation: float-slow 5s ease-in-out infinite; }
 .animate-bounce-gentle { animation: bounce-gentle 2s ease-in-out infinite; }
@@ -128,6 +139,8 @@ body {
 .animate-pop-in { animation: pop-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
 .animate-cloud { animation: cloud-drift 30s linear infinite; }
 .animate-star { animation: star-twinkle 2s ease-in-out infinite; }
+.animate-shake { animation: shake 0.5s ease-in-out; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
 
 /* Game card styles */
 .game-card {
@@ -179,6 +192,13 @@ body {
 }
 .btn-game:active {
   transform: scale(0.95);
+}
+
+.btn-bounce {
+  transition: transform 0.1s;
+}
+.btn-bounce:active {
+  transform: scale(0.9);
 }
 
 /* Background patterns */
