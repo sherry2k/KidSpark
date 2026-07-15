@@ -90,9 +90,6 @@ export default function PrivacyPolicy() {
             >
           <img src="/icon.png" alt="KidSpark" className="w-8 h-8 rounded" />
 
-// Any Lucide icon
-import { Sparkles } from 'lucide-react';
-<Sparkles className="w-6 h-6 text-white" />
             </motion.div>
             <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
               KidSpark
