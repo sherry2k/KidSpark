@@ -1,3 +1,28 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import PrivacyPolicy from './PrivacyPolicy';
+
+// Your existing KidSpark app content
+function Home() {
+  return (
+    // PASTE YOUR EXISTING APP CONTENT HERE
+    // Whatever was in your App.tsx before
+    <div>
+      <h1>KidSpark</h1>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
