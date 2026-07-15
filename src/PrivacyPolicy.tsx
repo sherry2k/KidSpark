@@ -88,7 +88,11 @@ export default function PrivacyPolicy() {
               whileHover={{ rotate: 20, scale: 1.1 }}
               className="w-10 h-10 bg-gradient-to-br from-yellow-400 via-orange-400 to-pink-500 rounded-xl flex items-center justify-center shadow-lg"
             >
-          <span className="text-white text-xl">🚀</span>
+          <img src="/icon.png" alt="KidSpark" className="w-8 h-8 rounded" />
+
+// Any Lucide icon
+import { Sparkles } from 'lucide-react';
+<Sparkles className="w-6 h-6 text-white" />
             </motion.div>
             <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
               KidSpark
