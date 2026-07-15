@@ -1,30 +1,7 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import PrivacyPolicy from './PrivacyPolicy';
-
-// Your existing KidSpark app content
-function Home() {
-  return (
-    // PASTE YOUR EXISTING APP CONTENT HERE
-    // Whatever was in your App.tsx before
-    <div>
-      <h1>KidSpark</h1>
-    </div>
-  );
-}
-
-export default function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-      </Routes>
-    </BrowserRouter>
-  );
-}
-
 import React, { useState, useCallback, useEffect } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import PrivacyPolicy from './PrivacyPolicy';
 
 // Screens
 import SplashScreen from './screens/SplashScreen';
@@ -83,13 +60,13 @@ type Screen =
   | 'profile'
   | 'skills';
 
-const App: React.FC = () => {
+// This is your main KidSpark game component
+const KidSparkApp: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('splash');
   const [profile, setProfile] = useState<PlayerProfile>(loadProfile);
   const [progress, setProgress] = useState<GameProgress>(loadProgress);
   const [settings, setSettings] = useState<GameSettings>(loadSettings);
 
-  // Save progress whenever it changes
   useEffect(() => {
     saveProgress(progress);
   }, [progress]);
@@ -98,7 +75,6 @@ const App: React.FC = () => {
     saveSettings(settings);
   }, [settings]);
 
-  // Check achievements
   const checkAchievements = useCallback((prog: GameProgress) => {
     const newBadges = [...prog.earnedBadges];
     let changed = false;
@@ -135,7 +111,6 @@ const App: React.FC = () => {
     });
   }, [checkAchievements]);
 
-  // Handlers
   const handleSplashComplete = useCallback(() => {
     if (!profile.name) {
       setCurrentScreen('profile-setup');
@@ -198,15 +173,12 @@ const App: React.FC = () => {
 
   const goHome = useCallback(() => setCurrentScreen('home'), []);
 
-  // Screen transition wrapper
   const renderScreen = () => {
     switch (currentScreen) {
       case 'splash':
         return <SplashScreen onComplete={handleSplashComplete} />;
-      
       case 'profile-setup':
         return <ProfileSetup onComplete={handleProfileSetup} />;
-      
       case 'home':
         return (
           <HomeScreen
@@ -219,129 +191,32 @@ const App: React.FC = () => {
             onOpenAchievements={() => setCurrentScreen('achievements')}
           />
         );
-      
       case 'learn':
-        return (
-          <LearnScreen
-            progress={progress}
-            onBack={goHome}
-            onCompleteLesson={handleCompleteLesson}
-          />
-        );
-      
+        return <LearnScreen progress={progress} onBack={goHome} onCompleteLesson={handleCompleteLesson} />;
       case 'quiz':
-        return (
-          <QuizScreen
-            progress={progress}
-            onBack={goHome}
-            onAnswer={handleQuizAnswer}
-            onComplete={handleQuizComplete}
-          />
-        );
-      
+        return <QuizScreen progress={progress} onBack={goHome} onAnswer={handleQuizAnswer} onComplete={handleQuizComplete} />;
       case 'memory':
-        return (
-          <MemoryGame
-            progress={progress}
-            onBack={goHome}
-            onComplete={handleGameComplete}
-          />
-        );
-      
+        return <MemoryGame progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
       case 'match':
-        return (
-          <MatchGame
-            progress={progress}
-            onBack={goHome}
-            onComplete={handleGameComplete}
-          />
-        );
-      
+        return <MatchGame progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
       case 'math':
-        return (
-          <MathGame
-            profile={profile}
-            progress={progress}
-            onBack={goHome}
-            onAnswer={handleQuizAnswer}
-            onComplete={handleGameComplete}
-          />
-        );
-      
+        return <MathGame profile={profile} progress={progress} onBack={goHome} onAnswer={handleQuizAnswer} onComplete={handleGameComplete} />;
       case 'wordbuilder':
-        return (
-          <WordBuilder
-            progress={progress}
-            onBack={goHome}
-            onComplete={handleGameComplete}
-          />
-        );
-      
+        return <WordBuilder progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
       case 'coloring':
-        return (
-          <ColoringBook
-            progress={progress}
-            onBack={goHome}
-            onComplete={handleGameComplete}
-          />
-        );
-      
+        return <ColoringBook progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
       case 'puzzle':
-        return (
-          <PuzzleGame
-            progress={progress}
-            onBack={goHome}
-            onComplete={handleGameComplete}
-          />
-        );
-      
+        return <PuzzleGame progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
       case 'progress':
-        return (
-          <ProgressScreen
-            profile={profile}
-            progress={progress}
-            onBack={goHome}
-          />
-        );
-      
+        return <ProgressScreen profile={profile} progress={progress} onBack={goHome} />;
       case 'achievements':
-        return (
-          <AchievementsScreen
-            progress={progress}
-            onBack={goHome}
-          />
-        );
-      
+        return <AchievementsScreen progress={progress} onBack={goHome} />;
       case 'settings':
-        return (
-          <SettingsScreen
-            settings={settings}
-            progress={progress}
-            onBack={goHome}
-            onUpdateSettings={handleUpdateSettings}
-            onResetProgress={handleResetProgress}
-          />
-        );
-      
+        return <SettingsScreen settings={settings} progress={progress} onBack={goHome} onUpdateSettings={handleUpdateSettings} onResetProgress={handleResetProgress} />;
       case 'profile':
-        return (
-          <ProfileScreen
-            profile={profile}
-            progress={progress}
-            onBack={goHome}
-            onUpdateProfile={handleUpdateProfile}
-          />
-        );
-      
+        return <ProfileScreen profile={profile} progress={progress} onBack={goHome} onUpdateProfile={handleUpdateProfile} />;
       case 'skills':
-        return (
-          <SkillsScreen
-            progress={progress}
-            onBack={goHome}
-            onComplete={handleGameComplete}
-          />
-        );
-      
+        return <SkillsScreen progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
       default:
         return null;
     }
@@ -372,4 +247,14 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
+// This is the main App with routing
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/*" element={<KidSparkApp />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
