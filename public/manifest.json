@@ -1,7 +1,7 @@
 {
   "name": "KidSpark",
   "short_name": "KidSpark",
-  "description": "A premium educational game for children aged 4-8. Learn letters, numbers, shapes, colors, animals and more through fun interactive games! Features quizzes, memory games, puzzles, coloring, math adventures, and real-world skills.",
+  "description": "A educational game for children aged 4-8. Learn letters, numbers, shapes, colors, animals and more through fun interactive games! Features quizzes, memory games, puzzles, coloring, math adventures, and real-world skills.",
   "start_url": "/",
   "id": "/kid-spark",
   "display": "standalone",
