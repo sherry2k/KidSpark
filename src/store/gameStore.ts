@@ -27,7 +27,6 @@ export interface GameProgress {
   totalTimeSeconds: number;
 }
 
-// 🎵 NEW: GameSettings Interface
 export interface GameSettings {
   soundEnabled: boolean;
   musicEnabled: boolean;
@@ -60,10 +59,10 @@ const DEFAULT_PROGRESS: GameProgress = {
   totalTimeSeconds: 0,
 };
 
-// 🎵 NEW: Default Settings
+// 🎵 Music DISABLED by default - Coming in v2.0!
 const DEFAULT_SETTINGS: GameSettings = {
   soundEnabled: true,
-  musicEnabled: true,
+  musicEnabled: false,  // 🚫 Disabled for now
   highContrast: false,
   dyslexiaFont: false,
 };
@@ -72,7 +71,6 @@ const PROFILE_KEY = 'kidspark_profile';
 const PROGRESS_KEY = 'kidspark_progress';
 const SETTINGS_KEY = 'kidspark_settings';
 
-// Load from localStorage
 export function loadProfile(): PlayerProfile {
   try {
     const data = localStorage.getItem(PROFILE_KEY);
@@ -91,7 +89,6 @@ export function loadProgress(): GameProgress {
     const data = localStorage.getItem(PROGRESS_KEY);
     const progress = data ? { ...DEFAULT_PROGRESS, ...JSON.parse(data) } : DEFAULT_PROGRESS;
     
-    // Check streak
     const today = new Date().toDateString();
     const yesterday = new Date(Date.now() - 86400000).toDateString();
     
@@ -109,21 +106,26 @@ export function saveProgress(progress: GameProgress): void {
   localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
 }
 
-// 🎵 FIXED: Single loadSettings function (removed duplicate)
 export function loadSettings(): GameSettings {
   try {
     const data = localStorage.getItem(SETTINGS_KEY);
-    return data ? { ...DEFAULT_SETTINGS, ...JSON.parse(data) } : DEFAULT_SETTINGS;
+    if (data) {
+      const parsed = JSON.parse(data);
+      // 🚫 Force music disabled (v1.0 - Music coming in v2.0)
+      return { ...DEFAULT_SETTINGS, ...parsed, musicEnabled: false };
+    }
+    return DEFAULT_SETTINGS;
   } catch {
     return DEFAULT_SETTINGS;
   }
 }
 
 export function saveSettings(settings: GameSettings): void {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  // 🚫 Force music disabled when saving
+  const settingsToSave = { ...settings, musicEnabled: false };
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settingsToSave));
 }
 
-// Progress update helpers
 export function addStars(progress: GameProgress, count: number): GameProgress {
   return { ...progress, stars: progress.stars + count };
 }
