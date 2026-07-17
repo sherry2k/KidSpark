@@ -39,141 +39,136 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
         >
-          {/* Top Bar */}
-<motion.div
-  className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4 gap-2"
-  initial={{ y: -30, opacity: 0 }}
-  animate={{ y: 0, opacity: 1 }}
->
-  {/* 👤 BIG Profile Button */}
-  <motion.button
-    onClick={onOpenProfile}
-    className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-2xl pl-2 pr-4 py-3 shadow-lg border-4 border-white"
-    style={{
-      boxShadow: '0 6px 0 rgba(139, 92, 246, 0.5), 0 8px 20px rgba(0,0,0,0.15)',
-      minHeight: '65px',
-    }}
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ 
-      scale: 0.95, 
-      y: 4,
-      boxShadow: '0 2px 0 rgba(139, 92, 246, 0.5), 0 4px 10px rgba(0,0,0,0.15)'
-    }}
-  >
-    <span className="text-4xl md:text-5xl">{profile.avatar}</span>
-    <div className="text-left">
-      <p 
-        className="font-bold text-gray-800 text-sm md:text-base leading-tight"
-        style={{ fontFamily: "'Bubblegum One', cursive" }}
-      >
-        {profile.name || 'Little Star'}
-      </p>
-      <p className="text-xs text-gray-500 font-semibold">🔥 {progress.streak} day streak</p>
-    </div>
-  </motion.button>
+          {/* 👤 BIG Profile Button */}
+          <motion.button
+            onClick={onOpenProfile}
+            className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-2xl pl-2 pr-4 py-3 shadow-lg border-4 border-white"
+            style={{
+              boxShadow: '0 6px 0 rgba(139, 92, 246, 0.5), 0 8px 20px rgba(0,0,0,0.15)',
+              minHeight: '65px',
+            }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ 
+              scale: 0.95, 
+              y: 4,
+              boxShadow: '0 2px 0 rgba(139, 92, 246, 0.5), 0 4px 10px rgba(0,0,0,0.15)'
+            }}
+          >
+            <span className="text-4xl md:text-5xl">{profile.avatar}</span>
+            <div className="text-left">
+              <p 
+                className="font-bold text-gray-800 text-sm md:text-base leading-tight"
+                style={{ fontFamily: "'Bubblegum One', cursive" }}
+              >
+                {profile.name || 'Little Star'}
+              </p>
+              <p className="text-xs text-gray-500 font-semibold">🔥 {progress.streak} day streak</p>
+            </div>
+          </motion.button>
 
-  {/* Stats & Settings - BIG BUTTONS */}
-  <div className="flex items-center gap-2 md:gap-3">
-    {/* 🌟 BIG Stars Button - FIXED VISIBILITY */}
-    <motion.button
-      onClick={onOpenProgress}
-      className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl px-4 py-3 shadow-lg border-4 border-white"
-      style={{
-        boxShadow: '0 6px 0 #7B2CBF, 0 8px 20px rgba(0,0,0,0.15)',
-        minHeight: '65px',
-        minWidth: '75px',
-      }}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ 
-        scale: 0.95, 
-        y: 4,
-        boxShadow: '0 2px 0 #7B2CBF, 0 4px 10px rgba(0,0,0,0.15)'
-      }}
-      animate={{
-        scale: [1, 1.03, 1],
-      }}
-      transition={{
-        scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
-      }}
-    >
-      <motion.span 
-        className="text-2xl md:text-3xl"
-        animate={{ rotate: [0, 15, -15, 0] }}
-        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-      >
-        🌟
-      </motion.span>
-      <span 
-        className="font-bold text-white text-lg md:text-xl"
-        style={{ 
-          fontFamily: "'Bubblegum One', cursive",
-          textShadow: '2px 2px 0 rgba(0,0,0,0.2)'
-        }}
-      >
-        {progress.stars}
-      </span>
-    </motion.button>
+          {/* Stats & Settings - BIG BUTTONS */}
+          <div className="flex items-center gap-2 md:gap-3">
+            {/* 🌟 BIG Stars Button */}
+            <motion.button
+              onClick={onOpenProgress}
+              className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl px-4 py-3 shadow-lg border-4 border-white"
+              style={{
+                boxShadow: '0 6px 0 #7B2CBF, 0 8px 20px rgba(0,0,0,0.15)',
+                minHeight: '65px',
+                minWidth: '75px',
+              }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ 
+                scale: 0.95, 
+                y: 4,
+                boxShadow: '0 2px 0 #7B2CBF, 0 4px 10px rgba(0,0,0,0.15)'
+              }}
+              animate={{
+                scale: [1, 1.03, 1],
+              }}
+              transition={{
+                scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
+              }}
+            >
+              <motion.span 
+                className="text-2xl md:text-3xl"
+                animate={{ rotate: [0, 15, -15, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                🌟
+              </motion.span>
+              <span 
+                className="font-bold text-white text-lg md:text-xl"
+                style={{ 
+                  fontFamily: "'Bubblegum One', cursive",
+                  textShadow: '2px 2px 0 rgba(0,0,0,0.2)'
+                }}
+              >
+                {progress.stars}
+              </span>
+            </motion.button>
 
-    {/* 🪙 BIG Coins Button - IMPROVED VISIBILITY */}
-    <motion.button
-      onClick={onOpenProgress}
-      className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl px-4 py-3 shadow-lg border-4 border-white"
-      style={{
-        boxShadow: '0 6px 0 #B91C1C, 0 8px 20px rgba(0,0,0,0.15)',
-        minHeight: '65px',
-        minWidth: '75px',
-      }}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ 
-        scale: 0.95, 
-        y: 4,
-        boxShadow: '0 2px 0 #B91C1C, 0 4px 10px rgba(0,0,0,0.15)'
-      }}
-    >
-      <motion.span 
-        className="text-2xl md:text-3xl"
-        animate={{ rotate: [0, 360] }}
-        transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-      >
-        🪙
-      </motion.span>
-      <span 
-        className="font-bold text-white text-lg md:text-xl"
-        style={{ 
-          fontFamily: "'Bubblegum One', cursive",
-          textShadow: '2px 2px 0 rgba(0,0,0,0.2)'
-        }}
-      >
-        {progress.coins}
-      </span>
-    </motion.button>
+            {/* 🪙 BIG Coins Button */}
+            <motion.button
+              onClick={onOpenProgress}
+              className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl px-4 py-3 shadow-lg border-4 border-white"
+              style={{
+                boxShadow: '0 6px 0 #B91C1C, 0 8px 20px rgba(0,0,0,0.15)',
+                minHeight: '65px',
+                minWidth: '75px',
+              }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ 
+                scale: 0.95, 
+                y: 4,
+                boxShadow: '0 2px 0 #B91C1C, 0 4px 10px rgba(0,0,0,0.15)'
+              }}
+            >
+              <motion.span 
+                className="text-2xl md:text-3xl"
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+              >
+                🪙
+              </motion.span>
+              <span 
+                className="font-bold text-white text-lg md:text-xl"
+                style={{ 
+                  fontFamily: "'Bubblegum One', cursive",
+                  textShadow: '2px 2px 0 rgba(0,0,0,0.2)'
+                }}
+              >
+                {progress.coins}
+              </span>
+            </motion.button>
 
-    {/* ⚙️ BIG Settings Button */}
-    <motion.button
-      onClick={onOpenSettings}
-      className="flex items-center justify-center bg-gradient-to-r from-blue-400 to-indigo-500 rounded-2xl p-3 shadow-lg border-4 border-white"
-      style={{
-        boxShadow: '0 6px 0 #4338CA, 0 8px 20px rgba(0,0,0,0.15)',
-        minHeight: '65px',
-        minWidth: '65px',
-      }}
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ 
-        scale: 0.9, 
-        y: 4,
-        boxShadow: '0 2px 0 #4338CA, 0 4px 10px rgba(0,0,0,0.15)'
-      }}
-    >
-      <motion.span 
-        className="text-3xl md:text-4xl"
-        animate={{ rotate: [0, 360] }}
-        transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
-      >
-        ⚙️
-      </motion.span>
-    </motion.button>
-  </div>
-</motion.div>
+            {/* ⚙️ BIG Settings Button */}
+            <motion.button
+              onClick={onOpenSettings}
+              className="flex items-center justify-center bg-gradient-to-r from-blue-400 to-indigo-500 rounded-2xl p-3 shadow-lg border-4 border-white"
+              style={{
+                boxShadow: '0 6px 0 #4338CA, 0 8px 20px rgba(0,0,0,0.15)',
+                minHeight: '65px',
+                minWidth: '65px',
+              }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ 
+                scale: 0.9, 
+                y: 4,
+                boxShadow: '0 2px 0 #4338CA, 0 4px 10px rgba(0,0,0,0.15)'
+              }}
+            >
+              <motion.span 
+                className="text-3xl md:text-4xl"
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+              >
+                ⚙️
+              </motion.span>
+            </motion.button>
+          </div>
+        </motion.div>
+
         {/* Welcome Banner */}
         <motion.div
           className="mx-4 md:mx-6 mb-4"
@@ -283,74 +278,4 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
           <div className="grid grid-cols-3 gap-3">
             <motion.button
               onClick={onOpenProgress}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 text-center shadow-md"
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              <span className="text-3xl block mb-1">📈</span>
-              <span className="text-xs font-bold text-gray-600">Progress</span>
-            </motion.button>
-            <motion.button
-              onClick={onOpenAchievements}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 text-center shadow-md relative"
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              <span className="text-3xl block mb-1">🏆</span>
-              <span className="text-xs font-bold text-gray-600">Badges</span>
-              {progress.earnedBadges.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {progress.earnedBadges.length}
-                </span>
-              )}
-            </motion.button>
-            <motion.button
-              onClick={onOpenProfile}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 text-center shadow-md"
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              <span className="text-3xl block mb-1">👤</span>
-              <span className="text-xs font-bold text-gray-600">Profile</span>
-            </motion.button>
-          </div>
-        </div>
-
-        {/* Stats Summary */}
-        <motion.div
-          className="mx-4 md:mx-6 mb-20"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-4 shadow-md">
-            <div className="grid grid-cols-4 gap-3 text-center">
-              <div>
-                <p className="text-2xl font-bold text-purple-600">{progress.lessonsCompleted}</p>
-                <p className="text-xs text-gray-500">Lessons</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-green-600">{progress.quizzesCompleted}</p>
-                <p className="text-xs text-gray-500">Quizzes</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-blue-600">{progress.gamesPlayed}</p>
-                <p className="text-xs text-gray-500">Games</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-orange-600">
-                  {progress.totalAnswers > 0
-                    ? Math.round((progress.correctAnswers / progress.totalAnswers) * 100)
-                    : 0}%
-                </p>
-                <p className="text-xs text-gray-500">Accuracy</p>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    </GameBackground>
-  );
-};
-
-export default HomeScreen;
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 
