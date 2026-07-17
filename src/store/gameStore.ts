@@ -56,20 +56,18 @@ const PROFILE_KEY = 'kidspark_profile';
 const PROGRESS_KEY = 'kidspark_progress';
 const SETTINGS_KEY = 'kidspark_settings';
 
-export interface GameSettings {
-  soundEnabled: boolean;
-  musicEnabled: boolean;
-  highContrast: boolean;
-  dyslexiaFont: boolean;
-  volume: number;
-}
-
-const DEFAULT_SETTINGS: GameSettings = {
-  soundEnabled: true,
-  musicEnabled: true,
-  highContrast: false,
-  dyslexiaFont: false,
-  volume: 0.7,
+export const loadSettings = (): GameSettings => {
+  const stored = localStorage.getItem('kidspark_settings');
+  const defaults: GameSettings = {
+    // ... your existing defaults
+    musicEnabled: true,      // 🎵 ADD THIS
+    soundEffectsEnabled: true,  // 🎵 ADD THIS (optional)
+  };
+  
+  if (stored) {
+    return { ...defaults, ...JSON.parse(stored) };
+  }
+  return defaults;
 };
 
 // Load from localStorage
