@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GameBackground } from '../components/Background';
 import Navigation from '../components/Navigation';
@@ -13,66 +13,394 @@ interface SkillsScreenProps {
 }
 
 type View = 'career-select' | 'skill-list' | 'skill-detail';
-type ActivityType = 'steps' | 'quiz' | 'match' | 'drag' | 'complete';
+
+// Activity data for each skill - defines what items to collect/assemble
+const SKILL_ACTIVITIES: Record<string, {
+  intro: string;
+  correctItems: string[];
+  allItems: string[];
+  finalResult: string;
+  successMessage: string;
+}> = {
+  // 🍳 COOKING STUDIO
+  'sandwich': {
+    intro: 'Build a yummy sandwich!',
+    correctItems: ['🍞', '🥬', '🍅', '🧀', '🍞'],
+    allItems: ['🍞', '🧀', '🍅', '🥬', '🍔', '🍟', '🍦', '🍿', '🍫', '🥚'],
+    finalResult: '🥪',
+    successMessage: 'Delicious sandwich ready!'
+  },
+  'baking': {
+    intro: 'Bake a delicious cake!',
+    correctItems: ['🌾', '🍚', '🥚', '🥛', '🎂'],
+    allItems: ['🌾', '🍚', '🥚', '🥛', '🍅', '🥩', '🌶️', '🧂', '🍄', '🍎'],
+    finalResult: '🎂',
+    successMessage: 'Yummy cake baked!'
+  },
+  'cupcake': {
+    intro: 'Decorate colorful cupcakes!',
+    correctItems: ['🧁', '🍓', '🍫', '🌈', '⭐'],
+    allItems: ['🧁', '🍓', '🍫', '🌈', '⭐', '🥕', '🍄', '🥬', '🌶️', '🧅'],
+    finalResult: '🧁',
+    successMessage: 'Beautiful cupcakes!'
+  },
+  'pizza': {
+    intro: 'Make a tasty pizza!',
+    correctItems: ['🍞', '🍅', '🧀', '🌶️', '🍄'],
+    allItems: ['🍞', '🧀', '🍅', '🥩', '🌶️', '🥬', '🍄', '🥒', '🧅', '🍎'],
+    finalResult: '🍕',
+    successMessage: 'Delicious pizza ready!'
+  },
+  'burger': {
+    intro: 'Build the perfect burger!',
+    correctItems: ['🍞', '🥩', '🧀', '🥬', '🍅', '🍞'],
+    allItems: ['🍞', '🥩', '🧀', '🥬', '🍅', '🥕', '🍎', '🍿', '🍇', '🥭'],
+    finalResult: '🍔',
+    successMessage: 'Perfect burger!'
+  },
+  'juice': {
+    intro: 'Squeeze fresh juice!',
+    correctItems: ['🍊', '🍋', '🍏', '🍇'],
+    allItems: ['🍊', '🍋', '🍏', '🍇', '🍅', '🥕', '🥩', '🧀', '🍔', '🍟'],
+    finalResult: '🧃',
+    successMessage: 'Fresh juice made!'
+  },
+  'vegwash': {
+    intro: 'Wash the vegetables!',
+    correctItems: ['🥬', '🥕', '🥒', '🌽', '🥦'],
+    allItems: ['🥬', '🥕', '🥒', '🌽', '🥦', '🍦', '🍫', '🍔', '🍿', '🎂'],
+    finalResult: '✨',
+    successMessage: 'All clean and fresh!'
+  },
+  'mixing': {
+    intro: 'Mix ingredients together!',
+    correctItems: ['🥛', '🥚', '🌾', '🍯'],
+    allItems: ['🥛', '🥚', '🌾', '🍯', '🌶️', '🧅', '🍔', '🍟', '🍕', '🥩'],
+    finalResult: '🥣',
+    successMessage: 'Well mixed!'
+  },
+  'safety': {
+    intro: 'Choose safe kitchen items!',
+    correctItems: ['🧤', '🧯', '🧼', '🥽'],
+    allItems: ['🧤', '🧯', '🧼', '🥽', '🎮', '🎪', '🎨', '⚽', '🎈', '🎭'],
+    finalResult: '✅',
+    successMessage: 'Safety first!'
+  },
+  'recipe': {
+    intro: 'Follow recipe steps in order!',
+    correctItems: ['📖', '🥣', '🥄', '🍽️'],
+    allItems: ['📖', '🥣', '🥄', '🍽️', '🎮', '📱', '📺', '🎧', '📚', '✏️'],
+    finalResult: '👨‍🍳',
+    successMessage: 'Recipe followed!'
+  },
+  'salad': {
+    intro: 'Make a healthy salad!',
+    correctItems: ['🥬', '🍅', '🥒', '🥕', '🌽'],
+    allItems: ['🥬', '🍅', '🥒', '🥕', '🌽', '🍦', '🍫', '🎂', '🍔', '🍟'],
+    finalResult: '🥗',
+    successMessage: 'Healthy salad!'
+  },
+  'smoothie': {
+    intro: 'Blend a yummy smoothie!',
+    correctItems: ['🍓', '🍌', '🥛', '🍯'],
+    allItems: ['🍓', '🍌', '🥛', '🍯', '🍔', '🥩', '🍟', '🌶️', '🧅', '🍕'],
+    finalResult: '🥤',
+    successMessage: 'Yummy smoothie!'
+  },
+  'cookie': {
+    intro: 'Bake sweet cookies!',
+    correctItems: ['🌾', '🥚', '🧈', '🍫', '🍪'],
+    allItems: ['🌾', '🥚', '🧈', '🍫', '🍅', '🥬', '🌶️', '🧅', '🥩', '🍔'],
+    finalResult: '🍪',
+    successMessage: 'Delicious cookies!'
+  },
+  'pancake': {
+    intro: 'Make fluffy pancakes!',
+    correctItems: ['🌾', '🥛', '🥚', '🧈'],
+    allItems: ['🌾', '🥛', '🥚', '🧈', '🍔', '🍟', '🍫', '🍅', '🥬', '🍕'],
+    finalResult: '🥞',
+    successMessage: 'Perfect pancakes!'
+  },
+
+  // 💄 BEAUTY & FASHION
+  'dressup': {
+    intro: 'Choose a complete outfit!',
+    correctItems: ['👗', '👠', '👜', '👒'],
+    allItems: ['👗', '👠', '👜', '👒', '🍕', '🚗', '📱', '🎮', '⚽', '🎨'],
+    finalResult: '💃',
+    successMessage: 'Stylish outfit!'
+  },
+  'hairstyle': {
+    intro: 'Style your hair!',
+    correctItems: ['💇', '💧', '🎀', '🪞'],
+    allItems: ['💇', '💧', '🎀', '🪞', '🍔', '🚗', '⚽', '🎮', '📱', '🎨'],
+    finalResult: '👱‍♀️',
+    successMessage: 'Beautiful hair!'
+  },
+  'facepainting': {
+    intro: 'Paint a fun design!',
+    correctItems: ['🎨', '🖌️', '💧', '⭐'],
+    allItems: ['🎨', '🖌️', '💧', '⭐', '🍔', '🚗', '📱', '🎮', '⚽', '📚'],
+    finalResult: '🎭',
+    successMessage: 'Amazing face paint!'
+  },
+  'nailart': {
+    intro: 'Create colorful nails!',
+    correctItems: ['💅', '💎', '⭐', '🌈'],
+    allItems: ['💅', '💎', '⭐', '🌈', '🍔', '🚗', '⚽', '📱', '🎨', '📚'],
+    finalResult: '💅',
+    successMessage: 'Pretty nails!'
+  },
+  'accessory': {
+    intro: 'Add stylish accessories!',
+    correctItems: ['👜', '👒', '🕶️', '💍'],
+    allItems: ['👜', '👒', '🕶️', '💍', '🍔', '🚗', '📱', '🎮', '⚽', '🎨'],
+    finalResult: '✨',
+    successMessage: 'So stylish!'
+  },
+  'colorcoord': {
+    intro: 'Match beautiful colors!',
+    correctItems: ['🔴', '🌸', '🌷', '❤️'],
+    allItems: ['🔴', '🌸', '🌷', '❤️', '🍔', '⚽', '🚗', '📱', '🎮', '📚'],
+    finalResult: '🎨',
+    successMessage: 'Perfect colors!'
+  },
+  'fashiondesign': {
+    intro: 'Design an outfit!',
+    correctItems: ['✏️', '📏', '🎨', '🧵'],
+    allItems: ['✏️', '📏', '🎨', '🧵', '🍔', '🚗', '⚽', '🎮', '📱', '🍕'],
+    finalResult: '👗',
+    successMessage: 'Amazing design!'
+  },
+  'jewelry': {
+    intro: 'Make pretty jewelry!',
+    correctItems: ['💎', '🔴', '🔵', '🟡'],
+    allItems: ['💎', '🔴', '🔵', '🟡', '🍔', '🚗', '⚽', '🎮', '📱', '🎨'],
+    finalResult: '📿',
+    successMessage: 'Beautiful jewelry!'
+  },
+  'braiding': {
+    intro: 'Braid the hair!',
+    correctItems: ['👱‍♀️', '🎀', '💧', '🪞'],
+    allItems: ['👱‍♀️', '🎀', '💧', '🪞', '🍔', '🚗', '⚽', '🎮', '📱', '📚'],
+    finalResult: '👧',
+    successMessage: 'Beautiful braids!'
+  },
+  'sewing': {
+    intro: 'Sew with needle and thread!',
+    correctItems: ['🧵', '🪡', '📏', '✂️'],
+    allItems: ['🧵', '🪡', '📏', '✂️', '🍔', '🚗', '⚽', '🎮', '📱', '🍕'],
+    finalResult: '👕',
+    successMessage: 'Great sewing!'
+  },
+
+  // 🔨 BUILDER WORKSHOP
+  'hammer': {
+    intro: 'Hammer some nails!',
+    correctItems: ['🔨', '📌', '🪵', '📐'],
+    allItems: ['🔨', '📌', '🪵', '📐', '🍔', '🎮', '⚽', '📱', '🎨', '📚'],
+    finalResult: '🏗️',
+    successMessage: 'Great hammering!'
+  },
+  'screwdriver': {
+    intro: 'Use the screwdriver!',
+    correctItems: ['🪛', '🔩', '🔧', '🪵'],
+    allItems: ['🪛', '🔩', '🔧', '🪵', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '✅',
+    successMessage: 'Well screwed in!'
+  },
+  'wrench': {
+    intro: 'Use the wrench!',
+    correctItems: ['🔧', '🔩', '⚙️', '🛠️'],
+    allItems: ['🔧', '🔩', '⚙️', '🛠️', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🔧',
+    successMessage: 'Tight and secure!'
+  },
+  'measuring': {
+    intro: 'Measure with tools!',
+    correctItems: ['📏', '📐', '✏️', '📝'],
+    allItems: ['📏', '📐', '✏️', '📝', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '📊',
+    successMessage: 'Perfectly measured!'
+  },
+  'sawing': {
+    intro: 'Cut wood safely!',
+    correctItems: ['🪚', '🪵', '📐', '🥽'],
+    allItems: ['🪚', '🪵', '📐', '🥽', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🪵',
+    successMessage: 'Clean cut!'
+  },
+  'drilling': {
+    intro: 'Drill some holes!',
+    correctItems: ['🔩', '🪵', '📏', '🥽'],
+    allItems: ['🔩', '🪵', '📏', '🥽', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '⚫',
+    successMessage: 'Perfect holes!'
+  },
+  'buildchair': {
+    intro: 'Build a chair!',
+    correctItems: ['🪵', '🔨', '🔩', '📏'],
+    allItems: ['🪵', '🔨', '🔩', '📏', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🪑',
+    successMessage: 'Sturdy chair!'
+  },
+  'repairbike': {
+    intro: 'Fix the bicycle!',
+    correctItems: ['🔧', '🛞', '⚙️', '🚲'],
+    allItems: ['🔧', '🛞', '⚙️', '🚲', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🚴',
+    successMessage: 'Bike fixed!'
+  },
+  'toolmatch': {
+    intro: 'Match the right tools!',
+    correctItems: ['🔨', '🪛', '🔧', '🪚'],
+    allItems: ['🔨', '🪛', '🔧', '🪚', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🧰',
+    successMessage: 'Right tools!'
+  },
+  'fixtoy': {
+    intro: 'Fix the broken toy!',
+    correctItems: ['🔧', '🧸', '🩹', '✨'],
+    allItems: ['🔧', '🧸', '🩹', '✨', '🍔', '⚽', '📱', '🎮', '🎨', '📚'],
+    finalResult: '🧸',
+    successMessage: 'Toy fixed!'
+  },
+  'birdhouse': {
+    intro: 'Build a birdhouse!',
+    correctItems: ['🪵', '🔨', '🔩', '🐦'],
+    allItems: ['🪵', '🔨', '🔩', '🐦', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🏠',
+    successMessage: 'Cozy birdhouse!'
+  },
+  'painting': {
+    intro: 'Paint the wood!',
+    correctItems: ['🖌️', '🎨', '🪵', '💧'],
+    allItems: ['🖌️', '🎨', '🪵', '💧', '🍔', '⚽', '🎮', '📱', '📚', '🍕'],
+    finalResult: '🎨',
+    successMessage: 'Beautiful paint!'
+  },
+
+  // ⚙️ ENGINEERING LAB
+  'bridge': {
+    intro: 'Build a strong bridge!',
+    correctItems: ['🌉', '🧱', '🔩', '📏'],
+    allItems: ['🌉', '🧱', '🔩', '📏', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🌉',
+    successMessage: 'Strong bridge!'
+  },
+  'house': {
+    intro: 'Build a house!',
+    correctItems: ['🏗️', '🧱', '🚪', '🪟', '🏠'],
+    allItems: ['🏗️', '🧱', '🚪', '🪟', '🏠', '🍔', '⚽', '🎮', '📱', '🎨'],
+    finalResult: '🏠',
+    successMessage: 'Beautiful house!'
+  },
+  'roads': {
+    intro: 'Design a road!',
+    correctItems: ['🛣️', '🚦', '🚧', '🚗'],
+    allItems: ['🛣️', '🚦', '🚧', '🚗', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🛣️',
+    successMessage: 'Smooth road!'
+  },
+  'tower': {
+    intro: 'Build a tall tower!',
+    correctItems: ['🗼', '🧱', '📐', '📏'],
+    allItems: ['🗼', '🧱', '📐', '📏', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🗼',
+    successMessage: 'Tall tower!'
+  },
+  'gears': {
+    intro: 'Connect the gears!',
+    correctItems: ['⚙️', '⚙️', '🔩', '🛠️'],
+    allItems: ['⚙️', '🔩', '🛠️', '🔧', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '⚙️',
+    successMessage: 'Gears working!'
+  },
+  'pulley': {
+    intro: 'Build a pulley system!',
+    correctItems: ['⚙️', '🪢', '⚖️', '🔗'],
+    allItems: ['⚙️', '🪢', '⚖️', '🔗', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🏗️',
+    successMessage: 'Pulley works!'
+  },
+  'crane': {
+    intro: 'Operate the crane!',
+    correctItems: ['🏗️', '🔗', '📦', '⚙️'],
+    allItems: ['🏗️', '🔗', '📦', '⚙️', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🏗️',
+    successMessage: 'Crane operational!'
+  },
+  'pipes': {
+    intro: 'Connect the pipes!',
+    correctItems: ['🔧', '💧', '🚰', '🛠️'],
+    allItems: ['🔧', '💧', '🚰', '🛠️', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🚿',
+    successMessage: 'Water flowing!'
+  },
+  'circuit': {
+    intro: 'Light up the bulb!',
+    correctItems: ['🔋', '💡', '⚡', '🔌'],
+    allItems: ['🔋', '💡', '⚡', '🔌', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '💡',
+    successMessage: 'Light is on!'
+  },
+  'solar': {
+    intro: 'Set up solar power!',
+    correctItems: ['☀️', '🔋', '💡', '⚡'],
+    allItems: ['☀️', '🔋', '💡', '⚡', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '☀️',
+    successMessage: 'Solar power ready!'
+  },
+  'windmill': {
+    intro: 'Build a windmill!',
+    correctItems: ['💨', '⚙️', '🏗️', '🌪️'],
+    allItems: ['💨', '⚙️', '🏗️', '🌪️', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🌬️',
+    successMessage: 'Windmill spinning!'
+  },
+  'robot': {
+    intro: 'Design a robot!',
+    correctItems: ['🤖', '⚙️', '🔩', '💻'],
+    allItems: ['🤖', '⚙️', '🔩', '💻', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🤖',
+    successMessage: 'Robot alive!'
+  },
+
+  // Default for any missing skills
+  'default': {
+    intro: 'Complete this skill!',
+    correctItems: ['⭐', '✨', '💫', '🌟'],
+    allItems: ['⭐', '✨', '💫', '🌟', '🎈', '🎉', '🎊', '🏆', '🎁', '💝'],
+    finalResult: '🎉',
+    successMessage: 'Well done!'
+  }
+};
+
+const getActivityForSkill = (skillId: string) => {
+  return SKILL_ACTIVITIES[skillId] || SKILL_ACTIVITIES.default;
+};
 
 const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplete }) => {
   const [view, setView] = useState<View>('career-select');
   const [selectedCategory, setSelectedCategory] = useState<SkillCategory | null>(null);
   const [selectedSkill, setSelectedSkill] = useState<SkillItem | null>(null);
-  const [currentStep, setCurrentStep] = useState(0);
   const [completedSkills, setCompletedSkills] = useState<string[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [activityType, setActivityType] = useState<ActivityType>('steps');
-  const [quizAnswer, setQuizAnswer] = useState<string | null>(null);
-  const [quizCorrect, setQuizCorrect] = useState<boolean | null>(null);
-  const [completedActions, setCompletedActions] = useState<number[]>([]);
-  const [starsEarned, setStarsEarned] = useState(0);
+  const [collectedItems, setCollectedItems] = useState<string[]>([]);
+  const [wrongTaps, setWrongTaps] = useState<number[]>([]);
+  const [shuffledItems, setShuffledItems] = useState<string[]>([]);
 
-  // Generate mini-activities for each step
-  const getActivityForStep = (skill: SkillItem, stepIndex: number): ActivityType => {
-    const activities: ActivityType[] = ['steps', 'quiz', 'match', 'drag'];
-    if (stepIndex === 0) return 'steps'; // Always start with intro
-    return activities[stepIndex % activities.length];
-  };
-
-  // Generate quiz for skill step
-  const getQuizForStep = (skill: SkillItem, stepText: string) => {
-    // Generate simple quiz based on step
-    const quizzes: Record<string, any> = {
-      'cook': {
-        question: 'What should you always do before cooking?',
-        options: ['🧼 Wash hands', '🎮 Play games', '📺 Watch TV'],
-        correct: '🧼 Wash hands'
-      },
-      'clean': {
-        question: 'Where do we put trash?',
-        options: ['🗑️ Trash bin', '🛏️ Bed', '🍽️ Plate'],
-        correct: '🗑️ Trash bin'
-      },
-      'brush': {
-        question: 'How many times a day should we brush?',
-        options: ['1️⃣ Once', '2️⃣ Twice', '5️⃣ Five times'],
-        correct: '2️⃣ Twice'
-      },
-      'draw': {
-        question: 'What do we use to draw?',
-        options: ['✏️ Pencil', '🍴 Fork', '👕 Shirt'],
-        correct: '✏️ Pencil'
-      },
-      'default': {
-        question: 'Is this skill important?',
-        options: ['✅ Yes!', '❌ No', '🤔 Maybe'],
-        correct: '✅ Yes!'
-      }
-    };
-    
-    // Find matching quiz
-    const skillLower = skill.name.toLowerCase();
-    for (const key in quizzes) {
-      if (skillLower.includes(key)) return quizzes[key];
+  // Shuffle items when skill changes
+  useEffect(() => {
+    if (selectedSkill) {
+      const activity = getActivityForSkill(selectedSkill.id);
+      const combined = [...new Set([...activity.correctItems, ...activity.allItems])];
+      const shuffled = [...combined].sort(() => Math.random() - 0.5);
+      setShuffledItems(shuffled);
+      setCollectedItems([]);
+      setWrongTaps([]);
     }
-    return quizzes.default;
-  };
+  }, [selectedSkill]);
 
   const handleCategorySelect = (cat: SkillCategory) => {
     setSelectedCategory(cat);
@@ -81,69 +409,53 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
 
   const handleSkillSelect = (skill: SkillItem) => {
     setSelectedSkill(skill);
-    setCurrentStep(0);
-    setStarsEarned(0);
-    setCompletedActions([]);
-    setActivityType(getActivityForStep(skill, 0));
     setView('skill-detail');
   };
 
-  const handleNextStep = () => {
-    if (!selectedSkill?.steps) return;
-    
-    // Reset activity states
-    setQuizAnswer(null);
-    setQuizCorrect(null);
-    
-    if (currentStep < selectedSkill.steps.length - 1) {
-      const nextStep = currentStep + 1;
-      setCurrentStep(nextStep);
-      setActivityType(getActivityForStep(selectedSkill, nextStep));
-    } else {
-      // Skill complete
-      if (!completedSkills.includes(selectedSkill.id)) {
-        setCompletedSkills((prev) => [...prev, selectedSkill.id]);
-      }
-      setShowCelebration(true);
-      onComplete(3);
-      setTimeout(() => {
-        setShowCelebration(false);
-        setView('skill-list');
-        setSelectedSkill(null);
-        setCurrentStep(0);
-      }, 2500);
-    }
-  };
-
-  const handleQuizAnswer = (answer: string) => {
+  const handleItemTap = (item: string, index: number) => {
     if (!selectedSkill) return;
-    const quiz = getQuizForStep(selectedSkill, '');
-    setQuizAnswer(answer);
-    const correct = answer === quiz.correct;
-    setQuizCorrect(correct);
+    const activity = getActivityForSkill(selectedSkill.id);
     
-    if (correct) {
-      setStarsEarned(s => s + 1);
-      setTimeout(() => handleNextStep(), 1200);
+    // Check if this is the next correct item
+    const nextExpectedItem = activity.correctItems[collectedItems.length];
+    
+    if (item === nextExpectedItem) {
+      // Correct!
+      const newCollected = [...collectedItems, item];
+      setCollectedItems(newCollected);
+      
+      // Check if all correct items collected
+      if (newCollected.length === activity.correctItems.length) {
+        if (!completedSkills.includes(selectedSkill.id)) {
+          setCompletedSkills((prev) => [...prev, selectedSkill.id]);
+        }
+        setTimeout(() => {
+          setShowCelebration(true);
+          onComplete(3);
+          setTimeout(() => {
+            setShowCelebration(false);
+            setView('skill-list');
+            setSelectedSkill(null);
+          }, 2500);
+        }, 500);
+      }
     } else {
+      // Wrong item - show red briefly
+      setWrongTaps([...wrongTaps, index]);
       setTimeout(() => {
-        setQuizAnswer(null);
-        setQuizCorrect(null);
-      }, 1500);
+        setWrongTaps(prev => prev.filter(i => i !== index));
+      }, 800);
     }
   };
 
-  const handleActionComplete = (index: number) => {
-    if (completedActions.includes(index)) return;
-    setCompletedActions([...completedActions, index]);
-    setStarsEarned(s => s + 0.5);
-    
-    // If all actions completed, move to next
-    if (selectedSkill?.steps && completedActions.length + 1 >= 3) {
-      setTimeout(() => {
-        setCompletedActions([]);
-        handleNextStep();
-      }, 800);
+  const handleReset = () => {
+    if (selectedSkill) {
+      const activity = getActivityForSkill(selectedSkill.id);
+      const combined = [...new Set([...activity.correctItems, ...activity.allItems])];
+      const shuffled = [...combined].sort(() => Math.random() - 0.5);
+      setShuffledItems(shuffled);
+      setCollectedItems([]);
+      setWrongTaps([]);
     }
   };
 
@@ -156,7 +468,6 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
       case 'skill-detail':
         setView('skill-list');
         setSelectedSkill(null);
-        setCurrentStep(0);
         break;
       default:
         onBack();
@@ -164,7 +475,7 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
   };
 
   // =============================================
-  // CAREER SELECTION (Main menu)
+  // CAREER SELECTION
   // =============================================
   if (view === 'career-select') {
     return (
@@ -178,20 +489,16 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
               initial={{ y: -20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
             >
-              <h2
-                className="text-xl md:text-2xl font-bold text-gray-800"
-                style={{ fontFamily: "'Bubblegum One', cursive" }}
-              >
+              <h2 className="text-xl md:text-2xl font-bold text-gray-800" style={{ fontFamily: "'Bubblegum One', cursive" }}>
                 Choose Your Adventure! 🚀
               </h2>
-              <p className="text-gray-500 text-sm mt-1">Fun activities & real skills for boys and girls!</p>
+              <p className="text-gray-500 text-sm mt-1">Fun activities for boys and girls!</p>
             </motion.div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 max-w-4xl mx-auto">
               {careerCategories.map((cat, i) => {
                 const completedInCat = cat.items.filter((s) => completedSkills.includes(s.id)).length;
                 const progressPercent = (completedInCat / cat.items.length) * 100;
-
                 return (
                   <motion.button
                     key={cat.id}
@@ -204,13 +511,11 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
                     whileTap={{ scale: 0.97 }}
                   >
                     <div className={`absolute inset-0 bg-gradient-to-br ${cat.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
-                    
                     {completedInCat > 0 && (
                       <div className="absolute top-2 right-2 bg-green-100 text-green-600 text-xs font-bold px-2 py-0.5 rounded-full">
                         {completedInCat}/{cat.items.length}
                       </div>
                     )}
-
                     <motion.span
                       className="text-4xl md:text-5xl block mb-2"
                       animate={{ y: [0, -4, 0] }}
@@ -218,10 +523,8 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
                     >
                       {cat.emoji}
                     </motion.span>
-
                     <h4 className="font-bold text-gray-800 text-sm md:text-base leading-tight">{cat.name}</h4>
                     <p className="text-gray-400 text-xs mt-1 hidden md:block">{cat.description}</p>
-
                     {completedInCat > 0 && (
                       <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <motion.div
@@ -237,21 +540,16 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
               })}
             </div>
 
-            <motion.div
-              className="mt-6 text-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-            >
+            <motion.div className="mt-6 text-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
               <div className="inline-flex items-center gap-4 bg-white/80 rounded-full px-6 py-3 shadow-md">
                 <div className="text-center">
                   <p className="text-lg font-bold text-purple-600">{completedSkills.length}</p>
-                  <p className="text-xs text-gray-400">Skills Learned</p>
+                  <p className="text-xs text-gray-400">Skills Done</p>
                 </div>
                 <div className="w-px h-8 bg-gray-200" />
                 <div className="text-center">
                   <p className="text-lg font-bold text-green-600">{careerCategories.length}</p>
-                  <p className="text-xs text-gray-400">Career Paths</p>
+                  <p className="text-xs text-gray-400">Categories</p>
                 </div>
               </div>
             </motion.div>
@@ -262,18 +560,13 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
   }
 
   // =============================================
-  // SKILL LIST (Skills in a category)
+  // SKILL LIST
   // =============================================
   if (view === 'skill-list' && selectedCategory) {
     return (
       <GameBackground variant="game">
         <div className="h-full flex flex-col">
-          <Navigation
-            title={`${selectedCategory.emoji} ${selectedCategory.name}`}
-            onBack={goBackOne}
-            stars={progress.stars}
-          />
-
+          <Navigation title={`${selectedCategory.emoji} ${selectedCategory.name}`} onBack={goBackOne} stars={progress.stars} />
           <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-8">
             <motion.div
               className={`bg-gradient-to-r ${selectedCategory.gradient} rounded-2xl p-4 mb-4 text-white text-center shadow-lg`}
@@ -283,9 +576,6 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
               <span className="text-4xl">{selectedCategory.emoji}</span>
               <h3 className="text-lg font-bold mt-1">{selectedCategory.name}</h3>
               <p className="text-white/80 text-sm">{selectedCategory.description}</p>
-              <p className="text-white/60 text-xs mt-1">
-                {completedSkills.filter((id) => selectedCategory.items.some((s) => s.id === id)).length} / {selectedCategory.items.length} completed
-              </p>
             </motion.div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-w-3xl mx-auto">
@@ -295,9 +585,7 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
                   <motion.button
                     key={skill.id}
                     onClick={() => handleSkillSelect(skill)}
-                    className={`game-card p-4 text-center relative overflow-hidden ${
-                      isCompleted ? 'ring-2 ring-green-300 bg-green-50/50' : ''
-                    }`}
+                    className={`game-card p-4 text-center relative overflow-hidden ${isCompleted ? 'ring-2 ring-green-300 bg-green-50/50' : ''}`}
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: i * 0.03 }}
@@ -305,15 +593,10 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
                     whileTap={{ scale: 0.97 }}
                   >
                     {isCompleted && (
-                      <motion.div
-                        className="absolute top-1 right-1 text-green-500 text-sm"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                      >
+                      <motion.div className="absolute top-1 right-1 text-green-500 text-sm" initial={{ scale: 0 }} animate={{ scale: 1 }}>
                         ✅
                       </motion.div>
                     )}
-
                     <motion.span
                       className="text-3xl md:text-4xl block mb-1"
                       animate={isCompleted ? {} : { y: [0, -3, 0] }}
@@ -321,9 +604,7 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
                     >
                       {skill.emoji}
                     </motion.span>
-
                     <h4 className="font-bold text-gray-800 text-xs md:text-sm leading-tight">{skill.name}</h4>
-                    <p className="text-gray-400 text-xs mt-1 hidden md:block line-clamp-2">{skill.description}</p>
                   </motion.button>
                 );
               })}
@@ -335,12 +616,12 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
   }
 
   // =============================================
-  // SKILL DETAIL - INTERACTIVE ACTIVITIES!
+  // SKILL DETAIL - INTERACTIVE ASSEMBLY!
   // =============================================
   if (view === 'skill-detail' && selectedSkill && selectedCategory) {
-    const steps = selectedSkill.steps || [];
-    const totalSteps = steps.length;
-    const currentStepText = steps[currentStep] || '';
+    const activity = getActivityForSkill(selectedSkill.id);
+    const totalNeeded = activity.correctItems.length;
+    const progress_percent = (collectedItems.length / totalNeeded) * 100;
 
     return (
       <GameBackground variant="game">
@@ -350,309 +631,162 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
             onBack={goBackOne}
             stars={progress.stars}
             showProgress
-            progress={totalSteps > 0 ? ((currentStep + 1) / totalSteps) * 100 : 100}
+            progress={progress_percent}
           />
 
-          <Celebration show={showCelebration} message="Amazing Skill!" stars={3} />
+          <Celebration show={showCelebration} message={activity.successMessage} stars={3} />
 
-          <div className="flex-1 overflow-y-auto px-4 pb-4">
-            <AnimatePresence mode="wait">
+          <div className="flex-1 overflow-y-auto px-3 pb-4">
+            {/* Instruction Card */}
+            <motion.div
+              className={`bg-gradient-to-r ${selectedCategory.gradient} rounded-2xl p-4 mb-3 text-white text-center shadow-lg`}
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+            >
               <motion.div
-                key={`step-${currentStep}-${activityType}`}
-                className="bg-white/95 backdrop-blur-xl rounded-3xl p-5 md:p-6 shadow-2xl max-w-2xl mx-auto border-4 border-white"
-                initial={{ x: 80, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: -80, opacity: 0 }}
-                transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                className="text-4xl md:text-5xl mb-2"
+                animate={{ scale: [1, 1.1, 1], rotate: [0, -5, 5, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
               >
-                {/* Category badge */}
-                <div className={`inline-flex items-center gap-1 bg-gradient-to-r ${selectedCategory.gradient} text-white text-xs font-bold px-3 py-1 rounded-full mb-3`}>
-                  <span>{selectedCategory.emoji}</span>
-                  <span>{selectedCategory.name}</span>
-                </div>
-
-                {/* Skill emoji */}
-                <motion.div
-                  className="text-6xl md:text-7xl mb-3 text-center"
-                  animate={{ scale: [1, 1.08, 1], rotate: [0, -3, 3, 0] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                >
-                  {selectedSkill.emoji}
-                </motion.div>
-
-                {/* Skill name */}
-                <h2
-                  className="text-2xl md:text-3xl font-bold text-gray-800 mb-1 text-center"
-                  style={{ fontFamily: "'Bubblegum One', cursive" }}
-                >
-                  {selectedSkill.name}
-                </h2>
-
-                {/* Step counter */}
-                <p className="text-center text-sm text-gray-500 mb-4">
-                  Activity {currentStep + 1} of {totalSteps}
-                </p>
-
-                {/* Fun fact on first step */}
-                {currentStep === 0 && (
-                  <motion.div
-                    className="bg-yellow-50 rounded-2xl p-3 mb-4 border-2 border-yellow-200"
-                    initial={{ y: 10, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                  >
-                    <p className="text-yellow-700 text-sm font-medium text-center">
-                      💡 {selectedSkill.funFact}
-                    </p>
-                  </motion.div>
-                )}
-
-                {/* ================================ */}
-                {/* ACTIVITY 1: STEP READING */}
-                {/* ================================ */}
-                {activityType === 'steps' && (
-                  <motion.div
-                    className={`bg-gradient-to-br ${selectedCategory.gradient} rounded-3xl p-6 mb-4 text-white shadow-lg`}
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                  >
-                    <div className="text-center">
-                      <div className="text-5xl mb-3">📖</div>
-                      <p className="text-lg md:text-xl font-bold mb-2" style={{ fontFamily: "'Bubblegum One', cursive" }}>
-                        Let's Learn!
-                      </p>
-                      <div className="bg-white/20 rounded-2xl p-4 backdrop-blur-sm">
-                        <p className="text-base md:text-lg font-medium">
-                          {currentStepText}
-                        </p>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* ================================ */}
-                {/* ACTIVITY 2: QUIZ */}
-                {/* ================================ */}
-                {activityType === 'quiz' && (() => {
-                  const quiz = getQuizForStep(selectedSkill, currentStepText);
-                  return (
-                    <motion.div
-                      className="mb-4"
-                      initial={{ scale: 0.9, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                    >
-                      <div className="bg-purple-100 rounded-2xl p-4 mb-4 text-center">
-                        <div className="text-4xl mb-2">🤔</div>
-                        <p 
-                          className="text-lg md:text-xl font-bold text-purple-900"
-                          style={{ fontFamily: "'Bubblegum One', cursive" }}
-                        >
-                          {quiz.question}
-                        </p>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 gap-3">
-                        {quiz.options.map((option: string, i: number) => {
-                          const isSelected = quizAnswer === option;
-                          const showResult = isSelected && quizCorrect !== null;
-                          
-                          return (
-                            <motion.button
-                              key={i}
-                              onClick={() => handleQuizAnswer(option)}
-                              disabled={quizAnswer !== null}
-                              className={`p-4 rounded-2xl text-lg font-bold shadow-lg border-4 transition-all ${
-                                showResult
-                                  ? quizCorrect
-                                    ? 'bg-green-400 text-white border-green-600'
-                                    : 'bg-red-400 text-white border-red-600'
-                                  : quizAnswer && !isSelected
-                                    ? 'bg-gray-200 text-gray-400 border-gray-300'
-                                    : 'bg-white text-gray-800 border-purple-300 hover:border-purple-500'
-                              }`}
-                              style={{
-                                fontFamily: "'Bubblegum One', cursive",
-                                minHeight: '65px',
-                              }}
-                              whileHover={quizAnswer === null ? { scale: 1.03 } : {}}
-                              whileTap={quizAnswer === null ? { scale: 0.97 } : {}}
-                            >
-                              {option}
-                              {showResult && quizCorrect && ' ✅'}
-                              {showResult && !quizCorrect && ' ❌'}
-                            </motion.button>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
-                  );
-                })()}
-
-                {/* ================================ */}
-                {/* ACTIVITY 3: MATCH THE ACTIONS */}
-                {/* ================================ */}
-                {activityType === 'match' && (
-                  <motion.div
-                    className="mb-4"
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                  >
-                    <div className="bg-blue-100 rounded-2xl p-4 mb-4 text-center">
-                      <div className="text-4xl mb-2">🎯</div>
-                      <p 
-                        className="text-lg md:text-xl font-bold text-blue-900"
-                        style={{ fontFamily: "'Bubblegum One', cursive" }}
-                      >
-                        Tap all the right things! ({completedActions.length}/3)
-                      </p>
-                      <p className="text-sm text-blue-700 mt-2">{currentStepText}</p>
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-3">
-                      {['✅', '⭐', '🎯', '❌', '💫', '🎊'].map((emoji, i) => {
-                        const isCompleted = completedActions.includes(i);
-                        const isCorrect = i < 3; // First 3 are correct
-                        
-                        return (
-                          <motion.button
-                            key={i}
-                            onClick={() => isCorrect && handleActionComplete(i)}
-                            disabled={isCompleted}
-                            className={`aspect-square rounded-2xl text-4xl md:text-5xl flex items-center justify-center shadow-lg border-4 transition-all ${
-                              isCompleted 
-                                ? 'bg-green-200 border-green-500 scale-95' 
-                                : 'bg-white border-white hover:scale-105'
-                            }`}
-                            style={{
-                              boxShadow: isCompleted 
-                                ? '0 4px 0 #047857' 
-                                : '0 6px 0 rgba(0,0,0,0.15)'
-                            }}
-                            whileHover={!isCompleted ? { scale: 1.1 } : {}}
-                            whileTap={!isCompleted ? { scale: 0.9 } : {}}
-                          >
-                            {isCompleted ? '✅' : emoji}
-                          </motion.button>
-                        );
-                      })}
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* ================================ */}
-                {/* ACTIVITY 4: DRAG TO COMPLETE */}
-                {/* ================================ */}
-                {activityType === 'drag' && (
-                  <motion.div
-                    className="mb-4"
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                  >
-                    <div className="bg-orange-100 rounded-2xl p-4 mb-4 text-center">
-                      <div className="text-4xl mb-2">🎪</div>
-                      <p 
-                        className="text-lg md:text-xl font-bold text-orange-900"
-                        style={{ fontFamily: "'Bubblegum One', cursive" }}
-                      >
-                        Practice Time!
-                      </p>
-                      <p className="text-sm text-orange-700 mt-2">{currentStepText}</p>
-                    </div>
-                    
-                    <div className="bg-white rounded-2xl p-4 border-4 border-dashed border-orange-300">
-                      <p className="text-center text-gray-600 mb-3 font-bold">Tap 3 times to practice!</p>
-                      <div className="flex justify-center gap-3">
-                        {[0, 1, 2].map((i) => {
-                          const isCompleted = completedActions.includes(i);
-                          return (
-                            <motion.button
-                              key={i}
-                              onClick={() => handleActionComplete(i)}
-                              className={`w-20 h-20 md:w-24 md:h-24 rounded-full text-4xl flex items-center justify-center shadow-lg border-4 ${
-                                isCompleted 
-                                  ? 'bg-green-400 border-green-600' 
-                                  : 'bg-gradient-to-br from-orange-400 to-red-500 border-white'
-                              }`}
-                              style={{
-                                boxShadow: isCompleted 
-                                  ? '0 4px 0 #047857' 
-                                  : '0 6px 0 #C2410C'
-                              }}
-                              whileHover={!isCompleted ? { scale: 1.1 } : {}}
-                              whileTap={!isCompleted ? { scale: 0.9, y: 3 } : {}}
-                              animate={!isCompleted ? { 
-                                scale: [1, 1.05, 1],
-                              } : {}}
-                              transition={{ 
-                                duration: 1.5, 
-                                repeat: Infinity,
-                                delay: i * 0.2
-                              }}
-                            >
-                              {isCompleted ? '✅' : selectedSkill.emoji}
-                            </motion.button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Step dots */}
-                {totalSteps > 0 && (
-                  <div className="flex justify-center gap-2 mb-4">
-                    {steps.map((_, i) => (
-                      <motion.div
-                        key={i}
-                        className={`h-3 rounded-full transition-all ${
-                          i < currentStep
-                            ? 'bg-green-400 w-3'
-                            : i === currentStep
-                            ? `bg-gradient-to-r ${selectedCategory.gradient} w-8`
-                            : 'bg-gray-200 w-3'
-                        }`}
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: i * 0.05 }}
-                      />
-                    ))}
-                  </div>
-                )}
+                {selectedSkill.emoji}
               </motion.div>
-            </AnimatePresence>
+              <h2 className="text-lg md:text-xl font-bold mb-1" style={{ fontFamily: "'Bubblegum One', cursive" }}>
+                {activity.intro}
+              </h2>
+              <p className="text-white/90 text-sm">Tap items in the right order!</p>
+            </motion.div>
 
-            {/* Action button - only for steps activity or when quiz is answered */}
-            {(activityType === 'steps') && (
+            {/* Collection Area - Shows what user collected */}
+            <motion.div
+              className="bg-white/95 rounded-3xl p-4 mb-3 shadow-lg border-4 border-white"
+              initial={{ y: -10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+            >
+              <p className="text-center text-sm font-bold text-gray-600 mb-2">
+                Your Progress ({collectedItems.length}/{totalNeeded})
+              </p>
+              <div className="flex justify-center items-center gap-2 flex-wrap min-h-[60px]">
+                {activity.correctItems.map((item, i) => (
+                  <motion.div
+                    key={i}
+                    className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-3xl md:text-4xl border-4 ${
+                      i < collectedItems.length 
+                        ? 'bg-green-100 border-green-400' 
+                        : 'bg-gray-100 border-gray-300 border-dashed'
+                    }`}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: i * 0.05 }}
+                  >
+                    {i < collectedItems.length ? (
+                      <motion.span
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ type: 'spring' }}
+                      >
+                        {collectedItems[i]}
+                      </motion.span>
+                    ) : (
+                      <span className="text-gray-400 text-2xl">?</span>
+                    )}
+                    {i < activity.correctItems.length - 1 && i < collectedItems.length && (
+                      <span className="text-green-400 ml-1">→</span>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+              
+              {collectedItems.length === totalNeeded && (
+                <motion.div
+                  className="text-center mt-3"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                >
+                  <p className="text-2xl">✨ → {activity.finalResult} → ✨</p>
+                </motion.div>
+              )}
+            </motion.div>
+
+            {/* Available Items to Tap */}
+            <div className="mb-3">
+              <p className="text-center text-sm font-bold text-gray-700 mb-2 bg-white/80 rounded-full px-4 py-1 mx-auto inline-block">
+                👆 Tap the correct items!
+              </p>
+            </div>
+
+            <div className="grid grid-cols-4 md:grid-cols-5 gap-2 md:gap-3 max-w-2xl mx-auto">
+              {shuffledItems.map((item, i) => {
+                const isCollected = collectedItems.filter(x => x === item).length >= 
+                  activity.correctItems.filter(x => x === item).length;
+                const isWrong = wrongTaps.includes(i);
+                
+                return (
+                  <motion.button
+                    key={`${item}-${i}`}
+                    onClick={() => !isCollected && handleItemTap(item, i)}
+                    disabled={isCollected}
+                    className={`aspect-square rounded-2xl flex items-center justify-center text-4xl md:text-5xl shadow-lg border-4 transition-all ${
+                      isWrong 
+                        ? 'bg-red-200 border-red-500 scale-95' 
+                        : isCollected 
+                          ? 'bg-gray-100 border-gray-300 opacity-40' 
+                          : 'bg-white border-white hover:border-purple-300'
+                    }`}
+                    style={{
+                      boxShadow: isWrong 
+                        ? '0 4px 0 #B91C1C' 
+                        : isCollected 
+                          ? 'none' 
+                          : '0 6px 0 rgba(0,0,0,0.15)',
+                      minHeight: '65px',
+                    }}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ 
+                      scale: 1, 
+                      opacity: 1,
+                      x: isWrong ? [-5, 5, -5, 5, 0] : 0
+                    }}
+                    transition={{ 
+                      delay: i * 0.02,
+                      x: { duration: 0.3 }
+                    }}
+                    whileHover={!isCollected ? { scale: 1.1, y: -3 } : {}}
+                    whileTap={!isCollected ? { scale: 0.9, y: 3 } : {}}
+                  >
+                    {isCollected ? '✓' : item}
+                  </motion.button>
+                );
+              })}
+            </div>
+
+            {/* Reset Button */}
+            {collectedItems.length > 0 && collectedItems.length < totalNeeded && (
               <motion.button
-                onClick={handleNextStep}
-                className={`mt-5 mx-auto block px-10 py-4 rounded-2xl text-white text-lg font-bold shadow-xl border-4 border-white ${
-                  currentStep >= totalSteps - 1
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-500'
-                    : `bg-gradient-to-r ${selectedCategory.gradient}`
-                }`}
+                onClick={handleReset}
+                className="mt-4 mx-auto block bg-orange-400 text-white rounded-2xl px-6 py-3 font-bold shadow-lg border-4 border-white"
                 style={{
-                  boxShadow: '0 6px 0 rgba(0,0,0,0.2)',
+                  boxShadow: '0 4px 0 #C2410C',
                   fontFamily: "'Bubblegum One', cursive"
                 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95, y: 4 }}
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                whileTap={{ scale: 0.95 }}
               >
-                {currentStep >= totalSteps - 1 ? '🎉 Complete Skill!' : 'Next Activity ▶️'}
+                🔄 Try Again
               </motion.button>
             )}
 
-            {/* Skip button for interactive activities */}
-            {activityType !== 'steps' && (
-              <motion.button
-                onClick={handleNextStep}
-                className="mt-4 mx-auto block text-gray-500 text-sm underline"
-                whileTap={{ scale: 0.95 }}
-              >
-                Skip this activity →
-              </motion.button>
-            )}
+            {/* Fun Fact */}
+            <motion.div
+              className="mt-4 bg-yellow-50 rounded-2xl p-3 border-2 border-yellow-200 max-w-md mx-auto"
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <p className="text-yellow-700 text-sm font-medium text-center">
+                💡 {selectedSkill.funFact}
+              </p>
+            </motion.div>
           </div>
         </div>
       </GameBackground>
