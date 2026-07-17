@@ -1,109 +1,195 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Howl } from 'howler';
+import { Howl, Howler } from 'howler';
 
 interface UseBackgroundMusicProps {
   enabled: boolean;
   volume?: number;
 }
 
+// 🎵 Create Howl instance OUTSIDE the hook (singleton pattern)
+// This prevents multiple instances on re-renders
+let musicInstance: Howl | null = null;
+
+const createMusicInstance = () => {
+  if (musicInstance) return musicInstance;
+  
+  musicInstance = new Howl({
+    src: ['/sounds/background-music.mp3'],
+    loop: true,
+    volume: 0.3,
+    preload: true,
+    html5: true, // 🎯 CRITICAL for mobile/Android
+    autoplay: false,
+    onload: () => {
+      console.log('🎵 Music loaded successfully');
+    },
+    onplay: () => {
+      console.log('🎵 Music started playing');
+    },
+    onpause: () => {
+      console.log('⏸️ Music paused');
+    },
+    onend: () => {
+      console.log('🔄 Music ended (should loop)');
+    },
+    onloaderror: (id, error) => {
+      console.error('❌ Music load error:', error);
+    },
+    onplayerror: (id, error) => {
+      console.error('❌ Music play error:', error);
+      // Try to recover from play error
+      musicInstance?.once('unlock', () => {
+        musicInstance?.play();
+      });
+    },
+    onstop: () => {
+      console.log('⏹️ Music stopped');
+    },
+  });
+  
+  return musicInstance;
+};
+
 export const useBackgroundMusic = ({ enabled, volume = 0.3 }: UseBackgroundMusicProps) => {
-  const musicRef = useRef<Howl | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const hasInitialized = useRef(false);
 
+  // Initialize music instance once
   useEffect(() => {
-    // Initialize music
-    musicRef.current = new Howl({
-      src: ['/sounds/background-music.mp3'],
-      loop: true,
-      volume: volume,
-      preload: true,
-      html5: true, // Better for mobile
-      onload: () => {
-        setIsLoaded(true);
-        console.log('🎵 Background music loaded');
-      },
-      onplay: () => {
-        setIsPlaying(true);
-        console.log('🎵 Music playing');
-      },
-      onpause: () => {
-        setIsPlaying(false);
-      },
-      onstop: () => {
-        setIsPlaying(false);
-      },
-      onloaderror: (id, error) => {
-        console.error('🎵 Music load error:', error);
-      },
-      onplayerror: (id, error) => {
-        console.error('🎵 Music play error:', error);
-      },
-    });
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
 
-    // Cleanup on unmount
-    return () => {
-      if (musicRef.current) {
-        musicRef.current.stop();
-        musicRef.current.unload();
+    const music = createMusicInstance();
+    
+    // Wait for music to load
+    if (music.state() === 'loaded') {
+      setIsLoaded(true);
+    } else {
+      music.once('load', () => {
+        setIsLoaded(true);
+      });
+    }
+
+    // Unlock audio context on first user interaction (mobile fix)
+    const unlockAudio = () => {
+      if (Howler.ctx && Howler.ctx.state === 'suspended') {
+        Howler.ctx.resume();
       }
+    };
+
+    document.addEventListener('touchstart', unlockAudio, { once: true });
+    document.addEventListener('click', unlockAudio, { once: true });
+
+    return () => {
+      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('click', unlockAudio);
     };
   }, []);
 
-  // Handle enabled/disabled changes
+  // Handle enabled/disabled state changes
   useEffect(() => {
-    if (!musicRef.current || !isLoaded) return;
+    if (!musicInstance || !isLoaded) return;
 
     if (enabled) {
-      if (!musicRef.current.playing()) {
-        musicRef.current.play();
+      if (!musicInstance.playing()) {
+        const playId = musicInstance.play();
+        // Track playing state
+        musicInstance.once('play', () => setIsPlaying(true));
+        
+        // Fallback: if play fails, try again after user interaction
+        if (playId === null) {
+          console.log('⚠️ Music play blocked, waiting for user interaction');
+        }
       }
     } else {
-      if (musicRef.current.playing()) {
-        musicRef.current.pause();
+      if (musicInstance.playing()) {
+        musicInstance.pause();
+        setIsPlaying(false);
       }
     }
   }, [enabled, isLoaded]);
 
   // Update volume when changed
   useEffect(() => {
-    if (musicRef.current) {
-      musicRef.current.volume(volume);
+    if (musicInstance) {
+      musicInstance.volume(volume);
     }
   }, [volume]);
 
+  // Handle page visibility (pause when app is minimized)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!musicInstance) return;
+
+      if (document.hidden) {
+        // App went to background
+        if (musicInstance.playing()) {
+          musicInstance.pause();
+        }
+      } else {
+        // App came back to foreground
+        if (enabled && !musicInstance.playing()) {
+          musicInstance.play();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [enabled]);
+
   const play = useCallback(() => {
-    if (musicRef.current && !musicRef.current.playing()) {
-      musicRef.current.play();
+    if (musicInstance && !musicInstance.playing()) {
+      musicInstance.play();
     }
   }, []);
 
   const pause = useCallback(() => {
-    if (musicRef.current && musicRef.current.playing()) {
-      musicRef.current.pause();
+    if (musicInstance && musicInstance.playing()) {
+      musicInstance.pause();
     }
   }, []);
 
   const stop = useCallback(() => {
-    if (musicRef.current) {
-      musicRef.current.stop();
+    if (musicInstance) {
+      musicInstance.stop();
     }
   }, []);
 
   const fadeIn = useCallback((duration: number = 2000) => {
-    if (musicRef.current) {
-      musicRef.current.volume(0);
-      musicRef.current.play();
-      musicRef.current.fade(0, volume, duration);
+    if (!musicInstance || !isLoaded) return;
+
+    // Ensure audio context is running
+    if (Howler.ctx && Howler.ctx.state === 'suspended') {
+      Howler.ctx.resume().then(() => {
+        startFadeIn(duration);
+      });
+    } else {
+      startFadeIn(duration);
     }
-  }, [volume]);
+  }, [isLoaded, volume]);
+
+  const startFadeIn = (duration: number) => {
+    if (!musicInstance) return;
+    
+    musicInstance.volume(0);
+    const playId = musicInstance.play();
+    
+    if (playId !== null) {
+      musicInstance.fade(0, volume, duration);
+    }
+  };
 
   const fadeOut = useCallback((duration: number = 1000) => {
-    if (musicRef.current && musicRef.current.playing()) {
-      musicRef.current.fade(volume, 0, duration);
+    if (musicInstance && musicInstance.playing()) {
+      musicInstance.fade(volume, 0, duration);
       setTimeout(() => {
-        if (musicRef.current) {
-          musicRef.current.pause();
+        if (musicInstance) {
+          musicInstance.pause();
         }
       }, duration);
     }
