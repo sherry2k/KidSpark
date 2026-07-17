@@ -35,47 +35,130 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
       <div className="h-full flex flex-col overflow-y-auto pb-6">
         {/* Top Bar */}
         <motion.div
-          className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4"
+          className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4 gap-2"
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
         >
-          {/* Profile */}
+          {/* 👤 BIG Profile Button */}
           <motion.button
             onClick={onOpenProfile}
-            className="flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full pl-2 pr-4 py-2 shadow-lg"
+            className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-2xl pl-2 pr-4 py-3 shadow-lg border-4 border-white"
+            style={{
+              boxShadow: '0 6px 0 rgba(139, 92, 246, 0.5), 0 8px 20px rgba(0,0,0,0.15)',
+              minHeight: '65px',
+            }}
             whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileTap={{ 
+              scale: 0.95, 
+              y: 4,
+              boxShadow: '0 2px 0 rgba(139, 92, 246, 0.5), 0 4px 10px rgba(0,0,0,0.15)'
+            }}
           >
-            <span className="text-3xl">{profile.avatar}</span>
+            <span className="text-4xl md:text-5xl">{profile.avatar}</span>
             <div className="text-left">
-              <p className="font-bold text-gray-800 text-sm leading-tight">{profile.name || 'Little Star'}</p>
-              <p className="text-xs text-gray-500">🔥 {progress.streak} day streak</p>
+              <p 
+                className="font-bold text-gray-800 text-sm md:text-base leading-tight"
+                style={{ fontFamily: "'Bubblegum One', cursive" }}
+              >
+                {profile.name || 'Little Star'}
+              </p>
+              <p className="text-xs text-gray-500 font-semibold">🔥 {progress.streak} day streak</p>
             </div>
           </motion.button>
 
-          {/* Stats */}
-          <div className="flex items-center gap-2">
-            <motion.div
-              className="flex items-center gap-1 bg-yellow-100/90 backdrop-blur-sm rounded-full px-3 py-2 shadow-md"
+          {/* Stats & Settings - BIG BUTTONS */}
+          <div className="flex items-center gap-2 md:gap-3">
+            {/* ⭐ BIG Stars Button */}
+            <motion.button
+              onClick={onOpenProgress}
+              className="flex items-center gap-2 bg-gradient-to-r from-yellow-300 to-yellow-400 rounded-2xl px-4 py-3 shadow-lg border-4 border-white"
+              style={{
+                boxShadow: '0 6px 0 #D97706, 0 8px 20px rgba(0,0,0,0.15)',
+                minHeight: '65px',
+                minWidth: '75px',
+              }}
               whileHover={{ scale: 1.05 }}
+              whileTap={{ 
+                scale: 0.95, 
+                y: 4,
+                boxShadow: '0 2px 0 #D97706, 0 4px 10px rgba(0,0,0,0.15)'
+              }}
+              animate={{
+                scale: [1, 1.03, 1],
+              }}
+              transition={{
+                scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
+              }}
             >
-              <span>⭐</span>
-              <span className="font-bold text-yellow-700 text-sm">{progress.stars}</span>
-            </motion.div>
-            <motion.div
-              className="flex items-center gap-1 bg-amber-100/90 backdrop-blur-sm rounded-full px-3 py-2 shadow-md"
+              <motion.span 
+                className="text-2xl md:text-3xl"
+                animate={{ rotate: [0, 15, -15, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                ⭐
+              </motion.span>
+              <span 
+                className="font-bold text-yellow-900 text-lg md:text-xl"
+                style={{ fontFamily: "'Bubblegum One', cursive" }}
+              >
+                {progress.stars}
+              </span>
+            </motion.button>
+
+            {/* 🪙 BIG Coins Button */}
+            <motion.button
+              onClick={onOpenProgress}
+              className="flex items-center gap-2 bg-gradient-to-r from-amber-300 to-orange-400 rounded-2xl px-4 py-3 shadow-lg border-4 border-white"
+              style={{
+                boxShadow: '0 6px 0 #B45309, 0 8px 20px rgba(0,0,0,0.15)',
+                minHeight: '65px',
+                minWidth: '75px',
+              }}
               whileHover={{ scale: 1.05 }}
+              whileTap={{ 
+                scale: 0.95, 
+                y: 4,
+                boxShadow: '0 2px 0 #B45309, 0 4px 10px rgba(0,0,0,0.15)'
+              }}
             >
-              <span>🪙</span>
-              <span className="font-bold text-amber-700 text-sm">{progress.coins}</span>
-            </motion.div>
+              <motion.span 
+                className="text-2xl md:text-3xl"
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+              >
+                🪙
+              </motion.span>
+              <span 
+                className="font-bold text-amber-900 text-lg md:text-xl"
+                style={{ fontFamily: "'Bubblegum One', cursive" }}
+              >
+                {progress.coins}
+              </span>
+            </motion.button>
+
+            {/* ⚙️ BIG Settings Button */}
             <motion.button
               onClick={onOpenSettings}
-              className="bg-white/80 backdrop-blur-sm rounded-full p-2 shadow-md"
+              className="flex items-center justify-center bg-gradient-to-r from-blue-400 to-indigo-500 rounded-2xl p-3 shadow-lg border-4 border-white"
+              style={{
+                boxShadow: '0 6px 0 #4338CA, 0 8px 20px rgba(0,0,0,0.15)',
+                minHeight: '65px',
+                minWidth: '65px',
+              }}
               whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+              whileTap={{ 
+                scale: 0.9, 
+                y: 4,
+                boxShadow: '0 2px 0 #4338CA, 0 4px 10px rgba(0,0,0,0.15)'
+              }}
             >
-              <span className="text-xl">⚙️</span>
+              <motion.span 
+                className="text-3xl md:text-4xl"
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+              >
+                ⚙️
+              </motion.span>
             </motion.button>
           </div>
         </motion.div>
@@ -198,7 +281,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
             </motion.button>
             <motion.button
               onClick={onOpenAchievements}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 text-center shadow-md"
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 text-center shadow-md relative"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
             >
