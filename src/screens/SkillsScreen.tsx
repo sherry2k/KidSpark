@@ -22,7 +22,9 @@ const SKILL_ACTIVITIES: Record<string, {
   finalResult: string;
   successMessage: string;
 }> = {
+  // ============================================
   // 🍳 COOKING STUDIO
+  // ============================================
   'sandwich': {
     intro: 'Build a yummy sandwich!',
     correctItems: ['🍞', '🥬', '🍅', '🧀', '🍞'],
@@ -32,15 +34,15 @@ const SKILL_ACTIVITIES: Record<string, {
   },
   'baking': {
     intro: 'Bake a delicious cake!',
-    correctItems: ['🌾', '🍚', '🥚', '🥛', '🎂'],
-    allItems: ['🌾', '🍚', '🥚', '🥛', '🍅', '🥩', '🌶️', '🧂', '🍄', '🍎'],
+    correctItems: ['🌾', '🥚', '🥛', '🍯', '🎂'],
+    allItems: ['🌾', '🥚', '🥛', '🍯', '🎂', '🍅', '🥩', '🌶️', '🧅', '🥕'],
     finalResult: '🎂',
     successMessage: 'Yummy cake baked!'
   },
   'cupcake': {
     intro: 'Decorate colorful cupcakes!',
     correctItems: ['🧁', '🍓', '🍫', '🌈', '⭐'],
-    allItems: ['🧁', '🍓', '🍫', '🌈', '⭐', '🥕', '🍄', '🥬', '🌶️', '🧅'],
+    allItems: ['🧁', '🍓', '🍫', '🌈', '⭐', '🥕', '🥬', '🌶️', '🧅', '🥩'],
     finalResult: '🧁',
     successMessage: 'Beautiful cupcakes!'
   },
@@ -53,7 +55,7 @@ const SKILL_ACTIVITIES: Record<string, {
   },
   'burger': {
     intro: 'Build the perfect burger!',
-    correctItems: ['🍞', '🥩', '🧀', '🥬', '🍅', '🍞'],
+    correctItems: ['🍞', '🥩', '🧀', '🥬', '🍅'],
     allItems: ['🍞', '🥩', '🧀', '🥬', '🍅', '🥕', '🍎', '🍿', '🍇', '🥭'],
     finalResult: '🍔',
     successMessage: 'Perfect burger!'
@@ -109,7 +111,7 @@ const SKILL_ACTIVITIES: Record<string, {
   },
   'cookie': {
     intro: 'Bake sweet cookies!',
-    correctItems: ['🌾', '🥚', '🧈', '🍫', '🍪'],
+    correctItems: ['🌾', '🥚', '🧈', '🍫'],
     allItems: ['🌾', '🥚', '🧈', '🍫', '🍅', '🥬', '🌶️', '🧅', '🥩', '🍔'],
     finalResult: '🍪',
     successMessage: 'Delicious cookies!'
@@ -122,11 +124,13 @@ const SKILL_ACTIVITIES: Record<string, {
     successMessage: 'Perfect pancakes!'
   },
 
-  // 💄 BEAUTY & FASHION
+  // ============================================
+  // 💄 BEAUTY & FASHION STUDIO
+  // ============================================
   'dressup': {
     intro: 'Choose a complete outfit!',
     correctItems: ['👗', '👠', '👜', '👒'],
-    allItems: ['👗', '👠', '👜', '👒', '🍕', '🚗', '📱', '🎮', '⚽', '🎨'],
+    allItems: ['👗', '👠', '👜', '👒', '🍕', '🚗', '📱', '🎮', '⚽', '🔨'],
     finalResult: '💃',
     successMessage: 'Stylish outfit!'
   },
@@ -194,7 +198,9 @@ const SKILL_ACTIVITIES: Record<string, {
     successMessage: 'Great sewing!'
   },
 
+  // ============================================
   // 🔨 BUILDER WORKSHOP
+  // ============================================
   'hammer': {
     intro: 'Hammer some nails!',
     correctItems: ['🔨', '📌', '🪵', '📐'],
@@ -280,7 +286,9 @@ const SKILL_ACTIVITIES: Record<string, {
     successMessage: 'Beautiful paint!'
   },
 
+  // ============================================
   // ⚙️ ENGINEERING LAB
+  // ============================================
   'bridge': {
     intro: 'Build a strong bridge!',
     correctItems: ['🌉', '🧱', '🔩', '📏'],
@@ -290,9 +298,9 @@ const SKILL_ACTIVITIES: Record<string, {
   },
   'house': {
     intro: 'Build a house!',
-    correctItems: ['🏗️', '🧱', '🚪', '🪟', '🏠'],
-    allItems: ['🏗️', '🧱', '🚪', '🪟', '🏠', '🍔', '⚽', '🎮', '📱', '🎨'],
-    finalResult: '🏠',
+    correctItems: ['🧱', '🚪', '🪟', '🏠'],
+    allItems: ['🧱', '🚪', '🪟', '🏠', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🏡',
     successMessage: 'Beautiful house!'
   },
   'roads': {
@@ -311,7 +319,7 @@ const SKILL_ACTIVITIES: Record<string, {
   },
   'gears': {
     intro: 'Connect the gears!',
-    correctItems: ['⚙️', '⚙️', '🔩', '🛠️'],
+    correctItems: ['⚙️', '🔩', '🛠️', '🔧'],
     allItems: ['⚙️', '🔩', '🛠️', '🔧', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
     finalResult: '⚙️',
     successMessage: 'Gears working!'
@@ -366,7 +374,518 @@ const SKILL_ACTIVITIES: Record<string, {
     successMessage: 'Robot alive!'
   },
 
-  // Default for any missing skills
+  // ============================================
+  // 🏭 FACTORY SIMULATOR
+  // ============================================
+  'toyfactory': {
+    intro: 'Make toys in factory!',
+    correctItems: ['🧸', '🎁', '📦', '✨'],
+    allItems: ['🧸', '🎁', '📦', '✨', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🧸',
+    successMessage: 'Toys made!'
+  },
+  'chocolate': {
+    intro: 'Make chocolate bars!',
+    correctItems: ['🍫', '🥛', '🍯', '📦'],
+    allItems: ['🍫', '🥛', '🍯', '📦', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🍫',
+    successMessage: 'Yummy chocolate!'
+  },
+  'juice': {
+    intro: 'Make juice bottles!',
+    correctItems: ['🍊', '💧', '🍶', '📦'],
+    allItems: ['🍊', '💧', '🍶', '📦', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🧃',
+    successMessage: 'Juice bottled!'
+  },
+  'carfactory': {
+    intro: 'Assemble a car!',
+    correctItems: ['🚗', '🛞', '⚙️', '🔧'],
+    allItems: ['🚗', '🛞', '⚙️', '🔧', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🚗',
+    successMessage: 'Car ready!'
+  },
+  'furniture': {
+    intro: 'Build furniture!',
+    correctItems: ['🪵', '🔨', '🪑', '🔩'],
+    allItems: ['🪵', '🔨', '🪑', '🔩', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🪑',
+    successMessage: 'Nice furniture!'
+  },
+  'recycle': {
+    intro: 'Sort recyclables!',
+    correctItems: ['♻️', '🥤', '📰', '🗑️'],
+    allItems: ['♻️', '🥤', '📰', '🗑️', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '♻️',
+    successMessage: 'Great recycling!'
+  },
+  'assembly': {
+    intro: 'Work on assembly line!',
+    correctItems: ['📦', '⚙️', '🔧', '✅'],
+    allItems: ['📦', '⚙️', '🔧', '✅', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🏭',
+    successMessage: 'Assembled!'
+  },
+  'packing': {
+    intro: 'Pack the boxes!',
+    correctItems: ['📦', '🎁', '📋', '✂️'],
+    allItems: ['📦', '🎁', '📋', '✂️', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '📦',
+    successMessage: 'All packed!'
+  },
+  'quality': {
+    intro: 'Check quality!',
+    correctItems: ['🔍', '✅', '📋', '⭐'],
+    allItems: ['🔍', '✅', '📋', '⭐', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '💯',
+    successMessage: 'Top quality!'
+  },
+
+  // ============================================
+  // 🚗 VEHICLE GARAGE
+  // ============================================
+  'carrepair': {
+    intro: 'Fix the car!',
+    correctItems: ['🚗', '🔧', '⚙️', '🛠️'],
+    allItems: ['🚗', '🔧', '⚙️', '🛠️', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🚗',
+    successMessage: 'Car fixed!'
+  },
+  'carwash': {
+    intro: 'Wash the car!',
+    correctItems: ['🚗', '🧽', '💧', '🧼'],
+    allItems: ['🚗', '🧽', '💧', '🧼', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '✨',
+    successMessage: 'Sparkling clean!'
+  },
+  'paintcar': {
+    intro: 'Paint the car!',
+    correctItems: ['🎨', '🖌️', '🚗', '💧'],
+    allItems: ['🎨', '🖌️', '🚗', '💧', '🍔', '⚽', '🎮', '📱', '📚', '🍕'],
+    finalResult: '🚗',
+    successMessage: 'Beautiful color!'
+  },
+  'tirechange': {
+    intro: 'Change the tires!',
+    correctItems: ['🛞', '🔧', '⚙️', '🚗'],
+    allItems: ['🛞', '🔧', '⚙️', '🚗', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🛞',
+    successMessage: 'New tires!'
+  },
+  'fillfuel': {
+    intro: 'Fill the fuel!',
+    correctItems: ['⛽', '🚗', '💧', '📊'],
+    allItems: ['⛽', '🚗', '💧', '📊', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '⛽',
+    successMessage: 'Tank full!'
+  },
+  'checkengine': {
+    intro: 'Check the engine!',
+    correctItems: ['🔍', '⚙️', '🔧', '📋'],
+    allItems: ['🔍', '⚙️', '🔧', '📋', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '✅',
+    successMessage: 'Engine perfect!'
+  },
+  'buildbike': {
+    intro: 'Build a bicycle!',
+    correctItems: ['🛞', '⚙️', '🔧', '🚲'],
+    allItems: ['🛞', '⚙️', '🔧', '🚲', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🚲',
+    successMessage: 'Bike ready!'
+  },
+  'raceprep': {
+    intro: 'Prepare for race!',
+    correctItems: ['🏎️', '🛞', '⛽', '🏁'],
+    allItems: ['🏎️', '🛞', '⛽', '🏁', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🏆',
+    successMessage: 'Ready to race!'
+  },
+  'buildcar': {
+    intro: 'Design your car!',
+    correctItems: ['🚗', '🛞', '🎨', '⚙️'],
+    allItems: ['🚗', '🛞', '🎨', '⚙️', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🚙',
+    successMessage: 'Dream car!'
+  },
+  'airplane': {
+    intro: 'Learn airplane parts!',
+    correctItems: ['✈️', '🛩️', '🚁', '🛬'],
+    allItems: ['✈️', '🛩️', '🚁', '🛬', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '✈️',
+    successMessage: 'Flying high!'
+  },
+
+  // ============================================
+  // 🌱 GARDEN & FARM
+  // ============================================
+  'plantflowers': {
+    intro: 'Plant flowers!',
+    correctItems: ['🌱', '🪴', '💧', '☀️', '🌸'],
+    allItems: ['🌱', '🪴', '💧', '☀️', '🌸', '🍔', '⚽', '🎮', '📱', '🎨'],
+    finalResult: '🌺',
+    successMessage: 'Flowers blooming!'
+  },
+  'growveggies': {
+    intro: 'Grow vegetables!',
+    correctItems: ['🌱', '💧', '☀️', '🥕'],
+    allItems: ['🌱', '💧', '☀️', '🥕', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🥕',
+    successMessage: 'Fresh veggies!'
+  },
+  'watering': {
+    intro: 'Water the plants!',
+    correctItems: ['💧', '🚿', '🌱', '☀️'],
+    allItems: ['💧', '🚿', '🌱', '☀️', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🌿',
+    successMessage: 'Plants happy!'
+  },
+  'harvest': {
+    intro: 'Harvest fruits!',
+    correctItems: ['🍎', '🍊', '🍇', '🧺'],
+    allItems: ['🍎', '🍊', '🍇', '🧺', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🍎',
+    successMessage: 'Fresh harvest!'
+  },
+  'feedanimals': {
+    intro: 'Feed the animals!',
+    correctItems: ['🌽', '🥕', '🐄', '🐔'],
+    allItems: ['🌽', '🥕', '🐄', '🐔', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🐮',
+    successMessage: 'Happy animals!'
+  },
+  'decorategarden': {
+    intro: 'Decorate the garden!',
+    correctItems: ['🌸', '🌷', '🪴', '🦋'],
+    allItems: ['🌸', '🌷', '🪴', '🦋', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🌷',
+    successMessage: 'Beautiful garden!'
+  },
+  'composting': {
+    intro: 'Make compost!',
+    correctItems: ['🍎', '🥬', '🍌', '♻️'],
+    allItems: ['🍎', '🥬', '🍌', '♻️', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🌱',
+    successMessage: 'Great compost!'
+  },
+  'butterflygarden': {
+    intro: 'Attract butterflies!',
+    correctItems: ['🌸', '🌺', '🌻', '🦋'],
+    allItems: ['🌸', '🌺', '🌻', '🦋', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🦋',
+    successMessage: 'Butterflies came!'
+  },
+  'herbgarden': {
+    intro: 'Grow herbs!',
+    correctItems: ['🌿', '🪴', '💧', '☀️'],
+    allItems: ['🌿', '🪴', '💧', '☀️', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🌿',
+    successMessage: 'Fresh herbs!'
+  },
+  'treeplanting': {
+    intro: 'Plant a tree!',
+    correctItems: ['🌱', '🪴', '💧', '🌳'],
+    allItems: ['🌱', '🪴', '💧', '🌳', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🌳',
+    successMessage: 'Tree growing!'
+  },
+
+  // ============================================
+  // 🏥 MEDICAL CLINIC
+  // ============================================
+  'heartbeat': {
+    intro: 'Check the heartbeat!',
+    correctItems: ['💓', '🩺', '👂', '📋'],
+    allItems: ['💓', '🩺', '👂', '📋', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '❤️',
+    successMessage: 'Heart is healthy!'
+  },
+  'bandage': {
+    intro: 'Apply the bandage!',
+    correctItems: ['🩹', '🧴', '💧', '🩺'],
+    allItems: ['🩹', '🧴', '💧', '🩺', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '❤️‍🩹',
+    successMessage: 'All better!'
+  },
+  'temperature': {
+    intro: 'Check temperature!',
+    correctItems: ['🌡️', '📋', '💊', '🩺'],
+    allItems: ['🌡️', '📋', '💊', '🩺', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🌡️',
+    successMessage: 'Temperature checked!'
+  },
+  'dental': {
+    intro: 'Take care of teeth!',
+    correctItems: ['🦷', '🪥', '💧', '🧴'],
+    allItems: ['🦷', '🪥', '💧', '🧴', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '😁',
+    successMessage: 'Shiny teeth!'
+  },
+  'eyecheck': {
+    intro: 'Check the eyes!',
+    correctItems: ['👁️', '🔍', '📋', '👓'],
+    allItems: ['👁️', '🔍', '📋', '👓', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '👀',
+    successMessage: 'Eyes are great!'
+  },
+  'healthy': {
+    intro: 'Choose healthy items!',
+    correctItems: ['🥗', '🏃', '💧', '😴'],
+    allItems: ['🥗', '🏃', '💧', '😴', '🍔', '🍟', '🍕', '🍫', '🍦', '🍿'],
+    finalResult: '💪',
+    successMessage: 'Super healthy!'
+  },
+  'firstaid': {
+    intro: 'First aid kit!',
+    correctItems: ['🩹', '💊', '🧴', '🩺'],
+    allItems: ['🩹', '💊', '🧴', '🩺', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🏥',
+    successMessage: 'First aid ready!'
+  },
+  'handwash': {
+    intro: 'Wash your hands!',
+    correctItems: ['💧', '🧼', '🫧', '🖐️'],
+    allItems: ['💧', '🧼', '🫧', '🖐️', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '✨',
+    successMessage: 'Clean hands!'
+  },
+  'xray': {
+    intro: 'X-ray examination!',
+    correctItems: ['🩻', '🦴', '📋', '💻'],
+    allItems: ['🩻', '🦴', '📋', '💻', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🦴',
+    successMessage: 'X-ray done!'
+  },
+  'ambulance': {
+    intro: 'Emergency response!',
+    correctItems: ['🚑', '🩺', '🏥', '⚡'],
+    allItems: ['🚑', '🩺', '🏥', '⚡', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🚑',
+    successMessage: 'Help on the way!'
+  },
+
+  // ============================================
+  // 🎨 ART & DESIGN
+  // ============================================
+  'drawing': {
+    intro: 'Draw a picture!',
+    correctItems: ['✏️', '📄', '🎨', '🖌️'],
+    allItems: ['✏️', '📄', '🎨', '🖌️', '🍔', '⚽', '🎮', '📱', '📚', '🍕'],
+    finalResult: '🖼️',
+    successMessage: 'Beautiful drawing!'
+  },
+  'painting': {
+    intro: 'Paint a masterpiece!',
+    correctItems: ['🎨', '🖌️', '🖼️', '💧'],
+    allItems: ['🎨', '🖌️', '🖼️', '💧', '🍔', '⚽', '🎮', '📱', '📚', '🍕'],
+    finalResult: '🖼️',
+    successMessage: 'Masterpiece!'
+  },
+  'pottery': {
+    intro: 'Make pottery!',
+    correctItems: ['🏺', '💧', '🎨', '🔥'],
+    allItems: ['🏺', '💧', '🎨', '🔥', '🍔', '⚽', '🎮', '📱', '📚', '🍕'],
+    finalResult: '🏺',
+    successMessage: 'Nice pottery!'
+  },
+  'origami': {
+    intro: 'Fold origami!',
+    correctItems: ['📄', '✂️', '🦢', '📐'],
+    allItems: ['📄', '✂️', '🦢', '📐', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🦢',
+    successMessage: 'Beautiful origami!'
+  },
+  'crafts': {
+    intro: 'Make a craft!',
+    correctItems: ['✂️', '📄', '🎨', '🖌️'],
+    allItems: ['✂️', '📄', '🎨', '🖌️', '🍔', '⚽', '🎮', '📱', '📚', '🍕'],
+    finalResult: '🎁',
+    successMessage: 'Amazing craft!'
+  },
+  'stickers': {
+    intro: 'Design stickers!',
+    correctItems: ['🎨', '✏️', '✂️', '⭐'],
+    allItems: ['🎨', '✏️', '✂️', '⭐', '🍔', '⚽', '🎮', '📱', '📚', '🍕'],
+    finalResult: '🏷️',
+    successMessage: 'Cool stickers!'
+  },
+  'poster': {
+    intro: 'Create a poster!',
+    correctItems: ['📃', '✏️', '🎨', '🖌️'],
+    allItems: ['📃', '✏️', '🎨', '🖌️', '🍔', '⚽', '🎮', '📱', '📚', '🍕'],
+    finalResult: '📃',
+    successMessage: 'Great poster!'
+  },
+  'sculpting': {
+    intro: 'Sculpt something!',
+    correctItems: ['🗿', '🎨', '🛠️', '💧'],
+    allItems: ['🗿', '🎨', '🛠️', '💧', '🍔', '⚽', '🎮', '📱', '📚', '🍕'],
+    finalResult: '🗿',
+    successMessage: 'Amazing sculpture!'
+  },
+  'collage': {
+    intro: 'Make a collage!',
+    correctItems: ['🖼️', '📄', '✂️', '🎨'],
+    allItems: ['🖼️', '📄', '✂️', '🎨', '🍔', '⚽', '🎮', '📱', '📚', '🍕'],
+    finalResult: '🎨',
+    successMessage: 'Cool collage!'
+  },
+  'tiedye': {
+    intro: 'Create tie-dye!',
+    correctItems: ['👕', '🌈', '💧', '🎨'],
+    allItems: ['👕', '🌈', '💧', '🎨', '🍔', '⚽', '🎮', '📱', '📚', '🍕'],
+    finalResult: '🌈',
+    successMessage: 'Colorful!'
+  },
+
+  // ============================================
+  // 💻 CODING & ROBOTICS
+  // ============================================
+  'basiccode': {
+    intro: 'Write your first code!',
+    correctItems: ['💻', '⌨️', '🖱️', '📝'],
+    allItems: ['💻', '⌨️', '🖱️', '📝', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '👨‍💻',
+    successMessage: 'You coded!'
+  },
+  'robotcontrol': {
+    intro: 'Control the robot!',
+    correctItems: ['🤖', '🎮', '📱', '⚙️'],
+    allItems: ['🤖', '🎮', '📱', '⚙️', '🍔', '⚽', '🎨', '🍕', '📚', '🎈'],
+    finalResult: '🤖',
+    successMessage: 'Robot obeys!'
+  },
+  'buildrobot': {
+    intro: 'Build a robot!',
+    correctItems: ['🤖', '⚙️', '🔩', '💡'],
+    allItems: ['🤖', '⚙️', '🔩', '💡', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🦾',
+    successMessage: 'Robot ready!'
+  },
+  'logic': {
+    intro: 'Solve the puzzle!',
+    correctItems: ['🧩', '💡', '🔍', '✅'],
+    allItems: ['🧩', '💡', '🔍', '✅', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🧠',
+    successMessage: 'Smart thinking!'
+  },
+  'animation': {
+    intro: 'Create animation!',
+    correctItems: ['🎬', '💻', '🎨', '🎭'],
+    allItems: ['🎬', '💻', '🎨', '🎭', '🍔', '⚽', '🎮', '📱', '📚', '🍕'],
+    finalResult: '🎬',
+    successMessage: 'Cool animation!'
+  },
+  'movement': {
+    intro: 'Program movement!',
+    correctItems: ['⬆️', '⬇️', '⬅️', '➡️'],
+    allItems: ['⬆️', '⬇️', '⬅️', '➡️', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🏃',
+    successMessage: 'Moving!'
+  },
+  'loops': {
+    intro: 'Use loops!',
+    correctItems: ['🔁', '🔄', '➰', '💻'],
+    allItems: ['🔁', '🔄', '➰', '💻', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🔁',
+    successMessage: 'Loop works!'
+  },
+  'debugging': {
+    intro: 'Fix the bug!',
+    correctItems: ['🐛', '🔍', '🛠️', '✅'],
+    allItems: ['🐛', '🔍', '🛠️', '✅', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '✅',
+    successMessage: 'Bug fixed!'
+  },
+  'gamedesign': {
+    intro: 'Design a game!',
+    correctItems: ['🎮', '👾', '🏆', '🎯'],
+    allItems: ['🎮', '👾', '🏆', '🎯', '🍔', '⚽', '📱', '💻', '🎨', '📚'],
+    finalResult: '🎮',
+    successMessage: 'Fun game!'
+  },
+  'appinventor': {
+    intro: 'Create an app!',
+    correctItems: ['📱', '💻', '🎨', '⚙️'],
+    allItems: ['📱', '💻', '🎨', '⚙️', '🍔', '⚽', '🎮', '📚', '🍕', '🎈'],
+    finalResult: '📱',
+    successMessage: 'App created!'
+  },
+
+  // ============================================
+  // 🔬 SCIENCE LAB
+  // ============================================
+  'volcano': {
+    intro: 'Make a volcano!',
+    correctItems: ['🌋', '🧪', '💧', '🔴'],
+    allItems: ['🌋', '🧪', '💧', '🔴', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🌋',
+    successMessage: 'Volcano erupted!'
+  },
+  'fossil': {
+    intro: 'Dig for fossils!',
+    correctItems: ['🦕', '🔨', '🔍', '🦴'],
+    allItems: ['🦕', '🔨', '🔍', '🦴', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🦖',
+    successMessage: 'Amazing fossil!'
+  },
+  'microscope': {
+    intro: 'Use the microscope!',
+    correctItems: ['🔬', '💧', '🧪', '📋'],
+    allItems: ['🔬', '💧', '🧪', '📋', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🔬',
+    successMessage: 'Amazing view!'
+  },
+  'weather': {
+    intro: 'Track the weather!',
+    correctItems: ['☀️', '🌧️', '⛅', '🌡️'],
+    allItems: ['☀️', '🌧️', '⛅', '🌡️', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🌤️',
+    successMessage: 'Weather tracked!'
+  },
+  'planets': {
+    intro: 'Learn about planets!',
+    correctItems: ['🌍', '🪐', '🌙', '⭐'],
+    allItems: ['🌍', '🪐', '🌙', '⭐', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🌌',
+    successMessage: 'Space explorer!'
+  },
+  'static': {
+    intro: 'Static electricity!',
+    correctItems: ['⚡', '🎈', '💇', '📄'],
+    allItems: ['⚡', '🎈', '💇', '📄', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '⚡',
+    successMessage: 'Zap!'
+  },
+  'telescope': {
+    intro: 'Look at stars!',
+    correctItems: ['🔭', '⭐', '🌙', '🌌'],
+    allItems: ['🔭', '⭐', '🌙', '🌌', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🌟',
+    successMessage: 'Beautiful stars!'
+  },
+  'chemistry': {
+    intro: 'Mix chemicals!',
+    correctItems: ['🧪', '⚗️', '💧', '🧴'],
+    allItems: ['🧪', '⚗️', '💧', '🧴', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🧪',
+    successMessage: 'Chemistry magic!'
+  },
+  'magnets': {
+    intro: 'Play with magnets!',
+    correctItems: ['🧲', '🔩', '📎', '🔧'],
+    allItems: ['🧲', '🔩', '📎', '🔧', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🧲',
+    successMessage: 'Magnets stick!'
+  },
+  'plants': {
+    intro: 'Study plants!',
+    correctItems: ['🌱', '💧', '☀️', '🪴'],
+    allItems: ['🌱', '💧', '☀️', '🪴', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
+    finalResult: '🌿',
+    successMessage: 'Plant grew!'
+  },
+
+  // Default fallback for any missing skills
   'default': {
     intro: 'Complete this skill!',
     correctItems: ['⭐', '✨', '💫', '🌟'],
@@ -375,6 +894,7 @@ const SKILL_ACTIVITIES: Record<string, {
     successMessage: 'Well done!'
   }
 };
+
 
 const getActivityForSkill = (skillId: string) => {
   return SKILL_ACTIVITIES[skillId] || SKILL_ACTIVITIES.default;
