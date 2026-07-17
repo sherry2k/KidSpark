@@ -117,6 +117,30 @@ export const useBackgroundMusic = ({ enabled, volume = 0.3 }: UseBackgroundMusic
     }
   }, [volume]);
 
+useEffect(() => {
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: 'KidSpark Background Music',
+      artist: 'KidSpark',
+      album: 'Learning Music',
+      artwork: [
+        { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+        { src: '/icon-512.png', sizes: '512x512', type: 'image/png' }
+      ]
+    });
+
+    navigator.mediaSession.setActionHandler('play', () => {
+      const music = (window as any).__kidsparkMusic;
+      if (music) music.play();
+    });
+
+    navigator.mediaSession.setActionHandler('pause', () => {
+      const music = (window as any).__kidsparkMusic;
+      if (music) music.pause();
+    });
+  }
+}, []);
+  
   // Handle page visibility (pause when app is minimized)
   useEffect(() => {
     const handleVisibilityChange = () => {
