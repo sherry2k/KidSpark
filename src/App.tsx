@@ -1,7 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import PrivacyPolicy from './PrivacyPolicy';
 
 // Screens
 import SplashScreen from './screens/SplashScreen';
@@ -73,7 +71,7 @@ const KidSparkApp: React.FC = () => {
   const [hasStarted, setHasStarted] = useState(false);
 
   // 🎵 Initialize background music
-  const { play: playMusic, pause: pauseMusic, fadeIn } = useBackgroundMusic({
+  const { fadeIn } = useBackgroundMusic({
     enabled: hasStarted && (settings.musicEnabled ?? true),
     volume: 0.3,
   });
@@ -268,14 +266,7 @@ const KidSparkApp: React.FC = () => {
   );
 };
 
-// Main App with routing
+// Main App - No routing needed anymore
 export default function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/*" element={<KidSparkApp />} />
-      </Routes>
-    </BrowserRouter>
-  );
+  return <KidSparkApp />;
 }
