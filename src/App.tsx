@@ -42,6 +42,9 @@ import {
 // Achievement checking
 import { achievements } from './data/gameData';
 
+// 🎵 Background Music Hook
+import { useBackgroundMusic } from './hooks/useBackgroundMusic';
+
 type Screen =
   | 'splash'
   | 'profile-setup'
@@ -60,12 +63,20 @@ type Screen =
   | 'profile'
   | 'skills';
 
-// This is your main KidSpark game component
 const KidSparkApp: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('splash');
   const [profile, setProfile] = useState<PlayerProfile>(loadProfile);
   const [progress, setProgress] = useState<GameProgress>(loadProgress);
   const [settings, setSettings] = useState<GameSettings>(loadSettings);
+  
+  // 🎵 Track if user has interacted (required by browsers for autoplay)
+  const [hasStarted, setHasStarted] = useState(false);
+
+  // 🎵 Initialize background music
+  const { play: playMusic, pause: pauseMusic, fadeIn } = useBackgroundMusic({
+    enabled: hasStarted && (settings.musicEnabled ?? true),
+    volume: 0.3,
+  });
 
   useEffect(() => {
     saveProgress(progress);
@@ -112,12 +123,22 @@ const KidSparkApp: React.FC = () => {
   }, [checkAchievements]);
 
   const handleSplashComplete = useCallback(() => {
+    // 🎵 Mark that user has interacted - now music can play
+    setHasStarted(true);
+    
+    // 🎵 Start music with fade-in effect
+    setTimeout(() => {
+      if (settings.musicEnabled ?? true) {
+        fadeIn(2000);
+      }
+    }, 500);
+
     if (!profile.name) {
       setCurrentScreen('profile-setup');
     } else {
       setCurrentScreen('home');
     }
-  }, [profile.name]);
+  }, [profile.name, settings.musicEnabled, fadeIn]);
 
   const handleProfileSetup = useCallback((newProfile: PlayerProfile) => {
     setProfile(newProfile);
@@ -247,7 +268,7 @@ const KidSparkApp: React.FC = () => {
   );
 };
 
-// This is the main App with routing
+// Main App with routing
 export default function App() {
   return (
     <BrowserRouter>
