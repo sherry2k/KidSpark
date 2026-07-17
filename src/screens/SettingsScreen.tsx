@@ -39,6 +39,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
       </p>
       <p className="text-xs text-gray-400">Fun Learning Adventure for Kids</p>
       <p className="text-xs text-gray-300 mt-1">Made with ❤️ for little learners</p>
+      <p className="text-xs text-gray-400 mt-1 font-bold">Version 1.0.0</p>
       
       {/* Content source indicator */}
       <div className="mt-3 pt-3 border-t border-gray-200">
@@ -101,6 +102,34 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
     </motion.div>
   );
 
+  // 🎵 Coming Soon Component (for Music)
+  const ComingSoonToggle: React.FC<{
+    label: string;
+    emoji: string;
+    description: string;
+  }> = ({ label, emoji, description }) => (
+    <motion.div
+      className="flex items-center justify-between bg-white/80 rounded-2xl p-4 shadow-md opacity-70"
+      whileHover={{ scale: 1.01 }}
+    >
+      <div className="flex items-center gap-3">
+        <span className="text-2xl">{emoji}</span>
+        <div>
+          <p className="font-bold text-gray-800 text-sm flex items-center gap-2">
+            {label}
+            <span className="text-xs bg-yellow-300 text-yellow-800 px-2 py-0.5 rounded-full font-bold">
+              🚀 Coming in v2.0
+            </span>
+          </p>
+          <p className="text-xs text-gray-400">{description}</p>
+        </div>
+      </div>
+      <div className="w-14 h-8 rounded-full p-1 bg-gray-300">
+        <div className="w-6 h-6 bg-white rounded-full shadow-md" />
+      </div>
+    </motion.div>
+  );
+
   return (
     <GameBackground variant="learn">
       <div className="h-full flex flex-col">
@@ -126,12 +155,11 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
               onToggle={() => toggleSetting('soundEnabled')}
             />
 
-            <SettingToggle
+            {/* 🎵 Music - Coming Soon in v2.0 */}
+            <ComingSoonToggle
               label="Background Music"
               emoji="🎵"
               description="Relaxing background music"
-              value={settings.musicEnabled}
-              onToggle={() => toggleSetting('musicEnabled')}
             />
 
             {/* Accessibility */}
