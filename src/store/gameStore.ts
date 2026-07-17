@@ -27,6 +27,14 @@ export interface GameProgress {
   totalTimeSeconds: number;
 }
 
+// 🎵 NEW: GameSettings Interface
+export interface GameSettings {
+  soundEnabled: boolean;
+  musicEnabled: boolean;
+  highContrast: boolean;
+  dyslexiaFont: boolean;
+}
+
 const DEFAULT_PROFILE: PlayerProfile = {
   name: '',
   avatar: '🐻',
@@ -52,23 +60,17 @@ const DEFAULT_PROGRESS: GameProgress = {
   totalTimeSeconds: 0,
 };
 
+// 🎵 NEW: Default Settings
+const DEFAULT_SETTINGS: GameSettings = {
+  soundEnabled: true,
+  musicEnabled: true,
+  highContrast: false,
+  dyslexiaFont: false,
+};
+
 const PROFILE_KEY = 'kidspark_profile';
 const PROGRESS_KEY = 'kidspark_progress';
 const SETTINGS_KEY = 'kidspark_settings';
-
-export const loadSettings = (): GameSettings => {
-  const stored = localStorage.getItem('kidspark_settings');
-  const defaults: GameSettings = {
-    // ... your existing defaults
-    musicEnabled: true,      // 🎵 ADD THIS
-    soundEffectsEnabled: true,  // 🎵 ADD THIS (optional)
-  };
-  
-  if (stored) {
-    return { ...defaults, ...JSON.parse(stored) };
-  }
-  return defaults;
-};
 
 // Load from localStorage
 export function loadProfile(): PlayerProfile {
@@ -107,6 +109,7 @@ export function saveProgress(progress: GameProgress): void {
   localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
 }
 
+// 🎵 FIXED: Single loadSettings function (removed duplicate)
 export function loadSettings(): GameSettings {
   try {
     const data = localStorage.getItem(SETTINGS_KEY);
