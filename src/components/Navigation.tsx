@@ -18,10 +18,10 @@ const Navigation: React.FC<NavigationProps> = ({ title, onBack, stars, coins, sh
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      {/* 🎯 BIG Back Button - Kid Friendly! */}
+      {/* 🎯 BIG Back Button */}
       <motion.button
         onClick={onBack}
-        className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl px-5 py-3 md:px-6 md:py-4 shadow-lg hover:shadow-xl transition-all border-4 border-white"
+        className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl px-5 py-3 md:px-6 md:py-4 shadow-lg border-4 border-white"
         style={{
           minWidth: '90px',
           minHeight: '55px',
@@ -63,24 +63,64 @@ const Navigation: React.FC<NavigationProps> = ({ title, onBack, stars, coins, sh
         {title}
       </motion.h1>
 
-      {/* Stats */}
-      <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+      {/* Stats - BIG BUTTONS */}
+      <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
         {stars !== undefined && (
           <motion.div
-            className="flex items-center gap-1 bg-yellow-100/90 backdrop-blur-sm rounded-full px-3 py-2 shadow-md"
+            className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl px-3 py-2 md:px-4 md:py-3 shadow-lg border-4 border-white"
+            style={{
+              minHeight: '55px',
+              minWidth: '70px',
+              boxShadow: '0 6px 0 #7B2CBF, 0 8px 20px rgba(0,0,0,0.15)',
+            }}
             whileHover={{ scale: 1.05 }}
+            animate={{ scale: [1, 1.03, 1] }}
+            transition={{ scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' } }}
           >
-            <span className="text-lg">⭐</span>
-            <span className="font-bold text-yellow-700 text-sm md:text-base">{stars}</span>
+            <motion.span 
+              className="text-xl md:text-2xl"
+              animate={{ rotate: [0, 15, -15, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              🌟
+            </motion.span>
+            <span 
+              className="font-bold text-white text-base md:text-lg"
+              style={{ 
+                fontFamily: "'Bubblegum One', cursive",
+                textShadow: '2px 2px 0 rgba(0,0,0,0.2)'
+              }}
+            >
+              {stars}
+            </span>
           </motion.div>
         )}
         {coins !== undefined && (
           <motion.div
-            className="flex items-center gap-1 bg-amber-100/90 backdrop-blur-sm rounded-full px-3 py-2 shadow-md"
+            className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl px-3 py-2 md:px-4 md:py-3 shadow-lg border-4 border-white"
+            style={{
+              minHeight: '55px',
+              minWidth: '70px',
+              boxShadow: '0 6px 0 #B91C1C, 0 8px 20px rgba(0,0,0,0.15)',
+            }}
             whileHover={{ scale: 1.05 }}
           >
-            <span className="text-lg">🪙</span>
-            <span className="font-bold text-amber-700 text-sm md:text-base">{coins}</span>
+            <motion.span 
+              className="text-xl md:text-2xl"
+              animate={{ rotate: [0, 360] }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+            >
+              🪙
+            </motion.span>
+            <span 
+              className="font-bold text-white text-base md:text-lg"
+              style={{ 
+                fontFamily: "'Bubblegum One', cursive",
+                textShadow: '2px 2px 0 rgba(0,0,0,0.2)'
+              }}
+            >
+              {coins}
+            </span>
           </motion.div>
         )}
       </div>
