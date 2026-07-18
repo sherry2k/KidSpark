@@ -60,7 +60,7 @@ type Screen =
   | 'achievements'
   | 'settings'
   | 'profile'
-  | 'skills';
+  | 'skills'
   | 'creative';
 
 const KidSparkApp: React.FC = () => {
