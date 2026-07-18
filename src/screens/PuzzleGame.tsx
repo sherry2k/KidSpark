@@ -96,12 +96,38 @@ const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete })
     }
   }, [puzzleType, currentLevel]);
 
-  const handleLevelComplete = useCallback(() => {
+ const handleLevelComplete = useCallback(() => {
+  const totalLevels = puzzleType === 'shape-match' ? SHAPE_MATCH_LEVELS.length :
+                     puzzleType === 'pattern' ? PATTERN_LEVELS.length :
+                     puzzleType === 'size-sort' ? SIZE_SORT_LEVELS.length : 0;
+  
+  const isLastLevel = currentLevel >= totalLevels - 1;
+  
+  if (isLastLevel) {
+    // Show celebration only on final level
     setShowCelebration(true);
     setTimeout(() => {
       onComplete(3);
     }, 500);
-  }, [onComplete]);
+  } else {
+    // Auto-advance to next level with quick success feedback
+    setTimeout(() => {
+      setCurrentLevel(currentLevel + 1);
+      // Reset states for next level
+      setMatches({});
+      setSelectedItem(null);
+      setSelectedAnswer(null);
+      setIsCorrect(null);
+      setSortedItems([]);
+      
+      // Reset for size-sort if needed
+      if (puzzleType === 'size-sort') {
+        const shuffled = [...SIZE_SORT_LEVELS[currentLevel + 1].items].sort(() => Math.random() - 0.5);
+        setAvailableItems(shuffled);
+      }
+    }, 1000); // Brief 1 second delay to show success
+  }
+}, [currentLevel, puzzleType, onComplete]);
 
   const nextLevel = () => {
     setShowCelebration(false);
