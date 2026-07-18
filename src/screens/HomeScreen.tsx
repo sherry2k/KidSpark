@@ -491,7 +491,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
               animate={{ y: [0, -3, 0] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              💡 Play daily to keep your streak growing! 🔥
+              💡 Play & Learn daily to keep your streak growing! 🔥
             </motion.p>
             <p className="text-xs text-white/80 mt-1">
               More games unlock coming soon! ✨
