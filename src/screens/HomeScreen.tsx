@@ -21,15 +21,15 @@ const GAME_MODE_STYLES: Record<string, {
   difficulty: string;
   stars: string;
 }> = {
-  'learn' { gradient: 'from-blue-400 to-cyan-500', shadow: '#0369A1', difficulty: 'Easy', stars: '⭐' },
-  'quiz' { gradient: 'from-purple-500 to-pink-500', shadow: '#6B21A8', difficulty: 'Medium', stars: '⭐⭐' },
-  'memory' { gradient: 'from-green-500 to-emerald-500', shadow: '#047857', difficulty: 'Easy', stars: '⭐' },
-  'match' { gradient: 'from-orange-400 to-yellow-500', shadow: '#B45309', difficulty: 'Easy', stars: '⭐' },
-  'math' { gradient: 'from-red-500 to-pink-500', shadow: '#B91C1C', difficulty: 'Medium', stars: '⭐⭐' },
-  'wordbuilder' { gradient: 'from-sky-400 to-blue-500', shadow: '#1E40AF', difficulty: 'Medium', stars: '⭐⭐' },
-  'coloring' { gradient: 'from-pink-400 to-rose-500', shadow: '#BE185D', difficulty: 'Easy', stars: '⭐' },
-  'puzzle' { gradient: 'from-violet-500 to-purple-500', shadow: '#6D28D9', difficulty: 'Medium', stars: '⭐⭐' },
-  'skills' { gradient: 'from-amber-400 to-orange-500', shadow: '#C2410C', difficulty: 'Fun', stars: '⭐⭐⭐' },
+  'learn': { gradient: 'from-blue-400 to-cyan-500', shadow: '#0369A1', difficulty: 'Easy', stars: '⭐' },
+  'quiz': { gradient: 'from-purple-500 to-pink-500', shadow: '#6B21A8', difficulty: 'Medium', stars: '⭐⭐' },
+  'memory': { gradient: 'from-green-500 to-emerald-500', shadow: '#047857', difficulty: 'Easy', stars: '⭐' },
+  'match': { gradient: 'from-orange-400 to-yellow-500', shadow: '#B45309', difficulty: 'Easy', stars: '⭐' },
+  'math': { gradient: 'from-red-500 to-pink-500', shadow: '#B91C1C', difficulty: 'Medium', stars: '⭐⭐' },
+  'wordbuilder': { gradient: 'from-sky-400 to-blue-500', shadow: '#1E40AF', difficulty: 'Medium', stars: '⭐⭐' },
+  'coloring': { gradient: 'from-pink-400 to-rose-500', shadow: '#BE185D', difficulty: 'Easy', stars: '⭐' },
+  'puzzle': { gradient: 'from-violet-500 to-purple-500', shadow: '#6D28D9', difficulty: 'Medium', stars: '⭐⭐' },
+  'skills': { gradient: 'from-amber-400 to-orange-500', shadow: '#C2410C', difficulty: 'Fun', stars: '⭐⭐⭐' },
   'creative': { gradient: 'from-orange-400 to-pink-500', shadow: '#BE185D', difficulty: 'Fun', stars: '⭐⭐' },
 };
 
