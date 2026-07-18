@@ -31,13 +31,19 @@ const BRUSH_SIZES = [
   { size: 40, label: 'XL' },
 ];
 
-// Sticker sizes
 const STICKER_SIZES = [
   { size: 40, label: 'S' },
   { size: 60, label: 'M' },
   { size: 80, label: 'L' },
   { size: 120, label: 'XL' },
   { size: 160, label: 'XXL' },
+];
+
+const SHAPE_SIZES = [
+  { size: 40, label: 'S' },
+  { size: 80, label: 'M' },
+  { size: 120, label: 'L' },
+  { size: 160, label: 'XL' },
 ];
 
 const STICKERS = [
@@ -72,7 +78,8 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
   const [currentTool, setCurrentTool] = useState<Tool>('brush');
   const [currentColor, setCurrentColor] = useState('#EF4444');
   const [brushSize, setBrushSize] = useState(8);
-  const [stickerSize, setStickerSize] = useState(80); // NEW: Sticker size
+  const [stickerSize, setStickerSize] = useState(80);
+  const [shapeSize, setShapeSize] = useState(80);
   const [opacity, setOpacity] = useState(1);
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawingHistory, setDrawingHistory] = useState<DrawingState[]>([]);
@@ -80,7 +87,9 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
   const [showStickers, setShowStickers] = useState(false);
   const [showShapes, setShowShapes] = useState(false);
   const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
+  const [selectedShape, setSelectedShape] = useState<Shape | null>(null); // NEW: Selected shape
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  const [previewPos, setPreviewPos] = useState<{ x: number; y: number } | null>(null); // NEW: Preview position
   const lastPos = useRef<{ x: number; y: number } | null>(null);
 
   // Initialize canvas
@@ -149,14 +158,40 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     };
   };
 
+  // Get position in display coordinates for preview
+  const getDisplayPos = (e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    
+    if ('touches' in e) {
+      return {
+        x: e.touches[0].clientX - rect.left,
+        y: e.touches[0].clientY - rect.top,
+      };
+    }
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+  };
+
   // Drawing handlers
   const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     const pos = getPos(e);
+    const displayPos = getDisplayPos(e);
     lastPos.current = pos;
 
+    // Sticker mode - show preview
     if (currentTool === 'sticker' && selectedSticker) {
-      addSticker(pos.x, pos.y);
+      setPreviewPos(displayPos);
+      return;
+    }
+
+    // Shape mode - show preview
+    if (currentTool === 'shape' && selectedShape) {
+      setPreviewPos(displayPos);
       return;
     }
 
@@ -180,6 +215,17 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
 
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
+    
+    const displayPos = getDisplayPos(e);
+    
+    // Update preview position when dragging sticker or shape
+    if ((currentTool === 'sticker' && selectedSticker) || (currentTool === 'shape' && selectedShape)) {
+      if (previewPos) {
+        setPreviewPos(displayPos);
+      }
+      return;
+    }
+    
     if (!isDrawing) return;
 
     const ctx = canvasRef.current?.getContext('2d');
@@ -210,7 +256,25 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     lastPos.current = pos;
   };
 
-  const stopDrawing = () => {
+  const stopDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    
+    // Place sticker at final position
+    if (currentTool === 'sticker' && selectedSticker && previewPos) {
+      const pos = getPos(e);
+      addSticker(pos.x, pos.y);
+      setPreviewPos(null);
+      return;
+    }
+    
+    // Place shape at final position
+    if (currentTool === 'shape' && selectedShape && previewPos) {
+      const pos = getPos(e);
+      drawShape(selectedShape, pos.x, pos.y);
+      setPreviewPos(null);
+      return;
+    }
+    
     if (isDrawing) {
       setIsDrawing(false);
       lastPos.current = null;
@@ -218,7 +282,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     }
   };
 
-  // Add sticker with custom size
+  // Add sticker at position with custom size
   const addSticker = (x: number, y: number) => {
     if (!selectedSticker) return;
     const ctx = canvasRef.current?.getContext('2d');
@@ -243,68 +307,150 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     saveToHistory();
   };
 
-  // Draw shape
-  const drawShape = (shape: Shape) => {
+  // Draw shape at position with white outline
+  const drawShape = (shape: Shape, x: number, y: number) => {
     const ctx = canvasRef.current?.getContext('2d');
-    if (!ctx || !canvasRef.current) return;
+    if (!ctx) return;
 
-    const centerX = canvasRef.current.width / 2;
-    const centerY = canvasRef.current.height / 2;
-    const size = 80;
-
-    ctx.strokeStyle = currentColor;
-    ctx.fillStyle = currentColor;
-    ctx.lineWidth = brushSize;
+    const size = shapeSize;
 
     switch (shape) {
       case 'circle':
+        // Fill with color
         ctx.beginPath();
-        ctx.arc(centerX, centerY, size, 0, Math.PI * 2);
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fillStyle = currentColor;
+        ctx.fill();
+        // White outline
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 6;
+        ctx.stroke();
+        // Dark outer outline
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 2;
         ctx.stroke();
         break;
+      
       case 'rectangle':
-        ctx.strokeRect(centerX - size, centerY - size / 2, size * 2, size);
+        // Fill with color
+        ctx.fillStyle = currentColor;
+        ctx.fillRect(x - size, y - size / 2, size * 2, size);
+        // White outline
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 6;
+        ctx.strokeRect(x - size, y - size / 2, size * 2, size);
+        // Dark outer outline
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x - size, y - size / 2, size * 2, size);
         break;
+      
       case 'triangle':
+        // Fill with color
         ctx.beginPath();
-        ctx.moveTo(centerX, centerY - size);
-        ctx.lineTo(centerX - size, centerY + size);
-        ctx.lineTo(centerX + size, centerY + size);
+        ctx.moveTo(x, y - size);
+        ctx.lineTo(x - size, y + size);
+        ctx.lineTo(x + size, y + size);
         ctx.closePath();
+        ctx.fillStyle = currentColor;
+        ctx.fill();
+        // White outline
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 6;
+        ctx.stroke();
+        // Dark outer outline
+        ctx.beginPath();
+        ctx.moveTo(x, y - size);
+        ctx.lineTo(x - size, y + size);
+        ctx.lineTo(x + size, y + size);
+        ctx.closePath();
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 2;
         ctx.stroke();
         break;
+      
       case 'line':
+        // White outline (background)
         ctx.beginPath();
-        ctx.moveTo(centerX - size, centerY);
-        ctx.lineTo(centerX + size, centerY);
+        ctx.moveTo(x - size, y);
+        ctx.lineTo(x + size, y);
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = brushSize + 6;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        // Main color line
+        ctx.beginPath();
+        ctx.moveTo(x - size, y);
+        ctx.lineTo(x + size, y);
+        ctx.strokeStyle = currentColor;
+        ctx.lineWidth = brushSize;
         ctx.stroke();
         break;
+      
       case 'arrow':
+        const arrowWidth = brushSize + 6;
+        // White outline for arrow
         ctx.beginPath();
-        ctx.moveTo(centerX - size, centerY);
-        ctx.lineTo(centerX + size, centerY);
-        ctx.moveTo(centerX + size, centerY);
-        ctx.lineTo(centerX + size - 20, centerY - 20);
-        ctx.moveTo(centerX + size, centerY);
-        ctx.lineTo(centerX + size - 20, centerY + 20);
+        ctx.moveTo(x - size, y);
+        ctx.lineTo(x + size, y);
+        ctx.moveTo(x + size, y);
+        ctx.lineTo(x + size - 20, y - 20);
+        ctx.moveTo(x + size, y);
+        ctx.lineTo(x + size - 20, y + 20);
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = arrowWidth;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+        // Main color arrow
+        ctx.beginPath();
+        ctx.moveTo(x - size, y);
+        ctx.lineTo(x + size, y);
+        ctx.moveTo(x + size, y);
+        ctx.lineTo(x + size - 20, y - 20);
+        ctx.moveTo(x + size, y);
+        ctx.lineTo(x + size - 20, y + 20);
+        ctx.strokeStyle = currentColor;
+        ctx.lineWidth = brushSize;
         ctx.stroke();
         break;
+      
       case 'star':
+        // Fill with color
         ctx.beginPath();
         for (let i = 0; i < 5; i++) {
           const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
-          const x = centerX + size * Math.cos(angle);
-          const y = centerY + size * Math.sin(angle);
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
+          const px = x + size * Math.cos(angle);
+          const py = y + size * Math.sin(angle);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
         }
         ctx.closePath();
+        ctx.fillStyle = currentColor;
+        ctx.fill();
+        // White outline
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 6;
+        ctx.stroke();
+        // Dark outer outline
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+          const px = x + size * Math.cos(angle);
+          const py = y + size * Math.sin(angle);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 2;
         ctx.stroke();
         break;
     }
     
     saveToHistory();
-    setShowShapes(false);
   };
 
   // Undo
@@ -368,6 +514,49 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     setTimeout(() => setSavedMessage(null), 2000);
   };
 
+  // Render preview shape/sticker
+  const renderPreview = () => {
+    if (!previewPos) return null;
+    
+    if (currentTool === 'sticker' && selectedSticker) {
+      return (
+        <div
+          className="absolute pointer-events-none opacity-70"
+          style={{
+            left: `${previewPos.x}px`,
+            top: `${previewPos.y}px`,
+            fontSize: `${stickerSize / 1.5}px`,
+            transform: 'translate(-50%, -50%)',
+            zIndex: 10,
+          }}
+        >
+          {selectedSticker}
+        </div>
+      );
+    }
+    
+    if (currentTool === 'shape' && selectedShape) {
+      return (
+        <div
+          className="absolute pointer-events-none opacity-50"
+          style={{
+            left: `${previewPos.x}px`,
+            top: `${previewPos.y}px`,
+            fontSize: `${shapeSize / 2}px`,
+            transform: 'translate(-50%, -50%)',
+            color: currentColor,
+            zIndex: 10,
+            textShadow: '0 0 10px rgba(255,255,255,0.8)',
+          }}
+        >
+          {SHAPES.find(s => s.id === selectedShape)?.icon}
+        </div>
+      );
+    }
+    
+    return null;
+  };
+
   return (
     <GameBackground variant="game">
       <div className="h-full flex flex-col">
@@ -396,9 +585,9 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
           )}
         </AnimatePresence>
 
-        {/* 🎯 TOP: Action Bar + Tools Combined */}
+        {/* TOP: Action Bar + Tools */}
         <div className="px-3 mb-2 space-y-2">
-          {/* Action Bar (Undo, Redo, Clear, Save, Export) */}
+          {/* Action Bar */}
           <motion.div
             className="bg-white/95 rounded-2xl p-2 shadow-lg border-4 border-white flex items-center justify-between gap-2"
             initial={{ y: -10, opacity: 0 }}
@@ -481,7 +670,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
             </div>
           </motion.div>
 
-          {/* 🎯 TOOLS BAR - MOVED TO TOP */}
+          {/* Tools Bar */}
           <motion.div
             className="bg-white/95 rounded-2xl p-3 shadow-lg border-4 border-white"
             initial={{ y: -10, opacity: 0 }}
@@ -498,6 +687,10 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                       setCurrentTool(tool.id);
                       setShowStickers(tool.id === 'sticker');
                       setShowShapes(tool.id === 'shape');
+                      // Reset selections when changing tools
+                      if (tool.id !== 'sticker') setSelectedSticker(null);
+                      if (tool.id !== 'shape') setSelectedShape(null);
+                      setPreviewPos(null);
                     }}
                     className={`rounded-2xl p-2 md:p-3 shadow-md border-4 border-white flex flex-col items-center flex-shrink-0 ${
                       isActive 
@@ -551,12 +744,12 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                     ))}
                   </div>
                   
-                  {/* 🎯 NEW: Sticker Size Selector */}
+                  {/* Sticker Size Selector */}
                   <div className="border-t-2 border-yellow-300 pt-2">
                     <p className="text-center text-xs font-black text-gray-700 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>
                       📏 Sticker Size
                     </p>
-                    <div className="flex items-center justify-center gap-2">
+                    <div className="flex items-center justify-center gap-2 flex-wrap">
                       {STICKER_SIZES.map(({ size, label }) => (
                         <motion.button
                           key={size}
@@ -580,16 +773,14 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                       ))}
                     </div>
                     
-                    {/* Preview */}
                     {selectedSticker && (
-                      <motion.div
-                        className="text-center mt-2 bg-white rounded-xl py-2 border-2 border-yellow-200"
+                      <motion.p 
+                        className="text-center text-xs font-black text-gray-600 mt-2 bg-white rounded-full py-1"
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                       >
-                        <p className="text-xs text-gray-500 mb-1">Preview:</p>
-                        <span style={{ fontSize: `${stickerSize / 2}px` }}>{selectedSticker}</span>
-                      </motion.div>
+                        💡 Touch and drag on canvas to place!
+                      </motion.p>
                     )}
                   </div>
                 </motion.div>
@@ -606,15 +797,19 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                   exit={{ height: 0, opacity: 0 }}
                 >
                   <p className="text-center text-sm font-black text-gray-700 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>
-                    🔷 Add a Shape
+                    🔷 Choose a Shape
                   </p>
-                  <div className="grid grid-cols-6 gap-2">
+                  <div className="grid grid-cols-6 gap-2 mb-3">
                     {SHAPES.map((shape) => (
                       <motion.button
                         key={shape.id}
-                        onClick={() => drawShape(shape.id)}
-                        className="aspect-square rounded-xl bg-white text-3xl md:text-4xl flex items-center justify-center border-2 border-white shadow-md"
-                        style={{ boxShadow: '0 4px 0 rgba(0,0,0,0.1)' }}
+                        onClick={() => setSelectedShape(shape.id)}
+                        className={`aspect-square rounded-xl text-3xl md:text-4xl flex items-center justify-center border-2 ${
+                          selectedShape === shape.id 
+                            ? 'bg-indigo-200 border-indigo-500 scale-110' 
+                            : 'bg-white border-white'
+                        }`}
+                        style={{ boxShadow: selectedShape === shape.id ? '0 3px 0 #4338CA' : '0 4px 0 rgba(0,0,0,0.1)' }}
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                       >
@@ -622,13 +817,53 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                       </motion.button>
                     ))}
                   </div>
+                  
+                  {/* Shape Size Selector */}
+                  <div className="border-t-2 border-indigo-300 pt-2">
+                    <p className="text-center text-xs font-black text-gray-700 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>
+                      📏 Shape Size
+                    </p>
+                    <div className="flex items-center justify-center gap-2 flex-wrap">
+                      {SHAPE_SIZES.map(({ size, label }) => (
+                        <motion.button
+                          key={size}
+                          onClick={() => setShapeSize(size)}
+                          className={`rounded-xl px-3 py-2 border-2 font-black text-sm ${
+                            shapeSize === size 
+                              ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-white scale-110' 
+                              : 'bg-white text-gray-600 border-indigo-300'
+                          }`}
+                          style={{ 
+                            minWidth: '50px',
+                            minHeight: '40px',
+                            fontFamily: "'Fredoka', 'Arial Black', sans-serif",
+                            boxShadow: shapeSize === size ? '0 3px 0 #4338CA' : 'none',
+                          }}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                        >
+                          {label}
+                        </motion.button>
+                      ))}
+                    </div>
+                    
+                    {selectedShape && (
+                      <motion.p 
+                        className="text-center text-xs font-black text-gray-600 mt-2 bg-white rounded-full py-1"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                      >
+                        💡 Touch and drag on canvas to place!
+                      </motion.p>
+                    )}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </motion.div>
         </div>
 
-        {/* 🎨 Canvas Area */}
+        {/* Canvas Area with Preview */}
         <div className="flex-1 mx-3 mb-2 bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white relative">
           <canvas
             ref={canvasRef}
@@ -641,13 +876,14 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
             onTouchMove={draw}
             onTouchEnd={stopDrawing}
           />
+          {/* Preview overlay */}
+          {renderPreview()}
         </div>
 
-        {/* 🎨 BOTTOM: Colors and Brush Size */}
+        {/* BOTTOM: Colors and Brush Size */}
         <div className="px-3 pb-3">
           <div className="bg-white/95 rounded-3xl p-3 shadow-2xl border-4 border-white">
-            {/* Brush Size (only show when not sticker) */}
-            {currentTool !== 'sticker' && (
+            {currentTool !== 'sticker' && currentTool !== 'shape' && (
               <div className="mb-3">
                 <p className="text-center text-xs font-black text-gray-600 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>
                   ✏️ Brush Size
@@ -681,7 +917,6 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
               </div>
             )}
 
-            {/* Colors */}
             <div>
               <p className="text-center text-xs font-black text-gray-600 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>
                 🎨 Colors
