@@ -10,7 +10,7 @@ interface CreativeStudioProps {
   onComplete: (stars: number) => void;
 }
 
-type Tool = 'brush' | 'pencil' | 'marker' | 'eraser' | 'fill' | 'shape' | 'sticker' | 'text';
+type Tool = 'brush' | 'pencil' | 'marker' | 'eraser' | 'fill' | 'shape' | 'sticker';
 type Shape = 'circle' | 'rectangle' | 'triangle' | 'line' | 'arrow' | 'star';
 
 interface DrawingState {
@@ -29,6 +29,15 @@ const BRUSH_SIZES = [
   { size: 16, label: 'M' },
   { size: 24, label: 'L' },
   { size: 40, label: 'XL' },
+];
+
+// Sticker sizes
+const STICKER_SIZES = [
+  { size: 40, label: 'S' },
+  { size: 60, label: 'M' },
+  { size: 80, label: 'L' },
+  { size: 120, label: 'XL' },
+  { size: 160, label: 'XXL' },
 ];
 
 const STICKERS = [
@@ -63,14 +72,13 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
   const [currentTool, setCurrentTool] = useState<Tool>('brush');
   const [currentColor, setCurrentColor] = useState('#EF4444');
   const [brushSize, setBrushSize] = useState(8);
+  const [stickerSize, setStickerSize] = useState(80); // NEW: Sticker size
   const [opacity, setOpacity] = useState(1);
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawingHistory, setDrawingHistory] = useState<DrawingState[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [showStickers, setShowStickers] = useState(false);
   const [showShapes, setShowShapes] = useState(false);
-  const [currentShape, setCurrentShape] = useState<Shape>('circle');
-  const [recentColors, setRecentColors] = useState<string[]>(['#EF4444', '#3B82F6', '#22C55E']);
   const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const lastPos = useRef<{ x: number; y: number } | null>(null);
@@ -113,7 +121,6 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     const newHistory = drawingHistory.slice(0, historyIndex + 1);
     newHistory.push({ imageData });
     
-    // Limit history to 30 states
     if (newHistory.length > 30) {
       newHistory.shift();
     }
@@ -165,7 +172,6 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
 
     ctx.globalAlpha = opacity;
     
-    // Draw initial dot
     ctx.beginPath();
     ctx.arc(pos.x, pos.y, brushSize / 2, 0, Math.PI * 2);
     ctx.fillStyle = currentTool === 'eraser' ? '#FFFFFF' : currentColor;
@@ -187,7 +193,6 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     ctx.lineTo(pos.x, pos.y);
     ctx.strokeStyle = currentTool === 'eraser' ? '#FFFFFF' : currentColor;
     
-    // Different brush styles
     if (currentTool === 'pencil') {
       ctx.lineWidth = brushSize / 2;
       ctx.lineCap = 'round';
@@ -210,17 +215,16 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
       setIsDrawing(false);
       lastPos.current = null;
       saveToHistory();
-      addToRecentColors(currentColor);
     }
   };
 
-  // Add sticker
+  // Add sticker with custom size
   const addSticker = (x: number, y: number) => {
     if (!selectedSticker) return;
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
 
-    ctx.font = `${brushSize * 3}px serif`;
+    ctx.font = `${stickerSize}px serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(selectedSticker, x, y);
@@ -228,7 +232,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     saveToHistory();
   };
 
-  // Fill area (basic flood fill)
+  // Fill area
   const fillArea = (x: number, y: number) => {
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
@@ -301,14 +305,6 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     
     saveToHistory();
     setShowShapes(false);
-  };
-
-  // Add to recent colors
-  const addToRecentColors = (color: string) => {
-    setRecentColors(prev => {
-      const filtered = prev.filter(c => c !== color);
-      return [color, ...filtered].slice(0, 5);
-    });
   };
 
   // Undo
@@ -400,8 +396,9 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
           )}
         </AnimatePresence>
 
-        {/* Top action bar */}
-        <div className="px-3 mb-2">
+        {/* 🎯 TOP: Action Bar + Tools Combined */}
+        <div className="px-3 mb-2 space-y-2">
+          {/* Action Bar (Undo, Redo, Clear, Save, Export) */}
           <motion.div
             className="bg-white/95 rounded-2xl p-2 shadow-lg border-4 border-white flex items-center justify-between gap-2"
             initial={{ y: -10, opacity: 0 }}
@@ -483,68 +480,52 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
               </motion.button>
             </div>
           </motion.div>
-        </div>
 
-        {/* Canvas Area */}
-        <div className="flex-1 mx-3 mb-2 bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white relative">
-          <canvas
-            ref={canvasRef}
-            className="w-full h-full cursor-crosshair touch-none block"
-            onMouseDown={startDrawing}
-            onMouseMove={draw}
-            onMouseUp={stopDrawing}
-            onMouseLeave={stopDrawing}
-            onTouchStart={startDrawing}
-            onTouchMove={draw}
-            onTouchEnd={stopDrawing}
-          />
-        </div>
-
-        {/* Tools Bar */}
-        <div className="px-3 pb-3">
-          <div className="bg-white/95 rounded-3xl p-3 shadow-2xl border-4 border-white">
-            
-            {/* Tool Selection */}
-            <div className="mb-3">
-              <div className="flex gap-2 overflow-x-auto pb-1 justify-center">
-                {TOOLS.map((tool) => {
-                  const isActive = currentTool === tool.id;
-                  return (
-                    <motion.button
-                      key={tool.id}
-                      onClick={() => {
-                        setCurrentTool(tool.id);
-                        setShowStickers(tool.id === 'sticker');
-                        setShowShapes(tool.id === 'shape');
-                      }}
-                      className={`rounded-2xl p-2 md:p-3 shadow-md border-4 border-white flex flex-col items-center flex-shrink-0 ${
-                        isActive 
-                          ? `bg-gradient-to-br ${tool.gradient} text-white scale-110` 
-                          : 'bg-gray-100 text-gray-600'
-                      }`}
-                      style={{
-                        minWidth: '55px',
-                        minHeight: '55px',
-                        boxShadow: isActive ? `0 4px 0 ${tool.shadow}` : '0 3px 0 rgba(0,0,0,0.1)',
-                      }}
-                      whileHover={{ scale: isActive ? 1.15 : 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <span className="text-xl md:text-2xl">{tool.icon}</span>
-                      <span className="text-xs font-black mt-0.5" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>
-                        {tool.label}
-                      </span>
-                    </motion.button>
-                  );
-                })}
-              </div>
+          {/* 🎯 TOOLS BAR - MOVED TO TOP */}
+          <motion.div
+            className="bg-white/95 rounded-2xl p-3 shadow-lg border-4 border-white"
+            initial={{ y: -10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.1 }}
+          >
+            <div className="flex gap-2 overflow-x-auto pb-1 justify-center">
+              {TOOLS.map((tool) => {
+                const isActive = currentTool === tool.id;
+                return (
+                  <motion.button
+                    key={tool.id}
+                    onClick={() => {
+                      setCurrentTool(tool.id);
+                      setShowStickers(tool.id === 'sticker');
+                      setShowShapes(tool.id === 'shape');
+                    }}
+                    className={`rounded-2xl p-2 md:p-3 shadow-md border-4 border-white flex flex-col items-center flex-shrink-0 ${
+                      isActive 
+                        ? `bg-gradient-to-br ${tool.gradient} text-white scale-110` 
+                        : 'bg-gray-100 text-gray-600'
+                    }`}
+                    style={{
+                      minWidth: '55px',
+                      minHeight: '55px',
+                      boxShadow: isActive ? `0 4px 0 ${tool.shadow}` : '0 3px 0 rgba(0,0,0,0.1)',
+                    }}
+                    whileHover={{ scale: isActive ? 1.15 : 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <span className="text-xl md:text-2xl">{tool.icon}</span>
+                    <span className="text-xs font-black mt-0.5" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>
+                      {tool.label}
+                    </span>
+                  </motion.button>
+                );
+              })}
             </div>
 
             {/* Sticker Panel */}
             <AnimatePresence>
               {showStickers && (
                 <motion.div
-                  className="mb-3 bg-yellow-50 rounded-2xl p-3 border-4 border-yellow-200"
+                  className="mt-3 bg-yellow-50 rounded-2xl p-3 border-4 border-yellow-200"
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
@@ -552,7 +533,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                   <p className="text-center text-sm font-black text-gray-700 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>
                     ⭐ Choose a Sticker
                   </p>
-                  <div className="grid grid-cols-8 gap-2 max-h-32 overflow-y-auto">
+                  <div className="grid grid-cols-8 gap-2 max-h-32 overflow-y-auto mb-3">
                     {STICKERS.map((sticker, i) => (
                       <motion.button
                         key={i}
@@ -569,6 +550,48 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                       </motion.button>
                     ))}
                   </div>
+                  
+                  {/* 🎯 NEW: Sticker Size Selector */}
+                  <div className="border-t-2 border-yellow-300 pt-2">
+                    <p className="text-center text-xs font-black text-gray-700 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>
+                      📏 Sticker Size
+                    </p>
+                    <div className="flex items-center justify-center gap-2">
+                      {STICKER_SIZES.map(({ size, label }) => (
+                        <motion.button
+                          key={size}
+                          onClick={() => setStickerSize(size)}
+                          className={`rounded-xl px-3 py-2 border-2 font-black text-sm ${
+                            stickerSize === size 
+                              ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-white scale-110' 
+                              : 'bg-white text-gray-600 border-yellow-300'
+                          }`}
+                          style={{ 
+                            minWidth: '50px',
+                            minHeight: '40px',
+                            fontFamily: "'Fredoka', 'Arial Black', sans-serif",
+                            boxShadow: stickerSize === size ? '0 3px 0 #D97706' : 'none',
+                          }}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                        >
+                          {label}
+                        </motion.button>
+                      ))}
+                    </div>
+                    
+                    {/* Preview */}
+                    {selectedSticker && (
+                      <motion.div
+                        className="text-center mt-2 bg-white rounded-xl py-2 border-2 border-yellow-200"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                      >
+                        <p className="text-xs text-gray-500 mb-1">Preview:</p>
+                        <span style={{ fontSize: `${stickerSize / 2}px` }}>{selectedSticker}</span>
+                      </motion.div>
+                    )}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -577,7 +600,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
             <AnimatePresence>
               {showShapes && (
                 <motion.div
-                  className="mb-3 bg-indigo-50 rounded-2xl p-3 border-4 border-indigo-200"
+                  className="mt-3 bg-indigo-50 rounded-2xl p-3 border-4 border-indigo-200"
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
@@ -602,39 +625,61 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                 </motion.div>
               )}
             </AnimatePresence>
+          </motion.div>
+        </div>
 
-            {/* Brush Size */}
-            <div className="mb-3">
-              <p className="text-center text-xs font-black text-gray-600 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>
-                ✏️ Brush Size
-              </p>
-              <div className="flex items-center justify-center gap-2">
-                {BRUSH_SIZES.map(({ size, label }) => (
-                  <motion.button
-                    key={size}
-                    onClick={() => setBrushSize(size)}
-                    className={`rounded-xl flex flex-col items-center justify-center border-2 ${
-                      brushSize === size 
-                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-white scale-110' 
-                        : 'bg-gray-100 text-gray-600 border-gray-200'
-                    }`}
-                    style={{ 
-                      minWidth: '45px',
-                      minHeight: '45px',
-                      fontFamily: "'Fredoka', 'Arial Black', sans-serif",
-                    }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <div 
-                      className={`rounded-full ${brushSize === size ? 'bg-white' : 'bg-gray-500'}`}
-                      style={{ width: `${Math.min(size, 20)}px`, height: `${Math.min(size, 20)}px` }}
-                    />
-                    <span className="text-xs">{label}</span>
-                  </motion.button>
-                ))}
+        {/* 🎨 Canvas Area */}
+        <div className="flex-1 mx-3 mb-2 bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white relative">
+          <canvas
+            ref={canvasRef}
+            className="w-full h-full cursor-crosshair touch-none block"
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={stopDrawing}
+            onMouseLeave={stopDrawing}
+            onTouchStart={startDrawing}
+            onTouchMove={draw}
+            onTouchEnd={stopDrawing}
+          />
+        </div>
+
+        {/* 🎨 BOTTOM: Colors and Brush Size */}
+        <div className="px-3 pb-3">
+          <div className="bg-white/95 rounded-3xl p-3 shadow-2xl border-4 border-white">
+            {/* Brush Size (only show when not sticker) */}
+            {currentTool !== 'sticker' && (
+              <div className="mb-3">
+                <p className="text-center text-xs font-black text-gray-600 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>
+                  ✏️ Brush Size
+                </p>
+                <div className="flex items-center justify-center gap-2">
+                  {BRUSH_SIZES.map(({ size, label }) => (
+                    <motion.button
+                      key={size}
+                      onClick={() => setBrushSize(size)}
+                      className={`rounded-xl flex flex-col items-center justify-center border-2 ${
+                        brushSize === size 
+                          ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-white scale-110' 
+                          : 'bg-gray-100 text-gray-600 border-gray-200'
+                      }`}
+                      style={{ 
+                        minWidth: '45px',
+                        minHeight: '45px',
+                        fontFamily: "'Fredoka', 'Arial Black', sans-serif",
+                      }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <div 
+                        className={`rounded-full ${brushSize === size ? 'bg-white' : 'bg-gray-500'}`}
+                        style={{ width: `${Math.min(size, 20)}px`, height: `${Math.min(size, 20)}px` }}
+                      />
+                      <span className="text-xs">{label}</span>
+                    </motion.button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Colors */}
             <div>
