@@ -18,6 +18,7 @@ import AchievementsScreen from './screens/AchievementsScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import SkillsScreen from './screens/SkillsScreen';
+import CreativeStudio from './screens/CreativeStudio';
 
 // Store
 import {
@@ -60,6 +61,7 @@ type Screen =
   | 'settings'
   | 'profile'
   | 'skills';
+  | 'creative';
 
 const KidSparkApp: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('splash');
@@ -155,6 +157,7 @@ const KidSparkApp: React.FC = () => {
       case 'coloring': setCurrentScreen('coloring'); break;
       case 'puzzle': setCurrentScreen('puzzle'); break;
       case 'skills': setCurrentScreen('skills'); break;
+      case 'creative': setCurrentScreen('creative'); break;
       default: setCurrentScreen('home');
     }
   }, []);
@@ -236,6 +239,8 @@ const KidSparkApp: React.FC = () => {
         return <ProfileScreen profile={profile} progress={progress} onBack={goHome} onUpdateProfile={handleUpdateProfile} />;
       case 'skills':
         return <SkillsScreen progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
+        case 'creative':
+        return <CreativeStudio progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
       default:
         return null;
     }
