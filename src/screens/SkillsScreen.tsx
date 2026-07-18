@@ -994,14 +994,14 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
     }
   };
 
-  // =============================================
-  // CAREER SELECTION
+    // =============================================
+  // CAREER SELECTION - REDESIGNED
   // =============================================
   if (view === 'career-select') {
     return (
       <GameBackground variant="game">
         <div className="h-full flex flex-col">
-          <Navigation title="🌟 Skills & Careers" onBack={onBack} stars={progress.stars} />
+          <Navigation title="🌟 Skills" onBack={onBack} stars={progress.stars} />
 
           <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-8">
             <motion.div
@@ -1019,36 +1019,98 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
               {careerCategories.map((cat, i) => {
                 const completedInCat = cat.items.filter((s) => completedSkills.includes(s.id)).length;
                 const progressPercent = (completedInCat / cat.items.length) * 100;
+                
+                // Get shadow color from gradient
+                const shadowColors: Record<string, string> = {
+                  'cooking': '#C2410C',
+                  'beauty': '#BE185D',
+                  'builder': '#B45309',
+                  'engineer': '#1E40AF',
+                  'factory': '#374151',
+                  'garage': '#B91C1C',
+                  'garden': '#047857',
+                  'medical': '#0F766E',
+                  'art': '#7B2CBF',
+                  'coding': '#0F766E',
+                  'science': '#6D28D9',
+                };
+                const shadow = shadowColors[cat.id] || '#374151';
+                
                 return (
                   <motion.button
                     key={cat.id}
                     onClick={() => handleCategorySelect(cat)}
-                    className="game-card p-4 md:p-5 text-center relative overflow-hidden group"
+                    className={`bg-gradient-to-br ${cat.gradient} rounded-3xl p-4 md:p-5 text-white shadow-xl border-4 border-white relative overflow-hidden`}
+                    style={{
+                      boxShadow: `0 8px 0 ${shadow}, 0 12px 25px rgba(0,0,0,0.2)`,
+                      minHeight: '180px',
+                    }}
                     initial={{ y: 30, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: i * 0.05, type: 'spring' }}
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
+                    whileHover={{ scale: 1.05, y: -3 }}
+                    whileTap={{ 
+                      scale: 0.95, 
+                      y: 4,
+                      boxShadow: `0 4px 0 ${shadow}, 0 6px 15px rgba(0,0,0,0.2)`
+                    }}
                   >
-                    <div className={`absolute inset-0 bg-gradient-to-br ${cat.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+                    {/* Completed Badge */}
                     {completedInCat > 0 && (
-                      <div className="absolute top-2 right-2 bg-green-100 text-green-600 text-xs font-bold px-2 py-0.5 rounded-full">
+                      <div className="absolute top-2 right-2 bg-white text-green-500 text-xs font-bold px-3 py-1 rounded-full shadow-lg border-2 border-green-400">
                         {completedInCat}/{cat.items.length}
                       </div>
                     )}
-                    <motion.span
-                      className="text-4xl md:text-5xl block mb-2"
-                      animate={{ y: [0, -4, 0] }}
-                      transition={{ duration: 2.5 + i * 0.2, repeat: Infinity }}
+
+                    {/* Sparkle */}
+                    <motion.div
+                      className="absolute top-2 left-2 text-yellow-200 text-lg opacity-70"
+                      animate={{
+                        scale: [1, 1.3, 1],
+                        opacity: [0.5, 1, 0.5],
+                        rotate: [0, 180, 360]
+                      }}
+                      transition={{ duration: 2, repeat: Infinity, delay: i * 0.2 }}
+                    >
+                      ✨
+                    </motion.div>
+
+                    {/* Big Emoji */}
+                    <motion.div
+                      className="text-5xl md:text-6xl mb-2 text-center"
+                      animate={{ 
+                        y: [0, -5, 0],
+                        rotate: [0, -3, 3, 0]
+                      }}
+                      transition={{ 
+                        duration: 2 + i * 0.3, 
+                        repeat: Infinity 
+                      }}
                     >
                       {cat.emoji}
-                    </motion.span>
-                    <h4 className="font-bold text-gray-800 text-sm md:text-base leading-tight">{cat.name}</h4>
-                    <p className="text-gray-400 text-xs mt-1 hidden md:block">{cat.description}</p>
+                    </motion.div>
+
+                    {/* Name */}
+                    <h4 
+                      className="text-lg md:text-xl font-bold mb-1 text-center"
+                      style={{ 
+                        fontFamily: "'Bubblegum One', cursive",
+                        textShadow: '2px 2px 0 rgba(0,0,0,0.15)'
+                      }}
+                    >
+                      {cat.name}
+                    </h4>
+
+                    {/* Description */}
+                    <p className="text-white/90 text-xs md:text-sm text-center mb-2 leading-tight">
+                      {cat.description}
+                    </p>
+
+                    {/* Progress Bar */}
                     {completedInCat > 0 && (
-                      <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="mt-2 h-2 bg-white/30 rounded-full overflow-hidden">
                         <motion.div
-                          className={`h-full rounded-full bg-gradient-to-r ${cat.gradient}`}
+                          className="h-full bg-white rounded-full"
                           initial={{ width: 0 }}
                           animate={{ width: `${progressPercent}%` }}
                           transition={{ duration: 0.8, delay: 0.3 }}
@@ -1060,16 +1122,21 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
               })}
             </div>
 
+            {/* Stats Summary */}
             <motion.div className="mt-6 text-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
-              <div className="inline-flex items-center gap-4 bg-white/80 rounded-full px-6 py-3 shadow-md">
+              <div className="inline-flex items-center gap-4 bg-white/95 rounded-2xl px-6 py-3 shadow-lg border-4 border-white">
                 <div className="text-center">
-                  <p className="text-lg font-bold text-purple-600">{completedSkills.length}</p>
-                  <p className="text-xs text-gray-400">Skills Done</p>
+                  <p className="text-2xl font-bold text-purple-600" style={{ fontFamily: "'Bubblegum One', cursive" }}>
+                    {completedSkills.length}
+                  </p>
+                  <p className="text-xs text-gray-500 font-semibold">Skills Done</p>
                 </div>
-                <div className="w-px h-8 bg-gray-200" />
+                <div className="w-px h-10 bg-gray-200" />
                 <div className="text-center">
-                  <p className="text-lg font-bold text-green-600">{careerCategories.length}</p>
-                  <p className="text-xs text-gray-400">Categories</p>
+                  <p className="text-2xl font-bold text-green-600" style={{ fontFamily: "'Bubblegum One', cursive" }}>
+                    {careerCategories.length}
+                  </p>
+                  <p className="text-xs text-gray-500 font-semibold">Categories</p>
                 </div>
               </div>
             </motion.div>
@@ -1079,52 +1146,122 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
     );
   }
 
-  // =============================================
-  // SKILL LIST
+    // =============================================
+  // SKILL LIST - REDESIGNED
   // =============================================
   if (view === 'skill-list' && selectedCategory) {
+    const shadowColors: Record<string, string> = {
+      'cooking': '#C2410C',
+      'beauty': '#BE185D',
+      'builder': '#B45309',
+      'engineer': '#1E40AF',
+      'factory': '#374151',
+      'garage': '#B91C1C',
+      'garden': '#047857',
+      'medical': '#0F766E',
+      'art': '#7B2CBF',
+      'coding': '#0F766E',
+      'science': '#6D28D9',
+    };
+    const catShadow = shadowColors[selectedCategory.id] || '#374151';
+
     return (
       <GameBackground variant="game">
         <div className="h-full flex flex-col">
           <Navigation title={`${selectedCategory.emoji} ${selectedCategory.name}`} onBack={goBackOne} stars={progress.stars} />
           <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-8">
+            {/* Category Header Card */}
             <motion.div
-              className={`bg-gradient-to-r ${selectedCategory.gradient} rounded-2xl p-4 mb-4 text-white text-center shadow-lg`}
+              className={`bg-gradient-to-r ${selectedCategory.gradient} rounded-3xl p-5 mb-4 text-white shadow-xl border-4 border-white`}
+              style={{
+                boxShadow: `0 8px 0 ${catShadow}, 0 12px 25px rgba(0,0,0,0.2)`,
+              }}
               initial={{ y: -20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
             >
-              <span className="text-4xl">{selectedCategory.emoji}</span>
-              <h3 className="text-lg font-bold mt-1">{selectedCategory.name}</h3>
-              <p className="text-white/80 text-sm">{selectedCategory.description}</p>
+              <motion.div
+                className="text-6xl md:text-7xl text-center mb-2"
+                animate={{ 
+                  scale: [1, 1.1, 1],
+                  rotate: [0, -5, 5, 0]
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                {selectedCategory.emoji}
+              </motion.div>
+              <h3 
+                className="text-2xl md:text-3xl font-bold mt-2 text-center"
+                style={{ 
+                  fontFamily: "'Bubblegum One', cursive",
+                  textShadow: '2px 2px 0 rgba(0,0,0,0.2)'
+                }}
+              >
+                {selectedCategory.name}
+              </h3>
+              <p className="text-white/90 text-sm md:text-base text-center mt-1">
+                {selectedCategory.description}
+              </p>
+              <div className="text-center mt-3">
+                <span className="bg-white/20 rounded-full px-4 py-1 text-sm font-bold">
+                  {completedSkills.filter((id) => selectedCategory.items.some((s) => s.id === id)).length} / {selectedCategory.items.length} completed
+                </span>
+              </div>
             </motion.div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-w-3xl mx-auto">
+            {/* Skills Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-w-4xl mx-auto">
               {selectedCategory.items.map((skill, i) => {
                 const isCompleted = completedSkills.includes(skill.id);
+                
                 return (
                   <motion.button
                     key={skill.id}
                     onClick={() => handleSkillSelect(skill)}
-                    className={`game-card p-4 text-center relative overflow-hidden ${isCompleted ? 'ring-2 ring-green-300 bg-green-50/50' : ''}`}
+                    className={`bg-white/95 rounded-3xl p-4 text-center relative overflow-hidden shadow-lg border-4 ${
+                      isCompleted 
+                        ? 'border-green-400 bg-green-50/50' 
+                        : 'border-white'
+                    }`}
+                    style={{
+                      boxShadow: isCompleted 
+                        ? '0 6px 0 #047857, 0 8px 20px rgba(0,0,0,0.1)' 
+                        : `0 6px 0 ${catShadow}80, 0 8px 20px rgba(0,0,0,0.1)`,
+                      minHeight: '110px',
+                    }}
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: i * 0.03 }}
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
+                    whileHover={{ scale: 1.05, y: -3 }}
+                    whileTap={{ 
+                      scale: 0.95, 
+                      y: 4,
+                      boxShadow: isCompleted 
+                        ? '0 2px 0 #047857, 0 4px 10px rgba(0,0,0,0.1)' 
+                        : `0 2px 0 ${catShadow}80, 0 4px 10px rgba(0,0,0,0.1)`,
+                    }}
                   >
                     {isCompleted && (
-                      <motion.div className="absolute top-1 right-1 text-green-500 text-sm" initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                        ✅
+                      <motion.div 
+                        className="absolute top-2 right-2 bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg shadow-lg border-2 border-white" 
+                        initial={{ scale: 0, rotate: -180 }} 
+                        animate={{ scale: 1, rotate: 0 }}
+                      >
+                        ✓
                       </motion.div>
                     )}
                     <motion.span
-                      className="text-3xl md:text-4xl block mb-1"
+                      className="text-4xl md:text-5xl block mb-2"
                       animate={isCompleted ? {} : { y: [0, -3, 0] }}
                       transition={{ duration: 2 + i * 0.15, repeat: Infinity }}
                     >
                       {skill.emoji}
                     </motion.span>
-                    <h4 className="font-bold text-gray-800 text-xs md:text-sm leading-tight">{skill.name}</h4>
+                    <h4 
+                      className="font-bold text-gray-800 text-sm md:text-base leading-tight"
+                      style={{ fontFamily: "'Bubblegum One', cursive" }}
+                    >
+                      {skill.name}
+                    </h4>
                   </motion.button>
                 );
               })}
@@ -1134,14 +1271,30 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
       </GameBackground>
     );
   }
+  
 
-  // =============================================
-  // SKILL DETAIL - INTERACTIVE ASSEMBLY!
+   // =============================================
+  // SKILL DETAIL - INTERACTIVE ASSEMBLY - REDESIGNED!
   // =============================================
   if (view === 'skill-detail' && selectedSkill && selectedCategory) {
     const activity = getActivityForSkill(selectedSkill.id);
     const totalNeeded = activity.correctItems.length;
     const progress_percent = (collectedItems.length / totalNeeded) * 100;
+
+    const shadowColors: Record<string, string> = {
+      'cooking': '#C2410C',
+      'beauty': '#BE185D',
+      'builder': '#B45309',
+      'engineer': '#1E40AF',
+      'factory': '#374151',
+      'garage': '#B91C1C',
+      'garden': '#047857',
+      'medical': '#0F766E',
+      'art': '#7B2CBF',
+      'coding': '#0F766E',
+      'science': '#6D28D9',
+    };
+    const catShadow = shadowColors[selectedCategory.id] || '#374151';
 
     return (
       <GameBackground variant="game">
@@ -1157,156 +1310,248 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
           <Celebration show={showCelebration} message={activity.successMessage} stars={3} />
 
           <div className="flex-1 overflow-y-auto px-3 pb-4">
-            {/* Instruction Card */}
-            <motion.div
-              className={`bg-gradient-to-r ${selectedCategory.gradient} rounded-2xl p-4 mb-3 text-white text-center shadow-lg`}
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-            >
+            <div className="max-w-2xl mx-auto">
+              {/* Score/Progress Bar */}
               <motion.div
-                className="text-4xl md:text-5xl mb-2"
-                animate={{ scale: [1, 1.1, 1], rotate: [0, -5, 5, 0] }}
-                transition={{ duration: 2, repeat: Infinity }}
+                className={`bg-gradient-to-r ${selectedCategory.gradient} rounded-2xl p-3 mb-3 text-white shadow-lg border-4 border-white flex items-center justify-between`}
+                initial={{ y: -10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
               >
-                {selectedSkill.emoji}
+                <div className="text-center flex-1">
+                  <p className="text-xs opacity-90">Progress</p>
+                  <p className="text-xl font-bold" style={{ fontFamily: "'Bubblegum One', cursive" }}>
+                    {collectedItems.length}/{totalNeeded}
+                  </p>
+                </div>
+                <div className="w-px h-10 bg-white/30" />
+                <div className="text-center flex-1">
+                  <p className="text-xs opacity-90">Category</p>
+                  <p className="text-2xl font-bold" style={{ fontFamily: "'Bubblegum One', cursive" }}>
+                    {selectedCategory.emoji}
+                  </p>
+                </div>
+                <div className="w-px h-10 bg-white/30" />
+                <div className="text-center flex-1">
+                  <p className="text-xs opacity-90">Stars</p>
+                  <p className="text-xl font-bold flex items-center justify-center gap-1" style={{ fontFamily: "'Bubblegum One', cursive" }}>
+                    ⭐ {progress.stars}
+                  </p>
+                </div>
               </motion.div>
-              <h2 className="text-lg md:text-xl font-bold mb-1" style={{ fontFamily: "'Bubblegum One', cursive" }}>
-                {activity.intro}
-              </h2>
-              <p className="text-white/90 text-sm">Tap items in the right order!</p>
-            </motion.div>
 
-            {/* Collection Area - Shows what user collected */}
-            <motion.div
-              className="bg-white/95 rounded-3xl p-4 mb-3 shadow-lg border-4 border-white"
-              initial={{ y: -10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-            >
-              <p className="text-center text-sm font-bold text-gray-600 mb-2">
-                Your Progress ({collectedItems.length}/{totalNeeded})
-              </p>
-              <div className="flex justify-center items-center gap-2 flex-wrap min-h-[60px]">
-                {activity.correctItems.map((item, i) => (
+              {/* Instruction Card */}
+              <motion.div
+                className={`bg-gradient-to-br ${selectedCategory.gradient} rounded-3xl p-5 mb-3 text-white text-center shadow-xl border-4 border-white`}
+                style={{
+                  boxShadow: `0 6px 0 ${catShadow}, 0 8px 20px rgba(0,0,0,0.15)`,
+                }}
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+              >
+                <motion.div
+                  className="text-6xl md:text-7xl mb-2"
+                  animate={{ scale: [1, 1.15, 1], rotate: [0, -5, 5, 0] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  {selectedSkill.emoji}
+                </motion.div>
+                <h2 
+                  className="text-xl md:text-2xl font-bold mb-1" 
+                  style={{ 
+                    fontFamily: "'Bubblegum One', cursive",
+                    textShadow: '2px 2px 0 rgba(0,0,0,0.2)'
+                  }}
+                >
+                  {activity.intro}
+                </h2>
+                <p className="text-white/90 text-sm md:text-base">Tap items in the right order! 👆</p>
+              </motion.div>
+
+              {/* Collection Area */}
+              <motion.div
+                className="bg-white/95 rounded-3xl p-4 md:p-5 mb-3 shadow-xl border-4 border-white"
+                initial={{ y: -10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+              >
+                <p 
+                  className="text-center text-base md:text-lg font-bold text-gray-700 mb-3"
+                  style={{ fontFamily: "'Bubblegum One', cursive" }}
+                >
+                  🎯 Your Progress
+                </p>
+                <div className="flex justify-center items-center gap-2 flex-wrap min-h-[70px]">
+                  {activity.correctItems.map((item, i) => (
+                    <motion.div
+                      key={i}
+                      className={`rounded-2xl flex items-center justify-center text-4xl md:text-5xl border-4 shadow-lg ${
+                        i < collectedItems.length 
+                          ? 'bg-gradient-to-br from-green-400 to-emerald-500 border-white' 
+                          : 'bg-gray-100 border-gray-300 border-dashed'
+                      }`}
+                      style={{
+                        width: '60px',
+                        height: '65px',
+                        boxShadow: i < collectedItems.length 
+                          ? '0 4px 0 #047857' 
+                          : 'inset 0 2px 4px rgba(0,0,0,0.05)'
+                      }}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: i * 0.05 }}
+                    >
+                      {i < collectedItems.length ? (
+                        <motion.span
+                          initial={{ scale: 0, rotate: -180 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ type: 'spring' }}
+                        >
+                          {collectedItems[i]}
+                        </motion.span>
+                      ) : (
+                        <span className="text-gray-400 text-3xl">?</span>
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+                
+                {collectedItems.length === totalNeeded && (
                   <motion.div
-                    key={i}
-                    className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-3xl md:text-4xl border-4 ${
-                      i < collectedItems.length 
-                        ? 'bg-green-100 border-green-400' 
-                        : 'bg-gray-100 border-gray-300 border-dashed'
-                    }`}
+                    className="text-center mt-4 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl p-4 border-4 border-yellow-300"
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    transition={{ delay: i * 0.05 }}
                   >
-                    {i < collectedItems.length ? (
-                      <motion.span
-                        initial={{ scale: 0, rotate: -180 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        transition={{ type: 'spring' }}
-                      >
-                        {collectedItems[i]}
-                      </motion.span>
-                    ) : (
-                      <span className="text-gray-400 text-2xl">?</span>
-                    )}
-                    {i < activity.correctItems.length - 1 && i < collectedItems.length && (
-                      <span className="text-green-400 ml-1">→</span>
-                    )}
+                    <p className="text-3xl md:text-4xl">
+                      ✨ → {activity.finalResult} → ✨
+                    </p>
+                    <p 
+                      className="text-yellow-700 font-bold text-lg mt-2"
+                      style={{ fontFamily: "'Bubblegum One', cursive" }}
+                    >
+                      {activity.successMessage}
+                    </p>
                   </motion.div>
-                ))}
-              </div>
-              
-              {collectedItems.length === totalNeeded && (
-                <motion.div
-                  className="text-center mt-3"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
+                )}
+              </motion.div>
+
+              {/* Instruction */}
+              <div className="mb-3 text-center">
+                <p 
+                  className="text-base md:text-lg font-bold text-gray-700 bg-white/95 rounded-full px-6 py-3 inline-block shadow-lg border-4 border-white"
+                  style={{ fontFamily: "'Bubblegum One', cursive" }}
                 >
-                  <p className="text-2xl">✨ → {activity.finalResult} → ✨</p>
-                </motion.div>
+                  👆 Tap the correct items!
+                </p>
+              </div>
+
+              {/* Available Items Grid - BIGGER */}
+              <div className="grid grid-cols-4 md:grid-cols-5 gap-2 md:gap-3">
+                {shuffledItems.map((item, i) => {
+                  const isCollected = collectedItems.filter(x => x === item).length >= 
+                    activity.correctItems.filter(x => x === item).length;
+                  const isWrong = wrongTaps.includes(i);
+                  
+                  return (
+                    <motion.button
+                      key={`${item}-${i}`}
+                      onClick={() => !isCollected && handleItemTap(item, i)}
+                      disabled={isCollected}
+                      className={`aspect-square rounded-2xl flex items-center justify-center text-4xl md:text-5xl shadow-lg border-4 transition-all ${
+                        isWrong 
+                          ? 'bg-red-200 border-red-500 scale-95' 
+                          : isCollected 
+                            ? 'bg-gray-100 border-gray-300 opacity-40' 
+                            : 'bg-white border-white hover:border-purple-300'
+                      }`}
+                      style={{
+                        boxShadow: isWrong 
+                          ? '0 4px 0 #B91C1C' 
+                          : isCollected 
+                            ? 'none' 
+                            : '0 6px 0 rgba(0,0,0,0.15)',
+                        minHeight: '75px',
+                      }}
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ 
+                        scale: 1, 
+                        opacity: 1,
+                        x: isWrong ? [-5, 5, -5, 5, 0] : 0
+                      }}
+                      transition={{ 
+                        delay: i * 0.02,
+                        x: { duration: 0.3 }
+                      }}
+                      whileHover={!isCollected ? { scale: 1.1, y: -3 } : {}}
+                      whileTap={!isCollected ? { 
+                        scale: 0.9, 
+                        y: 3,
+                        boxShadow: '0 2px 0 rgba(0,0,0,0.15)'
+                      } : {}}
+                    >
+                      {isCollected ? (
+                        <motion.span 
+                          className="text-3xl text-green-500"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1, rotate: 360 }}
+                        >
+                          ✓
+                        </motion.span>
+                      ) : item}
+                    </motion.button>
+                  );
+                })}
+              </div>
+
+              {/* Reset Button */}
+              {collectedItems.length > 0 && collectedItems.length < totalNeeded && (
+                <motion.button
+                  onClick={handleReset}
+                  className="mt-4 mx-auto block bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-2xl px-6 py-4 font-bold shadow-lg border-4 border-white"
+                  style={{
+                    boxShadow: '0 6px 0 #C2410C, 0 8px 15px rgba(0,0,0,0.15)',
+                    fontFamily: "'Bubblegum One', cursive",
+                    fontSize: '1.1rem',
+                    textShadow: '2px 2px 0 rgba(0,0,0,0.2)'
+                  }}
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ 
+                    scale: 0.95, 
+                    y: 3,
+                    boxShadow: '0 2px 0 #C2410C, 0 4px 10px rgba(0,0,0,0.15)'
+                  }}
+                >
+                  🔄 Try Again
+                </motion.button>
               )}
-            </motion.div>
 
-            {/* Available Items to Tap */}
-            <div className="mb-3">
-              <p className="text-center text-sm font-bold text-gray-700 mb-2 bg-white/80 rounded-full px-4 py-1 mx-auto inline-block">
-                👆 Tap the correct items!
-              </p>
-            </div>
-
-            <div className="grid grid-cols-4 md:grid-cols-5 gap-2 md:gap-3 max-w-2xl mx-auto">
-              {shuffledItems.map((item, i) => {
-                const isCollected = collectedItems.filter(x => x === item).length >= 
-                  activity.correctItems.filter(x => x === item).length;
-                const isWrong = wrongTaps.includes(i);
-                
-                return (
-                  <motion.button
-                    key={`${item}-${i}`}
-                    onClick={() => !isCollected && handleItemTap(item, i)}
-                    disabled={isCollected}
-                    className={`aspect-square rounded-2xl flex items-center justify-center text-4xl md:text-5xl shadow-lg border-4 transition-all ${
-                      isWrong 
-                        ? 'bg-red-200 border-red-500 scale-95' 
-                        : isCollected 
-                          ? 'bg-gray-100 border-gray-300 opacity-40' 
-                          : 'bg-white border-white hover:border-purple-300'
-                    }`}
-                    style={{
-                      boxShadow: isWrong 
-                        ? '0 4px 0 #B91C1C' 
-                        : isCollected 
-                          ? 'none' 
-                          : '0 6px 0 rgba(0,0,0,0.15)',
-                      minHeight: '65px',
-                    }}
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ 
-                      scale: 1, 
-                      opacity: 1,
-                      x: isWrong ? [-5, 5, -5, 5, 0] : 0
-                    }}
-                    transition={{ 
-                      delay: i * 0.02,
-                      x: { duration: 0.3 }
-                    }}
-                    whileHover={!isCollected ? { scale: 1.1, y: -3 } : {}}
-                    whileTap={!isCollected ? { scale: 0.9, y: 3 } : {}}
-                  >
-                    {isCollected ? '✓' : item}
-                  </motion.button>
-                );
-              })}
-            </div>
-
-            {/* Reset Button */}
-            {collectedItems.length > 0 && collectedItems.length < totalNeeded && (
-              <motion.button
-                onClick={handleReset}
-                className="mt-4 mx-auto block bg-orange-400 text-white rounded-2xl px-6 py-3 font-bold shadow-lg border-4 border-white"
+              {/* Fun Fact */}
+              <motion.div
+                className="mt-4 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl p-4 border-4 border-yellow-300 shadow-lg max-w-md mx-auto"
                 style={{
-                  boxShadow: '0 4px 0 #C2410C',
-                  fontFamily: "'Bubblegum One', cursive"
+                  boxShadow: '0 4px 0 #F59E0B, 0 6px 15px rgba(0,0,0,0.1)',
                 }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                whileTap={{ scale: 0.95 }}
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
               >
-                🔄 Try Again
-              </motion.button>
-            )}
-
-            {/* Fun Fact */}
-            <motion.div
-              className="mt-4 bg-yellow-50 rounded-2xl p-3 border-2 border-yellow-200 max-w-md mx-auto"
-              initial={{ y: 10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <p className="text-yellow-700 text-sm font-medium text-center">
-                💡 {selectedSkill.funFact}
-              </p>
-            </motion.div>
+                <div className="flex items-start gap-2">
+                  <motion.span 
+                    className="text-2xl md:text-3xl"
+                    animate={{ rotate: [0, 15, -15, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    💡
+                  </motion.span>
+                  <p 
+                    className="text-yellow-800 text-sm md:text-base font-bold flex-1"
+                    style={{ fontFamily: "'Bubblegum One', cursive" }}
+                  >
+                    {selectedSkill.funFact}
+                  </p>
+                </div>
+              </motion.div>
+            </div>
           </div>
         </div>
       </GameBackground>
