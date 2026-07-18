@@ -62,17 +62,20 @@ const Navigation: React.FC<NavigationProps> = ({ title, onBack, stars, coins, sh
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.1, type: 'spring' }}
       >
-        <motion.h1
-          className="inline-block bg-gradient-to-r from-white to-white/95 backdrop-blur-sm rounded-2xl px-4 py-3 md:px-8 md:py-4 shadow-lg border-4 border-white"
-          style={{ 
-            fontFamily: "'Bubblegum One', cursive",
-            fontSize: 'clamp(1.25rem, 4vw, 2rem)',
-            color: '#7B2CBF',
-            textShadow: '2px 2px 0 rgba(0,0,0,0.05)',
-            boxShadow: '0 6px 0 rgba(139, 92, 246, 0.3), 0 8px 20px rgba(0,0,0,0.15)',
-            minHeight: '55px',
-            lineHeight: '1.2'
-          }}
+       <motion.h1
+  className="inline-block bg-gradient-to-r from-white to-white/95 backdrop-blur-sm rounded-2xl px-5 py-3 md:px-8 md:py-4 shadow-lg border-4 border-white"
+  style={{ 
+    fontFamily: "'Fredoka', 'Comic Sans MS', 'Arial Black', sans-serif",
+    fontSize: 'clamp(1.5rem, 5vw, 2.25rem)',
+    color: '#7B2CBF',
+    fontWeight: 900,
+    letterSpacing: '1px',
+    textShadow: '3px 3px 0 rgba(139, 92, 246, 0.25), -1px -1px 0 rgba(139, 92, 246, 0.1)',
+    boxShadow: '0 6px 0 rgba(139, 92, 246, 0.3), 0 8px 20px rgba(0,0,0,0.15)',
+    minHeight: '55px',
+    lineHeight: '1.2',
+    WebkitTextStroke: '1px rgba(139, 92, 246, 0.3)',
+  }}
           animate={{
             y: [0, -2, 0]
           }}
