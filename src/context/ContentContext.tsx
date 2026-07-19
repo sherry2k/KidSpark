@@ -38,7 +38,7 @@ interface ContentState {
   colors: LearnItem[];
   vehicles: LearnItem[];
   birds: LearnItem[];
-  bodyparts: LearnItem[];
+  bodyParts: LearnItem[];
   alphabet: LearnItem[];
   numbers: LearnItem[];
   quizQuestions: QuizQuestion[];
