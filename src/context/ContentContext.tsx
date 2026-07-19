@@ -14,7 +14,7 @@ import {
   colorsData,
   vehiclesData,
   birdsData,
-  bodypartsData,
+  bodyPartsData,
   alphabetData,
   numbersData,
   quizQuestions as localQuizQuestions,
