@@ -14,7 +14,7 @@ import {
   colorsData,
   vehiclesData,
   birdsData,
-  bodyPartsData,
+  bodypartsData,
   alphabetData,
   numbersData,
   quizQuestions as localQuizQuestions,
@@ -38,7 +38,7 @@ interface ContentState {
   colors: LearnItem[];
   vehicles: LearnItem[];
   birds: LearnItem[];
-  bodyParts: LearnItem[];
+  bodyparts: LearnItem[];
   alphabet: LearnItem[];
   numbers: LearnItem[];
   quizQuestions: QuizQuestion[];
