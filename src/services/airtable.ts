@@ -145,11 +145,13 @@ export async function fetchBodyParts(): Promise<AirtableLearnItem[]> {
 }
 
 export async function fetchAlphabet(): Promise<AirtableLearnItem[]> {
-  return fetchAllRecords<AirtableLearnItem>(AIRTABLE_CONFIG.TABLES.ALPHABET);
+  const records = await fetchAllRecords<AirtableLearnItem>(AIRTABLE_CONFIG.TABLES.ALPHABET);
+  return records.sort((a, b) => a.id.localeCompare(b.id));
 }
 
 export async function fetchNumbers(): Promise<AirtableLearnItem[]> {
-  return fetchAllRecords<AirtableLearnItem>(AIRTABLE_CONFIG.TABLES.NUMBERS);
+  const records = await fetchAllRecords<AirtableLearnItem>(AIRTABLE_CONFIG.TABLES.NUMBERS);
+  return records.sort((a, b) => parseInt(a.name) - parseInt(b.name));
 }
 
 export async function fetchQuizQuestions(): Promise<AirtableQuizQuestion[]> {
