@@ -10,11 +10,19 @@ interface CreativeStudioProps {
   onComplete: (stars: number) => void;
 }
 
-type Tool = 'brush' | 'pencil' | 'marker' | 'eraser' | 'fill' | 'shape' | 'sticker';
+type Tool = 'brush' | 'pencil' | 'marker' | 'eraser' | 'fill' | 'shape' | 'sticker' | 'move';
 type Shape = 'circle' | 'rectangle' | 'triangle' | 'line' | 'arrow' | 'star';
 
-interface DrawingState {
-  imageData: ImageData | null;
+interface PlacedItem {
+  id: string;
+  type: 'sticker' | 'shape';
+  x: number;
+  y: number;
+  size: number;
+  emoji?: string;
+  shape?: Shape;
+  color?: string;
+  brushSize?: number;
 }
 
 const COLORS = [
@@ -47,7 +55,7 @@ const SHAPE_SIZES = [
 ];
 
 const STICKERS = [
-  '⭐','☺️', '❤️', '🌟', '✨', '🎈', '🎨', '🎭', '🎪',
+  '⭐', '❤️', '🌟', '✨', '🎈', '🎨', '🎭', '🎪',
   '🐶', '🐱', '🐰', '🦊', '🦁', '🐼', '🐨', '🦄',
   '🌸', '🌺', '🌻', '🌷', '🌹', '🌼', '🌵', '🌳',
   '🚗', '✈️', '🚀', '🎯', '⚽', '🏆', '👑', '💎',
@@ -62,6 +70,7 @@ const TOOLS: Array<{ id: Tool; icon: string; label: string; gradient: string; sh
   { id: 'fill', icon: '🪣', label: 'Fill', gradient: 'from-green-500 to-emerald-500', shadow: '#047857' },
   { id: 'shape', icon: '🔷', label: 'Shape', gradient: 'from-indigo-500 to-purple-500', shadow: '#4338CA' },
   { id: 'sticker', icon: '⭐', label: 'Sticker', gradient: 'from-yellow-400 to-orange-500', shadow: '#D97706' },
+  { id: 'move', icon: '👆', label: 'Move', gradient: 'from-teal-500 to-cyan-600', shadow: '#0F766E' },
 ];
 
 const SHAPES: Array<{ id: Shape; icon: string; label: string }> = [
@@ -80,19 +89,23 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
   const [brushSize, setBrushSize] = useState(8);
   const [stickerSize, setStickerSize] = useState(80);
   const [shapeSize, setShapeSize] = useState(80);
-  const [opacity, setOpacity] = useState(1);
+  const [opacity] = useState(1);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [drawingHistory, setDrawingHistory] = useState<DrawingState[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
   const [showStickers, setShowStickers] = useState(false);
   const [showShapes, setShowShapes] = useState(false);
   const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
   const [selectedShape, setSelectedShape] = useState<Shape | null>(null);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  
+  // NEW: Placed items tracking
+  const [placedItems, setPlacedItems] = useState<PlacedItem[]>([]);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [isDraggingItem, setIsDraggingItem] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [previewPos, setPreviewPos] = useState<{ x: number; y: number } | null>(null);
-  const [isDraggingItem, setIsDraggingItem] = useState(false); // NEW: Track dragging state
+  
   const lastPos = useRef<{ x: number; y: number } | null>(null);
-  const canvasPos = useRef<{ x: number; y: number } | null>(null); // NEW: Store canvas position
+  const canvasPos = useRef<{ x: number; y: number } | null>(null);
 
   // Initialize canvas
   const initCanvas = useCallback(() => {
@@ -110,8 +123,6 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
 
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    saveToHistory();
   }, []);
 
   useEffect(() => {
@@ -121,26 +132,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     return () => window.removeEventListener('resize', handleResize);
   }, [initCanvas]);
 
-  // Save to history
-  const saveToHistory = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const newHistory = drawingHistory.slice(0, historyIndex + 1);
-    newHistory.push({ imageData });
-    
-    if (newHistory.length > 30) {
-      newHistory.shift();
-    }
-    
-    setDrawingHistory(newHistory);
-    setHistoryIndex(newHistory.length - 1);
-  };
-
-  // Get position on canvas (for drawing)
+  // Get position on canvas
   const getPos = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
@@ -160,7 +152,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     };
   };
 
-  // Get display position for preview
+  // Get display position for overlay
   const getDisplayPos = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
@@ -178,17 +170,45 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     };
   };
 
+  // Convert canvas position to display position
+  const canvasToDisplay = (canvasX: number, canvasY: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: canvasX * (rect.width / canvas.width),
+      y: canvasY * (rect.height / canvas.height),
+    };
+  };
+
+  // Convert display position to canvas position
+  const displayToCanvas = (displayX: number, displayY: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: displayX * (canvas.width / rect.width),
+      y: displayY * (canvas.height / rect.height),
+    };
+  };
+
   // Drawing handlers
   const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     const pos = getPos(e);
     const displayPos = getDisplayPos(e);
     
+    // Move tool - don't do anything on canvas (items handle their own drag)
+    if (currentTool === 'move') {
+      // Deselect if clicking empty area
+      setSelectedItemId(null);
+      return;
+    }
+
     // Sticker mode
     if (currentTool === 'sticker' && selectedSticker) {
       canvasPos.current = pos;
       setPreviewPos(displayPos);
-      setIsDraggingItem(true);
       return;
     }
 
@@ -196,7 +216,6 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     if (currentTool === 'shape' && selectedShape) {
       canvasPos.current = pos;
       setPreviewPos(displayPos);
-      setIsDraggingItem(true);
       return;
     }
 
@@ -226,8 +245,8 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     const pos = getPos(e);
     const displayPos = getDisplayPos(e);
     
-    // Update preview position when dragging sticker or shape
-    if (isDraggingItem && (currentTool === 'sticker' || currentTool === 'shape')) {
+    // Update preview when placing sticker/shape
+    if (canvasPos.current && (currentTool === 'sticker' || currentTool === 'shape')) {
       canvasPos.current = pos;
       setPreviewPos(displayPos);
       return;
@@ -265,20 +284,36 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
   const stopDrawing = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     
-    // Place sticker at final position
-    if (isDraggingItem && currentTool === 'sticker' && selectedSticker && canvasPos.current) {
-      addSticker(canvasPos.current.x, canvasPos.current.y);
+    // Place sticker at final position (as movable overlay)
+    if (currentTool === 'sticker' && selectedSticker && canvasPos.current) {
+      const newItem: PlacedItem = {
+        id: `sticker-${Date.now()}-${Math.random()}`,
+        type: 'sticker',
+        x: canvasPos.current.x,
+        y: canvasPos.current.y,
+        size: stickerSize,
+        emoji: selectedSticker,
+      };
+      setPlacedItems([...placedItems, newItem]);
       setPreviewPos(null);
-      setIsDraggingItem(false);
       canvasPos.current = null;
       return;
     }
     
-    // Place shape at final position
-    if (isDraggingItem && currentTool === 'shape' && selectedShape && canvasPos.current) {
-      drawShape(selectedShape, canvasPos.current.x, canvasPos.current.y);
+    // Place shape at final position (as movable overlay)
+    if (currentTool === 'shape' && selectedShape && canvasPos.current) {
+      const newItem: PlacedItem = {
+        id: `shape-${Date.now()}-${Math.random()}`,
+        type: 'shape',
+        x: canvasPos.current.x,
+        y: canvasPos.current.y,
+        size: shapeSize,
+        shape: selectedShape,
+        color: currentColor,
+        brushSize: brushSize,
+      };
+      setPlacedItems([...placedItems, newItem]);
       setPreviewPos(null);
-      setIsDraggingItem(false);
       canvasPos.current = null;
       return;
     }
@@ -286,23 +321,58 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     if (isDrawing) {
       setIsDrawing(false);
       lastPos.current = null;
-      saveToHistory();
     }
   };
 
-  // Add sticker to canvas
-  const addSticker = (x: number, y: number) => {
-    if (!selectedSticker) return;
-    const ctx = canvasRef.current?.getContext('2d');
-    if (!ctx) return;
-
-    ctx.globalAlpha = 1;
-    ctx.font = `${stickerSize}px serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(selectedSticker, x, y);
+  // Handle item drag (move tool)
+  const handleItemMouseDown = (e: React.MouseEvent | React.TouchEvent, itemId: string) => {
+    if (currentTool !== 'move') return;
+    e.stopPropagation();
+    e.preventDefault();
     
-    saveToHistory();
+    setSelectedItemId(itemId);
+    setIsDraggingItem(true);
+    
+    const item = placedItems.find(i => i.id === itemId);
+    if (!item) return;
+    
+    const displayPos = getDisplayPos(e);
+    const itemDisplayPos = canvasToDisplay(item.x, item.y);
+    
+    setDragOffset({
+      x: displayPos.x - itemDisplayPos.x,
+      y: displayPos.y - itemDisplayPos.y,
+    });
+  };
+
+  const handleItemMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isDraggingItem || !selectedItemId) return;
+    e.preventDefault();
+    
+    const displayPos = getDisplayPos(e);
+    const canvasPos = displayToCanvas(
+      displayPos.x - dragOffset.x,
+      displayPos.y - dragOffset.y
+    );
+    
+    setPlacedItems(items =>
+      items.map(item =>
+        item.id === selectedItemId
+          ? { ...item, x: canvasPos.x, y: canvasPos.y }
+          : item
+      )
+    );
+  };
+
+  const handleItemMouseUp = () => {
+    setIsDraggingItem(false);
+  };
+
+  // Delete selected item
+  const handleDeleteSelected = () => {
+    if (!selectedItemId) return;
+    setPlacedItems(items => items.filter(item => item.id !== selectedItemId));
+    setSelectedItemId(null);
   };
 
   // Fill area
@@ -312,183 +382,256 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
 
     ctx.fillStyle = currentColor;
     ctx.fillRect(0, 0, canvasRef.current!.width, canvasRef.current!.height);
-    
-    saveToHistory();
   };
 
-  // Draw shape - ONLY OUTLINE (no fill)
-  const drawShape = (shape: Shape, x: number, y: number) => {
-    const ctx = canvasRef.current?.getContext('2d');
-    if (!ctx) return;
-
-    const size = shapeSize;
-    ctx.globalAlpha = 1;
-
-    switch (shape) {
-      case 'circle':
-        // White outline (background)
-        ctx.beginPath();
-        ctx.arc(x, y, size, 0, Math.PI * 2);
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = brushSize + 6;
-        ctx.stroke();
-        // Main color outline
-        ctx.beginPath();
-        ctx.arc(x, y, size, 0, Math.PI * 2);
-        ctx.strokeStyle = currentColor;
-        ctx.lineWidth = brushSize;
-        ctx.stroke();
-        break;
-      
-      case 'rectangle':
-        // White outline
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = brushSize + 6;
-        ctx.strokeRect(x - size, y - size / 2, size * 2, size);
-        // Main color outline
-        ctx.strokeStyle = currentColor;
-        ctx.lineWidth = brushSize;
-        ctx.strokeRect(x - size, y - size / 2, size * 2, size);
-        break;
-      
-      case 'triangle':
-        // White outline
-        ctx.beginPath();
-        ctx.moveTo(x, y - size);
-        ctx.lineTo(x - size, y + size);
-        ctx.lineTo(x + size, y + size);
-        ctx.closePath();
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = brushSize + 6;
-        ctx.lineJoin = 'round';
-        ctx.stroke();
-        // Main color outline
-        ctx.beginPath();
-        ctx.moveTo(x, y - size);
-        ctx.lineTo(x - size, y + size);
-        ctx.lineTo(x + size, y + size);
-        ctx.closePath();
-        ctx.strokeStyle = currentColor;
-        ctx.lineWidth = brushSize;
-        ctx.stroke();
-        break;
-      
-      case 'line':
-        // White outline
-        ctx.beginPath();
-        ctx.moveTo(x - size, y);
-        ctx.lineTo(x + size, y);
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = brushSize + 6;
-        ctx.lineCap = 'round';
-        ctx.stroke();
-        // Main color line
-        ctx.beginPath();
-        ctx.moveTo(x - size, y);
-        ctx.lineTo(x + size, y);
-        ctx.strokeStyle = currentColor;
-        ctx.lineWidth = brushSize;
-        ctx.stroke();
-        break;
-      
-      case 'arrow':
-        // White outline for arrow
-        ctx.beginPath();
-        ctx.moveTo(x - size, y);
-        ctx.lineTo(x + size, y);
-        ctx.moveTo(x + size, y);
-        ctx.lineTo(x + size - 20, y - 20);
-        ctx.moveTo(x + size, y);
-        ctx.lineTo(x + size - 20, y + 20);
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = brushSize + 6;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.stroke();
-        // Main color arrow
-        ctx.beginPath();
-        ctx.moveTo(x - size, y);
-        ctx.lineTo(x + size, y);
-        ctx.moveTo(x + size, y);
-        ctx.lineTo(x + size - 20, y - 20);
-        ctx.moveTo(x + size, y);
-        ctx.lineTo(x + size - 20, y + 20);
-        ctx.strokeStyle = currentColor;
-        ctx.lineWidth = brushSize;
-        ctx.stroke();
-        break;
-      
-      case 'star':
-        // White outline
-        ctx.beginPath();
-        for (let i = 0; i < 5; i++) {
-          const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
-          const px = x + size * Math.cos(angle);
-          const py = y + size * Math.sin(angle);
-          if (i === 0) ctx.moveTo(px, py);
-          else ctx.lineTo(px, py);
-        }
-        ctx.closePath();
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = brushSize + 6;
-        ctx.lineJoin = 'round';
-        ctx.stroke();
-        // Main color outline
-        ctx.beginPath();
-        for (let i = 0; i < 5; i++) {
-          const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
-          const px = x + size * Math.cos(angle);
-          const py = y + size * Math.sin(angle);
-          if (i === 0) ctx.moveTo(px, py);
-          else ctx.lineTo(px, py);
-        }
-        ctx.closePath();
-        ctx.strokeStyle = currentColor;
-        ctx.lineWidth = brushSize;
-        ctx.stroke();
-        break;
-    }
+  // Render shape SVG (for both preview and permanent overlay)
+  const renderShapeSVG = (shape: Shape, size: number, color: string, strokeWidth: number, isPreview = false) => {
+    const opacity = isPreview ? 0.7 : 1;
+    const padding = 20;
+    const totalSize = size * 2 + padding * 2;
     
-    saveToHistory();
+    return (
+      <svg
+        width={totalSize}
+        height={totalSize}
+        style={{ 
+          opacity, 
+          overflow: 'visible',
+          display: 'block',
+          pointerEvents: 'none'
+        }}
+      >
+        <g transform={`translate(${totalSize / 2}, ${totalSize / 2})`}>
+          {shape === 'circle' && (
+            <>
+              <circle cx="0" cy="0" r={size / 2} stroke="white" strokeWidth={strokeWidth + 6} fill="none" />
+              <circle cx="0" cy="0" r={size / 2} stroke={color} strokeWidth={strokeWidth} fill="none" />
+            </>
+          )}
+          {shape === 'rectangle' && (
+            <>
+              <rect x={-size / 2} y={-size / 4} width={size} height={size / 2} stroke="white" strokeWidth={strokeWidth + 6} fill="none" />
+              <rect x={-size / 2} y={-size / 4} width={size} height={size / 2} stroke={color} strokeWidth={strokeWidth} fill="none" />
+            </>
+          )}
+          {shape === 'triangle' && (
+            <>
+              <polygon 
+                points={`0,${-size / 2} ${-size / 2},${size / 2} ${size / 2},${size / 2}`}
+                stroke="white" strokeWidth={strokeWidth + 6} fill="none" strokeLinejoin="round"
+              />
+              <polygon 
+                points={`0,${-size / 2} ${-size / 2},${size / 2} ${size / 2},${size / 2}`}
+                stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinejoin="round"
+              />
+            </>
+          )}
+          {shape === 'star' && (
+            <>
+              <polygon 
+                points={Array.from({length: 5}, (_, i) => {
+                  const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+                  return `${(size / 2) * Math.cos(angle)},${(size / 2) * Math.sin(angle)}`;
+                }).join(' ')}
+                stroke="white" strokeWidth={strokeWidth + 6} fill="none" strokeLinejoin="round"
+              />
+              <polygon 
+                points={Array.from({length: 5}, (_, i) => {
+                  const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+                  return `${(size / 2) * Math.cos(angle)},${(size / 2) * Math.sin(angle)}`;
+                }).join(' ')}
+                stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinejoin="round"
+              />
+            </>
+          )}
+          {shape === 'line' && (
+            <>
+              <line x1={-size / 2} y1="0" x2={size / 2} y2="0" stroke="white" strokeWidth={strokeWidth + 6} strokeLinecap="round" />
+              <line x1={-size / 2} y1="0" x2={size / 2} y2="0" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+            </>
+          )}
+          {shape === 'arrow' && (
+            <>
+              <g stroke="white" strokeWidth={strokeWidth + 6} strokeLinecap="round" strokeLinejoin="round" fill="none">
+                <line x1={-size / 2} y1="0" x2={size / 2} y2="0" />
+                <line x1={size / 2} y1="0" x2={size / 2 - 15} y2="-15" />
+                <line x1={size / 2} y1="0" x2={size / 2 - 15} y2="15" />
+              </g>
+              <g stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" fill="none">
+                <line x1={-size / 2} y1="0" x2={size / 2} y2="0" />
+                <line x1={size / 2} y1="0" x2={size / 2 - 15} y2="-15" />
+                <line x1={size / 2} y1="0" x2={size / 2 - 15} y2="15" />
+              </g>
+            </>
+          )}
+        </g>
+      </svg>
+    );
   };
 
-  // Undo
+  // Undo - remove last placed item
   const handleUndo = () => {
-    if (historyIndex > 0) {
-      const newIndex = historyIndex - 1;
-      setHistoryIndex(newIndex);
-      const ctx = canvasRef.current?.getContext('2d');
-      if (ctx && drawingHistory[newIndex]?.imageData) {
-        ctx.putImageData(drawingHistory[newIndex].imageData!, 0, 0);
-      }
+    if (placedItems.length > 0) {
+      setPlacedItems(items => items.slice(0, -1));
+      setSelectedItemId(null);
     }
   };
 
-  // Redo
-  const handleRedo = () => {
-    if (historyIndex < drawingHistory.length - 1) {
-      const newIndex = historyIndex + 1;
-      setHistoryIndex(newIndex);
-      const ctx = canvasRef.current?.getContext('2d');
-      if (ctx && drawingHistory[newIndex]?.imageData) {
-        ctx.putImageData(drawingHistory[newIndex].imageData!, 0, 0);
-      }
-    }
-  };
-
-  // Clear canvas
+  // Clear canvas and all items
   const handleClear = () => {
     if (confirm('Clear the drawing? 🎨')) {
       initCanvas();
+      setPlacedItems([]);
+      setSelectedItemId(null);
+    }
+  };
+
+  // Merge canvas with items and save
+  const mergeAndSave = async (): Promise<string> => {
+    const canvas = canvasRef.current;
+    if (!canvas) return '';
+
+    // Create a new canvas to combine everything
+    const mergedCanvas = document.createElement('canvas');
+    mergedCanvas.width = canvas.width;
+    mergedCanvas.height = canvas.height;
+    const mergedCtx = mergedCanvas.getContext('2d');
+    if (!mergedCtx) return '';
+
+    // Draw the original canvas
+    mergedCtx.drawImage(canvas, 0, 0);
+
+    // Draw all placed items
+    for (const item of placedItems) {
+      if (item.type === 'sticker' && item.emoji) {
+        mergedCtx.font = `${item.size}px serif`;
+        mergedCtx.textAlign = 'center';
+        mergedCtx.textBaseline = 'middle';
+        mergedCtx.fillText(item.emoji, item.x, item.y);
+      } else if (item.type === 'shape' && item.shape && item.color && item.brushSize) {
+        drawShapeToContext(mergedCtx, item.shape, item.x, item.y, item.size, item.color, item.brushSize);
+      }
+    }
+
+    return mergedCanvas.toDataURL('image/png');
+  };
+
+  // Draw shape to any context (for merging)
+  const drawShapeToContext = (ctx: CanvasRenderingContext2D, shape: Shape, x: number, y: number, size: number, color: string, strokeWidth: number) => {
+    switch (shape) {
+      case 'circle':
+        ctx.beginPath();
+        ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = strokeWidth + 6;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = strokeWidth;
+        ctx.stroke();
+        break;
+      case 'rectangle':
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = strokeWidth + 6;
+        ctx.strokeRect(x - size / 2, y - size / 4, size, size / 2);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = strokeWidth;
+        ctx.strokeRect(x - size / 2, y - size / 4, size, size / 2);
+        break;
+      case 'triangle':
+        ctx.beginPath();
+        ctx.moveTo(x, y - size / 2);
+        ctx.lineTo(x - size / 2, y + size / 2);
+        ctx.lineTo(x + size / 2, y + size / 2);
+        ctx.closePath();
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = strokeWidth + 6;
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y - size / 2);
+        ctx.lineTo(x - size / 2, y + size / 2);
+        ctx.lineTo(x + size / 2, y + size / 2);
+        ctx.closePath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = strokeWidth;
+        ctx.stroke();
+        break;
+      case 'line':
+        ctx.beginPath();
+        ctx.moveTo(x - size / 2, y);
+        ctx.lineTo(x + size / 2, y);
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = strokeWidth + 6;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x - size / 2, y);
+        ctx.lineTo(x + size / 2, y);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = strokeWidth;
+        ctx.stroke();
+        break;
+      case 'arrow':
+        ctx.beginPath();
+        ctx.moveTo(x - size / 2, y);
+        ctx.lineTo(x + size / 2, y);
+        ctx.moveTo(x + size / 2, y);
+        ctx.lineTo(x + size / 2 - 15, y - 15);
+        ctx.moveTo(x + size / 2, y);
+        ctx.lineTo(x + size / 2 - 15, y + 15);
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = strokeWidth + 6;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x - size / 2, y);
+        ctx.lineTo(x + size / 2, y);
+        ctx.moveTo(x + size / 2, y);
+        ctx.lineTo(x + size / 2 - 15, y - 15);
+        ctx.moveTo(x + size / 2, y);
+        ctx.lineTo(x + size / 2 - 15, y + 15);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = strokeWidth;
+        ctx.stroke();
+        break;
+      case 'star':
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+          const px = x + (size / 2) * Math.cos(angle);
+          const py = y + (size / 2) * Math.sin(angle);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = strokeWidth + 6;
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+          const px = x + (size / 2) * Math.cos(angle);
+          const py = y + (size / 2) * Math.sin(angle);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = strokeWidth;
+        ctx.stroke();
+        break;
     }
   };
 
   // Save drawing
-  const handleSave = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const handleSave = async () => {
+    const dataUrl = await mergeAndSave();
+    if (!dataUrl) return;
 
-    const dataUrl = canvas.toDataURL('image/png');
     const timestamp = new Date().toISOString();
     const drawings = JSON.parse(localStorage.getItem('kidspark_drawings') || '[]');
     drawings.push({ id: timestamp, image: dataUrl, name: `Drawing ${drawings.length + 1}` });
@@ -500,122 +643,17 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
   };
 
   // Export as PNG
-  const handleExport = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const handleExport = async () => {
+    const dataUrl = await mergeAndSave();
+    if (!dataUrl) return;
 
     const link = document.createElement('a');
     link.download = `kidspark-drawing-${Date.now()}.png`;
-    link.href = canvas.toDataURL('image/png');
+    link.href = dataUrl;
     link.click();
     
     setSavedMessage('📥 Downloaded!');
     setTimeout(() => setSavedMessage(null), 2000);
-  };
-
-  // Render preview shape/sticker
-  const renderPreview = () => {
-    if (!previewPos || !isDraggingItem) return null;
-    
-    if (currentTool === 'sticker' && selectedSticker) {
-      return (
-        <div
-          className="absolute pointer-events-none opacity-60"
-          style={{
-            left: `${previewPos.x}px`,
-            top: `${previewPos.y}px`,
-            fontSize: `${stickerSize / 1.5}px`,
-            transform: 'translate(-50%, -50%)',
-            zIndex: 10,
-          }}
-        >
-          {selectedSticker}
-        </div>
-      );
-    }
-    
-    if (currentTool === 'shape' && selectedShape) {
-      return (
-        <svg
-          className="absolute pointer-events-none opacity-70"
-          style={{
-            left: `${previewPos.x}px`,
-            top: `${previewPos.y}px`,
-            transform: 'translate(-50%, -50%)',
-            zIndex: 10,
-          }}
-          width={shapeSize * 2 + 40}
-          height={shapeSize * 2 + 40}
-        >
-          <g transform={`translate(${shapeSize + 20}, ${shapeSize + 20})`}>
-            {selectedShape === 'circle' && (
-              <>
-                <circle cx="0" cy="0" r={shapeSize / 2} stroke="white" strokeWidth={brushSize + 6} fill="none" />
-                <circle cx="0" cy="0" r={shapeSize / 2} stroke={currentColor} strokeWidth={brushSize} fill="none" />
-              </>
-            )}
-            {selectedShape === 'rectangle' && (
-              <>
-                <rect x={-shapeSize / 2} y={-shapeSize / 4} width={shapeSize} height={shapeSize / 2} stroke="white" strokeWidth={brushSize + 6} fill="none" />
-                <rect x={-shapeSize / 2} y={-shapeSize / 4} width={shapeSize} height={shapeSize / 2} stroke={currentColor} strokeWidth={brushSize} fill="none" />
-              </>
-            )}
-            {selectedShape === 'triangle' && (
-              <>
-                <polygon 
-                  points={`0,${-shapeSize / 2} ${-shapeSize / 2},${shapeSize / 2} ${shapeSize / 2},${shapeSize / 2}`}
-                  stroke="white" strokeWidth={brushSize + 6} fill="none" strokeLinejoin="round"
-                />
-                <polygon 
-                  points={`0,${-shapeSize / 2} ${-shapeSize / 2},${shapeSize / 2} ${shapeSize / 2},${shapeSize / 2}`}
-                  stroke={currentColor} strokeWidth={brushSize} fill="none" strokeLinejoin="round"
-                />
-              </>
-            )}
-            {selectedShape === 'star' && (
-              <>
-                <polygon 
-                  points={Array.from({length: 5}, (_, i) => {
-                    const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
-                    return `${(shapeSize / 2) * Math.cos(angle)},${(shapeSize / 2) * Math.sin(angle)}`;
-                  }).join(' ')}
-                  stroke="white" strokeWidth={brushSize + 6} fill="none" strokeLinejoin="round"
-                />
-                <polygon 
-                  points={Array.from({length: 5}, (_, i) => {
-                    const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
-                    return `${(shapeSize / 2) * Math.cos(angle)},${(shapeSize / 2) * Math.sin(angle)}`;
-                  }).join(' ')}
-                  stroke={currentColor} strokeWidth={brushSize} fill="none" strokeLinejoin="round"
-                />
-              </>
-            )}
-            {selectedShape === 'line' && (
-              <>
-                <line x1={-shapeSize / 2} y1="0" x2={shapeSize / 2} y2="0" stroke="white" strokeWidth={brushSize + 6} strokeLinecap="round" />
-                <line x1={-shapeSize / 2} y1="0" x2={shapeSize / 2} y2="0" stroke={currentColor} strokeWidth={brushSize} strokeLinecap="round" />
-              </>
-            )}
-            {selectedShape === 'arrow' && (
-              <>
-                <g stroke="white" strokeWidth={brushSize + 6} strokeLinecap="round" strokeLinejoin="round" fill="none">
-                  <line x1={-shapeSize / 2} y1="0" x2={shapeSize / 2} y2="0" />
-                  <line x1={shapeSize / 2} y1="0" x2={shapeSize / 2 - 15} y2="-15" />
-                  <line x1={shapeSize / 2} y1="0" x2={shapeSize / 2 - 15} y2="15" />
-                </g>
-                <g stroke={currentColor} strokeWidth={brushSize} strokeLinecap="round" strokeLinejoin="round" fill="none">
-                  <line x1={-shapeSize / 2} y1="0" x2={shapeSize / 2} y2="0" />
-                  <line x1={shapeSize / 2} y1="0" x2={shapeSize / 2 - 15} y2="-15" />
-                  <line x1={shapeSize / 2} y1="0" x2={shapeSize / 2 - 15} y2="15" />
-                </g>
-              </>
-            )}
-          </g>
-        </svg>
-      );
-    }
-    
-    return null;
   };
 
   return (
@@ -655,26 +693,27 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
             <div className="flex gap-2">
               <motion.button
                 onClick={handleUndo}
-                disabled={historyIndex <= 0}
+                disabled={placedItems.length === 0}
                 className={`rounded-xl p-2 md:p-3 shadow-md border-2 border-white ${
-                  historyIndex > 0 ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white' : 'bg-gray-200 text-gray-400'
+                  placedItems.length > 0 ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white' : 'bg-gray-200 text-gray-400'
                 }`}
-                style={{ minWidth: '50px', minHeight: '50px', boxShadow: historyIndex > 0 ? '0 4px 0 #0369A1' : 'none' }}
-                whileTap={historyIndex > 0 ? { scale: 0.9, y: 2 } : {}}
+                style={{ minWidth: '50px', minHeight: '50px', boxShadow: placedItems.length > 0 ? '0 4px 0 #0369A1' : 'none' }}
+                whileTap={placedItems.length > 0 ? { scale: 0.9, y: 2 } : {}}
               >
                 <span className="text-xl md:text-2xl">↶</span>
               </motion.button>
-              <motion.button
-                onClick={handleRedo}
-                disabled={historyIndex >= drawingHistory.length - 1}
-                className={`rounded-xl p-2 md:p-3 shadow-md border-2 border-white ${
-                  historyIndex < drawingHistory.length - 1 ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white' : 'bg-gray-200 text-gray-400'
-                }`}
-                style={{ minWidth: '50px', minHeight: '50px', boxShadow: historyIndex < drawingHistory.length - 1 ? '0 4px 0 #0369A1' : 'none' }}
-                whileTap={historyIndex < drawingHistory.length - 1 ? { scale: 0.9, y: 2 } : {}}
-              >
-                <span className="text-xl md:text-2xl">↷</span>
-              </motion.button>
+              {selectedItemId && (
+                <motion.button
+                  onClick={handleDeleteSelected}
+                  className="rounded-xl p-2 md:p-3 shadow-md border-2 border-white bg-gradient-to-r from-red-500 to-pink-500 text-white"
+                  style={{ minWidth: '50px', minHeight: '50px', boxShadow: '0 4px 0 #B91C1C' }}
+                  whileTap={{ scale: 0.9, y: 2 }}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                >
+                  <span className="text-xl md:text-2xl">🗑️</span>
+                </motion.button>
+              )}
               <motion.button
                 onClick={handleClear}
                 className="rounded-xl p-2 md:p-3 shadow-md border-2 border-white bg-gradient-to-r from-red-500 to-pink-500 text-white"
@@ -726,13 +765,12 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                       if (tool.id !== 'sticker') setSelectedSticker(null);
                       if (tool.id !== 'shape') setSelectedShape(null);
                       setPreviewPos(null);
-                      setIsDraggingItem(false);
+                      if (tool.id !== 'move') setSelectedItemId(null);
                     }}
                     className={`rounded-2xl p-2 md:p-3 shadow-md border-4 border-white flex flex-col items-center flex-shrink-0 ${
                       isActive ? `bg-gradient-to-br ${tool.gradient} text-white scale-110` : 'bg-gray-100 text-gray-600'
                     }`}
                     style={{ minWidth: '55px', minHeight: '55px', boxShadow: isActive ? `0 4px 0 ${tool.shadow}` : '0 3px 0 rgba(0,0,0,0.1)' }}
-                    whileHover={{ scale: isActive ? 1.15 : 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
                     <span className="text-xl md:text-2xl">{tool.icon}</span>
@@ -741,6 +779,22 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                 );
               })}
             </div>
+
+            {/* Move Tool Hint */}
+            {currentTool === 'move' && (
+              <motion.div
+                className="mt-3 bg-teal-50 rounded-2xl p-3 border-4 border-teal-200 text-center"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+              >
+                <p className="text-sm font-black text-teal-800" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>
+                  👆 Touch any sticker or shape to move it!
+                </p>
+                <p className="text-xs text-teal-600 mt-1">
+                  {placedItems.length === 0 ? '⚠️ No items placed yet' : `${placedItems.length} item(s) placed - tap to select and drag`}
+                </p>
+              </motion.div>
+            )}
 
             <AnimatePresence>
               {showStickers && (
@@ -759,7 +813,6 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                         className={`aspect-square rounded-xl text-2xl md:text-3xl flex items-center justify-center border-2 ${
                           selectedSticker === sticker ? 'bg-yellow-200 border-yellow-500 scale-110' : 'bg-white border-white'
                         }`}
-                        whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                       >
                         {sticker}
@@ -776,7 +829,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                           className={`rounded-xl px-3 py-2 border-2 font-black text-sm ${
                             stickerSize === size ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-white scale-110' : 'bg-white text-gray-600 border-yellow-300'
                           }`}
-                          style={{ minWidth: '50px', minHeight: '40px', fontFamily: "'Fredoka', 'Arial Black', sans-serif", boxShadow: stickerSize === size ? '0 3px 0 #D97706' : 'none' }}
+                          style={{ minWidth: '50px', minHeight: '40px', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}
                           whileTap={{ scale: 0.9 }}
                         >
                           {label}
@@ -784,9 +837,9 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                       ))}
                     </div>
                     {selectedSticker && (
-                      <motion.p className="text-center text-xs font-black text-gray-600 mt-2 bg-white rounded-full py-1" initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                        💡 Touch and drag on canvas to place!
-                      </motion.p>
+                      <p className="text-center text-xs font-black text-gray-600 mt-2 bg-white rounded-full py-1">
+                        💡 Touch canvas to place, then use Move tool to reposition!
+                      </p>
                     )}
                   </div>
                 </motion.div>
@@ -810,7 +863,6 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                         className={`aspect-square rounded-xl text-3xl md:text-4xl flex items-center justify-center border-2 ${
                           selectedShape === shape.id ? 'bg-indigo-200 border-indigo-500 scale-110' : 'bg-white border-white'
                         }`}
-                        style={{ boxShadow: selectedShape === shape.id ? '0 3px 0 #4338CA' : '0 4px 0 rgba(0,0,0,0.1)' }}
                         whileTap={{ scale: 0.9 }}
                       >
                         {shape.icon}
@@ -827,7 +879,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                           className={`rounded-xl px-3 py-2 border-2 font-black text-sm ${
                             shapeSize === size ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-white scale-110' : 'bg-white text-gray-600 border-indigo-300'
                           }`}
-                          style={{ minWidth: '50px', minHeight: '40px', fontFamily: "'Fredoka', 'Arial Black', sans-serif", boxShadow: shapeSize === size ? '0 3px 0 #4338CA' : 'none' }}
+                          style={{ minWidth: '50px', minHeight: '40px', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}
                           whileTap={{ scale: 0.9 }}
                         >
                           {label}
@@ -835,9 +887,9 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                       ))}
                     </div>
                     {selectedShape && (
-                      <motion.p className="text-center text-xs font-black text-gray-600 mt-2 bg-white rounded-full py-1" initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                        💡 Touch and drag on canvas to place!
-                      </motion.p>
+                      <p className="text-center text-xs font-black text-gray-600 mt-2 bg-white rounded-full py-1">
+                        💡 Touch canvas to place, then use Move tool to reposition!
+                      </p>
                     )}
                   </div>
                 </motion.div>
@@ -846,8 +898,14 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
           </motion.div>
         </div>
 
-        {/* Canvas Area with Preview */}
-        <div className="flex-1 mx-3 mb-2 bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white relative">
+        {/* Canvas Area with Overlays */}
+        <div 
+          className="flex-1 mx-3 mb-2 bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white relative"
+          onMouseMove={handleItemMove}
+          onTouchMove={handleItemMove}
+          onMouseUp={handleItemMouseUp}
+          onTouchEnd={handleItemMouseUp}
+        >
           <canvas
             ref={canvasRef}
             className="w-full h-full cursor-crosshair touch-none block"
@@ -859,13 +917,97 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
             onTouchMove={draw}
             onTouchEnd={stopDrawing}
           />
-          {renderPreview()}
+          
+          {/* Placed items overlay */}
+          {placedItems.map((item) => {
+            const displayPos = canvasToDisplay(item.x, item.y);
+            const displaySize = item.size * (canvasRef.current ? canvasRef.current.getBoundingClientRect().width / canvasRef.current.width : 1);
+            const isSelected = selectedItemId === item.id;
+            const isMoveMode = currentTool === 'move';
+            
+            return (
+              <div
+                key={item.id}
+                className="absolute"
+                style={{
+                  left: `${displayPos.x}px`,
+                  top: `${displayPos.y}px`,
+                  transform: 'translate(-50%, -50%)',
+                  cursor: isMoveMode ? 'move' : 'default',
+                  zIndex: isSelected ? 20 : 10,
+                  pointerEvents: isMoveMode ? 'auto' : 'none',
+                }}
+                onMouseDown={(e) => handleItemMouseDown(e, item.id)}
+                onTouchStart={(e) => handleItemMouseDown(e, item.id)}
+              >
+                {item.type === 'sticker' && (
+                  <div style={{ 
+                    fontSize: `${displaySize}px`,
+                    userSelect: 'none',
+                    filter: isSelected ? 'drop-shadow(0 0 8px #14B8A6)' : 'none',
+                  }}>
+                    {item.emoji}
+                  </div>
+                )}
+                {item.type === 'shape' && item.shape && item.color && item.brushSize && (
+                  <div style={{
+                    filter: isSelected ? 'drop-shadow(0 0 8px #14B8A6)' : 'none',
+                  }}>
+                    {renderShapeSVG(item.shape, displaySize, item.color, item.brushSize * (canvasRef.current ? canvasRef.current.getBoundingClientRect().width / canvasRef.current.width : 1))}
+                  </div>
+                )}
+                
+                {/* Selection indicator */}
+                {isSelected && (
+                  <div 
+                    className="absolute inset-0 border-4 border-teal-400 rounded-lg animate-pulse"
+                    style={{
+                      width: `${displaySize + 20}px`,
+                      height: `${displaySize + 20}px`,
+                      transform: 'translate(-50%, -50%)',
+                      left: '50%',
+                      top: '50%',
+                    }}
+                  />
+                )}
+              </div>
+            );
+          })}
+          
+          {/* Preview during placement */}
+          {previewPos && currentTool === 'sticker' && selectedSticker && (
+            <div
+              className="absolute pointer-events-none opacity-60"
+              style={{
+                left: `${previewPos.x}px`,
+                top: `${previewPos.y}px`,
+                fontSize: `${stickerSize / 1.5}px`,
+                transform: 'translate(-50%, -50%)',
+                zIndex: 15,
+              }}
+            >
+              {selectedSticker}
+            </div>
+          )}
+          {previewPos && currentTool === 'shape' && selectedShape && (
+            <div
+              className="absolute pointer-events-none opacity-70"
+              style={{
+                left: `${previewPos.x}px`,
+                top: `${previewPos.y}px`,
+                transform: 'translate(-50%, -50%)',
+                zIndex: 15,
+              }}
+            >
+              {renderShapeSVG(selectedShape, shapeSize / 2, currentColor, brushSize, true)}
+            </div>
+          )}
         </div>
 
         {/* BOTTOM */}
         <div className="px-3 pb-3">
           <div className="bg-white/95 rounded-3xl p-3 shadow-2xl border-4 border-white">
-            {currentTool !== 'sticker' && (
+            {currentTool !== 'sticker' && currentTool !== 'move' && (
               <div className="mb-3">
                 <p className="text-center text-xs font-black text-gray-600 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>✏️ Brush Size</p>
                 <div className="flex items-center justify-center gap-2">
