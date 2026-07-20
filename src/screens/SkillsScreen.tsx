@@ -391,7 +391,7 @@ const SKILL_ACTIVITIES: Record<string, {
     finalResult: '🍫',
     successMessage: 'Yummy chocolate!'
   },
-  'juice': {
+  'juicefactory': {
     intro: 'Make juice bottles!',
     correctItems: ['🍊', '💧', '🍶', '📦'],
     allItems: ['🍊', '💧', '🍶', '📦', '🍔', '⚽', '🎮', '📱', '🎨', '📚'],
