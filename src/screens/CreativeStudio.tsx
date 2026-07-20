@@ -44,8 +44,7 @@ const STICKER_SIZES = [
   { size: 60, label: 'M' },
   { size: 80, label: 'L' },
   { size: 120, label: 'XL' },
-  { size: 160, label: 'XXL' },
-];
+  ];
 
 const SHAPE_SIZES = [
   { size: 40, label: 'S' },
