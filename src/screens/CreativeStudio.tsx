@@ -10,7 +10,7 @@ interface CreativeStudioProps {
   onComplete: (stars: number) => void;
 }
 
-type Tool = 'brush' | 'pencil' | 'marker' | 'eraser' | 'fill' | 'shape' | 'sticker' | 'move';
+type Tool = 'brush' | 'pencil' | 'eraser' | 'fill' | 'shape' | 'sticker' | 'move';
 type Shape = 'circle' | 'rectangle' | 'triangle' | 'line' | 'arrow' | 'star';
 
 interface PlacedItem {
