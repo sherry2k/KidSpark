@@ -673,7 +673,7 @@ const SKILL_ACTIVITIES: Record<string, {
     finalResult: '🖼️',
     successMessage: 'Beautiful drawing!'
   },
-  'painting': {
+  'artpainting': {
     intro: 'Paint a masterpiece!',
     correctItems: ['🎨', '🖌️', '🖼️', '💧'],
     allItems: ['🎨', '🖌️', '🖼️', '💧', '🍔', '⚽', '🎮', '📱', '📚', '🍕'],
