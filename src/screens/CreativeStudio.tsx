@@ -96,31 +96,25 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
   const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
   const [selectedShape, setSelectedShape] = useState<Shape | null>(null);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
-  
-  // NEW: Placed items tracking
   const [placedItems, setPlacedItems] = useState<PlacedItem[]>([]);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [isDraggingItem, setIsDraggingItem] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [previewPos, setPreviewPos] = useState<{ x: number; y: number } | null>(null);
-  
+  const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null);
+  const [showCursor, setShowCursor] = useState(false);
   const lastPos = useRef<{ x: number; y: number } | null>(null);
   const canvasPos = useRef<{ x: number; y: number } | null>(null);
 
-  // Initialize canvas
   const initCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const container = canvas.parentElement;
     if (!container) return;
-
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }, []);
@@ -132,14 +126,12 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     return () => window.removeEventListener('resize', handleResize);
   }, [initCanvas]);
 
-  // Get position on canvas
   const getPos = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    
     if ('touches' in e) {
       return {
         x: (e.touches[0].clientX - rect.left) * scaleX,
@@ -152,12 +144,10 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     };
   };
 
-  // Get display position for overlay
   const getDisplayPos = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    
     if ('touches' in e) {
       return {
         x: e.touches[0].clientX - rect.left,
@@ -170,7 +160,6 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     };
   };
 
-  // Convert canvas position to display position
   const canvasToDisplay = (canvasX: number, canvasY: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
@@ -181,7 +170,6 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     };
   };
 
-  // Convert display position to canvas position
   const displayToCanvas = (displayX: number, displayY: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
@@ -192,47 +180,34 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     };
   };
 
-  // Drawing handlers
   const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     const pos = getPos(e);
     const displayPos = getDisplayPos(e);
     
-    // Move tool - don't do anything on canvas (items handle their own drag)
     if (currentTool === 'move') {
-      // Deselect if clicking empty area
       setSelectedItemId(null);
       return;
     }
-
-    // Sticker mode
     if (currentTool === 'sticker' && selectedSticker) {
       canvasPos.current = pos;
       setPreviewPos(displayPos);
       return;
     }
-
-    // Shape mode
     if (currentTool === 'shape' && selectedShape) {
       canvasPos.current = pos;
       setPreviewPos(displayPos);
       return;
     }
-
     if (currentTool === 'fill') {
       fillArea(pos.x, pos.y);
       return;
     }
-
-    // Regular drawing
     setIsDrawing(true);
     lastPos.current = pos;
-    
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
-
     ctx.globalAlpha = opacity;
-    
     ctx.beginPath();
     ctx.arc(pos.x, pos.y, brushSize / 2, 0, Math.PI * 2);
     ctx.fillStyle = currentTool === 'eraser' ? '#FFFFFF' : currentColor;
@@ -241,29 +216,22 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
 
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
-    
     const pos = getPos(e);
     const displayPos = getDisplayPos(e);
     
-    // Update preview when placing sticker/shape
     if (canvasPos.current && (currentTool === 'sticker' || currentTool === 'shape')) {
       canvasPos.current = pos;
       setPreviewPos(displayPos);
       return;
     }
-    
     if (!isDrawing) return;
-
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx || !lastPos.current) return;
-
     ctx.globalAlpha = opacity;
-
     ctx.beginPath();
     ctx.moveTo(lastPos.current.x, lastPos.current.y);
     ctx.lineTo(pos.x, pos.y);
     ctx.strokeStyle = currentTool === 'eraser' ? '#FFFFFF' : currentColor;
-    
     if (currentTool === 'pencil') {
       ctx.lineWidth = brushSize / 2;
       ctx.lineCap = 'round';
@@ -276,15 +244,12 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
     }
-    
     ctx.stroke();
     lastPos.current = pos;
   };
 
   const stopDrawing = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
-    
-    // Place sticker at final position (as movable overlay)
     if (currentTool === 'sticker' && selectedSticker && canvasPos.current) {
       const newItem: PlacedItem = {
         id: `sticker-${Date.now()}-${Math.random()}`,
@@ -299,8 +264,6 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
       canvasPos.current = null;
       return;
     }
-    
-    // Place shape at final position (as movable overlay)
     if (currentTool === 'shape' && selectedShape && canvasPos.current) {
       const newItem: PlacedItem = {
         id: `shape-${Date.now()}-${Math.random()}`,
@@ -317,28 +280,22 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
       canvasPos.current = null;
       return;
     }
-    
     if (isDrawing) {
       setIsDrawing(false);
       lastPos.current = null;
     }
   };
 
-  // Handle item drag (move tool)
   const handleItemMouseDown = (e: React.MouseEvent | React.TouchEvent, itemId: string) => {
     if (currentTool !== 'move') return;
     e.stopPropagation();
     e.preventDefault();
-    
     setSelectedItemId(itemId);
     setIsDraggingItem(true);
-    
     const item = placedItems.find(i => i.id === itemId);
     if (!item) return;
-    
     const displayPos = getDisplayPos(e);
     const itemDisplayPos = canvasToDisplay(item.x, item.y);
-    
     setDragOffset({
       x: displayPos.x - itemDisplayPos.x,
       y: displayPos.y - itemDisplayPos.y,
@@ -348,17 +305,15 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
   const handleItemMove = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isDraggingItem || !selectedItemId) return;
     e.preventDefault();
-    
     const displayPos = getDisplayPos(e);
-    const canvasPos = displayToCanvas(
+    const canvasPosResult = displayToCanvas(
       displayPos.x - dragOffset.x,
       displayPos.y - dragOffset.y
     );
-    
     setPlacedItems(items =>
       items.map(item =>
         item.id === selectedItemId
-          ? { ...item, x: canvasPos.x, y: canvasPos.y }
+          ? { ...item, x: canvasPosResult.x, y: canvasPosResult.y }
           : item
       )
     );
@@ -368,39 +323,25 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     setIsDraggingItem(false);
   };
 
-  // Delete selected item
   const handleDeleteSelected = () => {
     if (!selectedItemId) return;
     setPlacedItems(items => items.filter(item => item.id !== selectedItemId));
     setSelectedItemId(null);
   };
 
-  // Fill area
   const fillArea = (x: number, y: number) => {
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
-
     ctx.fillStyle = currentColor;
     ctx.fillRect(0, 0, canvasRef.current!.width, canvasRef.current!.height);
   };
 
-  // Render shape SVG (for both preview and permanent overlay)
   const renderShapeSVG = (shape: Shape, size: number, color: string, strokeWidth: number, isPreview = false) => {
     const opacity = isPreview ? 0.7 : 1;
     const padding = 20;
     const totalSize = size * 2 + padding * 2;
-    
     return (
-      <svg
-        width={totalSize}
-        height={totalSize}
-        style={{ 
-          opacity, 
-          overflow: 'visible',
-          display: 'block',
-          pointerEvents: 'none'
-        }}
-      >
+      <svg width={totalSize} height={totalSize} style={{ opacity, overflow: 'visible', display: 'block', pointerEvents: 'none' }}>
         <g transform={`translate(${totalSize / 2}, ${totalSize / 2})`}>
           {shape === 'circle' && (
             <>
@@ -416,32 +357,20 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
           )}
           {shape === 'triangle' && (
             <>
-              <polygon 
-                points={`0,${-size / 2} ${-size / 2},${size / 2} ${size / 2},${size / 2}`}
-                stroke="white" strokeWidth={strokeWidth + 6} fill="none" strokeLinejoin="round"
-              />
-              <polygon 
-                points={`0,${-size / 2} ${-size / 2},${size / 2} ${size / 2},${size / 2}`}
-                stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinejoin="round"
-              />
+              <polygon points={`0,${-size / 2} ${-size / 2},${size / 2} ${size / 2},${size / 2}`} stroke="white" strokeWidth={strokeWidth + 6} fill="none" strokeLinejoin="round" />
+              <polygon points={`0,${-size / 2} ${-size / 2},${size / 2} ${size / 2},${size / 2}`} stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinejoin="round" />
             </>
           )}
           {shape === 'star' && (
             <>
-              <polygon 
-                points={Array.from({length: 5}, (_, i) => {
-                  const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
-                  return `${(size / 2) * Math.cos(angle)},${(size / 2) * Math.sin(angle)}`;
-                }).join(' ')}
-                stroke="white" strokeWidth={strokeWidth + 6} fill="none" strokeLinejoin="round"
-              />
-              <polygon 
-                points={Array.from({length: 5}, (_, i) => {
-                  const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
-                  return `${(size / 2) * Math.cos(angle)},${(size / 2) * Math.sin(angle)}`;
-                }).join(' ')}
-                stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinejoin="round"
-              />
+              <polygon points={Array.from({length: 5}, (_, i) => {
+                const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+                return `${(size / 2) * Math.cos(angle)},${(size / 2) * Math.sin(angle)}`;
+              }).join(' ')} stroke="white" strokeWidth={strokeWidth + 6} fill="none" strokeLinejoin="round" />
+              <polygon points={Array.from({length: 5}, (_, i) => {
+                const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+                return `${(size / 2) * Math.cos(angle)},${(size / 2) * Math.sin(angle)}`;
+              }).join(' ')} stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinejoin="round" />
             </>
           )}
           {shape === 'line' && (
@@ -469,54 +398,6 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     );
   };
 
-  // Undo - remove last placed item
-  const handleUndo = () => {
-    if (placedItems.length > 0) {
-      setPlacedItems(items => items.slice(0, -1));
-      setSelectedItemId(null);
-    }
-  };
-
-  // Clear canvas and all items
-  const handleClear = () => {
-    if (confirm('Clear the drawing? 🎨')) {
-      initCanvas();
-      setPlacedItems([]);
-      setSelectedItemId(null);
-    }
-  };
-
-  // Merge canvas with items and save
-  const mergeAndSave = async (): Promise<string> => {
-    const canvas = canvasRef.current;
-    if (!canvas) return '';
-
-    // Create a new canvas to combine everything
-    const mergedCanvas = document.createElement('canvas');
-    mergedCanvas.width = canvas.width;
-    mergedCanvas.height = canvas.height;
-    const mergedCtx = mergedCanvas.getContext('2d');
-    if (!mergedCtx) return '';
-
-    // Draw the original canvas
-    mergedCtx.drawImage(canvas, 0, 0);
-
-    // Draw all placed items
-    for (const item of placedItems) {
-      if (item.type === 'sticker' && item.emoji) {
-        mergedCtx.font = `${item.size}px serif`;
-        mergedCtx.textAlign = 'center';
-        mergedCtx.textBaseline = 'middle';
-        mergedCtx.fillText(item.emoji, item.x, item.y);
-      } else if (item.type === 'shape' && item.shape && item.color && item.brushSize) {
-        drawShapeToContext(mergedCtx, item.shape, item.x, item.y, item.size, item.color, item.brushSize);
-      }
-    }
-
-    return mergedCanvas.toDataURL('image/png');
-  };
-
-  // Draw shape to any context (for merging)
   const drawShapeToContext = (ctx: CanvasRenderingContext2D, shape: Shape, x: number, y: number, size: number, color: string, strokeWidth: number) => {
     switch (shape) {
       case 'circle':
@@ -627,31 +508,62 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
     }
   };
 
-  // Save drawing
+  const mergeAndSave = async (): Promise<string> => {
+    const canvas = canvasRef.current;
+    if (!canvas) return '';
+    const mergedCanvas = document.createElement('canvas');
+    mergedCanvas.width = canvas.width;
+    mergedCanvas.height = canvas.height;
+    const mergedCtx = mergedCanvas.getContext('2d');
+    if (!mergedCtx) return '';
+    mergedCtx.drawImage(canvas, 0, 0);
+    for (const item of placedItems) {
+      if (item.type === 'sticker' && item.emoji) {
+        mergedCtx.font = `${item.size}px serif`;
+        mergedCtx.textAlign = 'center';
+        mergedCtx.textBaseline = 'middle';
+        mergedCtx.fillText(item.emoji, item.x, item.y);
+      } else if (item.type === 'shape' && item.shape && item.color && item.brushSize) {
+        drawShapeToContext(mergedCtx, item.shape, item.x, item.y, item.size, item.color, item.brushSize);
+      }
+    }
+    return mergedCanvas.toDataURL('image/png');
+  };
+
+  const handleUndo = () => {
+    if (placedItems.length > 0) {
+      setPlacedItems(items => items.slice(0, -1));
+      setSelectedItemId(null);
+    }
+  };
+
+  const handleClear = () => {
+    if (confirm('Clear the drawing? 🎨')) {
+      initCanvas();
+      setPlacedItems([]);
+      setSelectedItemId(null);
+    }
+  };
+
   const handleSave = async () => {
     const dataUrl = await mergeAndSave();
     if (!dataUrl) return;
-
     const timestamp = new Date().toISOString();
     const drawings = JSON.parse(localStorage.getItem('kidspark_drawings') || '[]');
     drawings.push({ id: timestamp, image: dataUrl, name: `Drawing ${drawings.length + 1}` });
     localStorage.setItem('kidspark_drawings', JSON.stringify(drawings));
-    
     setSavedMessage('💾 Saved!');
     setTimeout(() => setSavedMessage(null), 2000);
     onComplete(2);
   };
 
-  // Export as PNG
   const handleExport = async () => {
     const dataUrl = await mergeAndSave();
     if (!dataUrl) return;
-
     const link = document.createElement('a');
     link.download = `kidspark-drawing-${Date.now()}.png`;
     link.href = dataUrl;
     link.click();
-    
     setSavedMessage('📥 Downloaded!');
     setTimeout(() => setSavedMessage(null), 2000);
   };
@@ -663,116 +575,55 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
 
         <AnimatePresence>
           {savedMessage && (
-            <motion.div
-              className="fixed top-24 left-1/2 -translate-x-1/2 pointer-events-none z-50"
-              initial={{ y: -100, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: -100, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 300 }}
-            >
-              <div
-                className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-full px-6 py-3 shadow-2xl border-4 border-white text-white font-black text-xl"
-                style={{
-                  boxShadow: '0 6px 0 #047857, 0 8px 20px rgba(0,0,0,0.3)',
-                  fontFamily: "'Fredoka', 'Arial Black', sans-serif",
-                }}
-              >
+            <motion.div className="fixed top-24 left-1/2 -translate-x-1/2 pointer-events-none z-50" initial={{ y: -100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -100, opacity: 0 }} transition={{ type: 'spring', stiffness: 300 }}>
+              <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-full px-6 py-3 shadow-2xl border-4 border-white text-white font-black text-xl" style={{ boxShadow: '0 6px 0 #047857, 0 8px 20px rgba(0,0,0,0.3)', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>
                 {savedMessage}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* TOP: Action Bar + Tools */}
         <div className="px-3 mb-2 space-y-2">
-          <motion.div
-            className="bg-white/95 rounded-2xl p-2 shadow-lg border-4 border-white flex items-center justify-between gap-2"
-            initial={{ y: -10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-          >
+          <motion.div className="bg-white/95 rounded-2xl p-2 shadow-lg border-4 border-white flex items-center justify-between gap-2" initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
             <div className="flex gap-2">
-              <motion.button
-                onClick={handleUndo}
-                disabled={placedItems.length === 0}
-                className={`rounded-xl p-2 md:p-3 shadow-md border-2 border-white ${
-                  placedItems.length > 0 ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white' : 'bg-gray-200 text-gray-400'
-                }`}
-                style={{ minWidth: '50px', minHeight: '50px', boxShadow: placedItems.length > 0 ? '0 4px 0 #0369A1' : 'none' }}
-                whileTap={placedItems.length > 0 ? { scale: 0.9, y: 2 } : {}}
-              >
+              <motion.button onClick={handleUndo} disabled={placedItems.length === 0} className={`rounded-xl p-2 md:p-3 shadow-md border-2 border-white ${placedItems.length > 0 ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white' : 'bg-gray-200 text-gray-400'}`} style={{ minWidth: '50px', minHeight: '50px', boxShadow: placedItems.length > 0 ? '0 4px 0 #0369A1' : 'none' }} whileTap={placedItems.length > 0 ? { scale: 0.9, y: 2 } : {}}>
                 <span className="text-xl md:text-2xl">↶</span>
               </motion.button>
               {selectedItemId && (
-                <motion.button
-                  onClick={handleDeleteSelected}
-                  className="rounded-xl p-2 md:p-3 shadow-md border-2 border-white bg-gradient-to-r from-red-500 to-pink-500 text-white"
-                  style={{ minWidth: '50px', minHeight: '50px', boxShadow: '0 4px 0 #B91C1C' }}
-                  whileTap={{ scale: 0.9, y: 2 }}
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                >
+                <motion.button onClick={handleDeleteSelected} className="rounded-xl p-2 md:p-3 shadow-md border-2 border-white bg-gradient-to-r from-red-500 to-pink-500 text-white" style={{ minWidth: '50px', minHeight: '50px', boxShadow: '0 4px 0 #B91C1C' }} whileTap={{ scale: 0.9, y: 2 }} initial={{ scale: 0 }} animate={{ scale: 1 }}>
                   <span className="text-xl md:text-2xl">🗑️</span>
                 </motion.button>
               )}
-              <motion.button
-                onClick={handleClear}
-                className="rounded-xl p-2 md:p-3 shadow-md border-2 border-white bg-gradient-to-r from-red-500 to-pink-500 text-white"
-                style={{ minWidth: '50px', minHeight: '50px', boxShadow: '0 4px 0 #B91C1C' }}
-                whileTap={{ scale: 0.9, y: 2 }}
-              >
+              <motion.button onClick={handleClear} className="rounded-xl p-2 md:p-3 shadow-md border-2 border-white bg-gradient-to-r from-red-500 to-pink-500 text-white" style={{ minWidth: '50px', minHeight: '50px', boxShadow: '0 4px 0 #B91C1C' }} whileTap={{ scale: 0.9, y: 2 }}>
                 <span className="text-xl md:text-2xl">🗑️</span>
               </motion.button>
             </div>
-
             <div className="flex gap-2">
-              <motion.button
-                onClick={handleSave}
-                className="rounded-xl px-4 py-2 md:px-5 md:py-3 shadow-md border-2 border-white bg-gradient-to-r from-green-500 to-emerald-500 text-white font-black text-sm md:text-base flex items-center gap-2"
-                style={{ boxShadow: '0 4px 0 #047857', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}
-                whileTap={{ scale: 0.95, y: 2 }}
-              >
+              <motion.button onClick={handleSave} className="rounded-xl px-4 py-2 md:px-5 md:py-3 shadow-md border-2 border-white bg-gradient-to-r from-green-500 to-emerald-500 text-white font-black text-sm md:text-base flex items-center gap-2" style={{ boxShadow: '0 4px 0 #047857', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }} whileTap={{ scale: 0.95, y: 2 }}>
                 <span>💾</span>
                 <span className="hidden md:inline">Save</span>
               </motion.button>
-              <motion.button
-                onClick={handleExport}
-                className="rounded-xl px-4 py-2 md:px-5 md:py-3 shadow-md border-2 border-white bg-gradient-to-r from-orange-500 to-red-500 text-white font-black text-sm md:text-base flex items-center gap-2"
-                style={{ boxShadow: '0 4px 0 #C2410C', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}
-                whileTap={{ scale: 0.95, y: 2 }}
-              >
+              <motion.button onClick={handleExport} className="rounded-xl px-4 py-2 md:px-5 md:py-3 shadow-md border-2 border-white bg-gradient-to-r from-orange-500 to-red-500 text-white font-black text-sm md:text-base flex items-center gap-2" style={{ boxShadow: '0 4px 0 #C2410C', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }} whileTap={{ scale: 0.95, y: 2 }}>
                 <span>📥</span>
                 <span className="hidden md:inline">Export</span>
               </motion.button>
             </div>
           </motion.div>
 
-          <motion.div
-            className="bg-white/95 rounded-2xl p-3 shadow-lg border-4 border-white"
-            initial={{ y: -10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.1 }}
-          >
+          <motion.div className="bg-white/95 rounded-2xl p-3 shadow-lg border-4 border-white" initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}>
             <div className="flex gap-2 overflow-x-auto pb-1 justify-center">
               {TOOLS.map((tool) => {
                 const isActive = currentTool === tool.id;
                 return (
-                  <motion.button
-                    key={tool.id}
-                    onClick={() => {
-                      setCurrentTool(tool.id);
-                      setShowStickers(tool.id === 'sticker');
-                      setShowShapes(tool.id === 'shape');
-                      if (tool.id !== 'sticker') setSelectedSticker(null);
-                      if (tool.id !== 'shape') setSelectedShape(null);
-                      setPreviewPos(null);
-                      if (tool.id !== 'move') setSelectedItemId(null);
-                    }}
-                    className={`rounded-2xl p-2 md:p-3 shadow-md border-4 border-white flex flex-col items-center flex-shrink-0 ${
-                      isActive ? `bg-gradient-to-br ${tool.gradient} text-white scale-110` : 'bg-gray-100 text-gray-600'
-                    }`}
-                    style={{ minWidth: '55px', minHeight: '55px', boxShadow: isActive ? `0 4px 0 ${tool.shadow}` : '0 3px 0 rgba(0,0,0,0.1)' }}
-                    whileTap={{ scale: 0.95 }}
-                  >
+                  <motion.button key={tool.id} onClick={() => {
+                    setCurrentTool(tool.id);
+                    setShowStickers(tool.id === 'sticker');
+                    setShowShapes(tool.id === 'shape');
+                    if (tool.id !== 'sticker') setSelectedSticker(null);
+                    if (tool.id !== 'shape') setSelectedShape(null);
+                    setPreviewPos(null);
+                    if (tool.id !== 'move') setSelectedItemId(null);
+                  }} className={`rounded-2xl p-2 md:p-3 shadow-md border-4 border-white flex flex-col items-center flex-shrink-0 ${isActive ? `bg-gradient-to-br ${tool.gradient} text-white scale-110` : 'bg-gray-100 text-gray-600'}`} style={{ minWidth: '55px', minHeight: '55px', boxShadow: isActive ? `0 4px 0 ${tool.shadow}` : '0 3px 0 rgba(0,0,0,0.1)' }} whileTap={{ scale: 0.95 }}>
                     <span className="text-xl md:text-2xl">{tool.icon}</span>
                     <span className="text-xs font-black mt-0.5" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>{tool.label}</span>
                   </motion.button>
@@ -780,41 +631,20 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
               })}
             </div>
 
-            {/* Move Tool Hint */}
             {currentTool === 'move' && (
-              <motion.div
-                className="mt-3 bg-teal-50 rounded-2xl p-3 border-4 border-teal-200 text-center"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-              >
-                <p className="text-sm font-black text-teal-800" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>
-                  👆 Touch any sticker or shape to move it!
-                </p>
-                <p className="text-xs text-teal-600 mt-1">
-                  {placedItems.length === 0 ? '⚠️ No items placed yet' : `${placedItems.length} item(s) placed - tap to select and drag`}
-                </p>
+              <motion.div className="mt-3 bg-teal-50 rounded-2xl p-3 border-4 border-teal-200 text-center" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}>
+                <p className="text-sm font-black text-teal-800" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>👆 Touch any sticker or shape to move it!</p>
+                <p className="text-xs text-teal-600 mt-1">{placedItems.length === 0 ? '⚠️ No items placed yet' : `${placedItems.length} item(s) placed - tap to select and drag`}</p>
               </motion.div>
             )}
 
             <AnimatePresence>
               {showStickers && (
-                <motion.div
-                  className="mt-3 bg-yellow-50 rounded-2xl p-3 border-4 border-yellow-200"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                >
+                <motion.div className="mt-3 bg-yellow-50 rounded-2xl p-3 border-4 border-yellow-200" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
                   <p className="text-center text-sm font-black text-gray-700 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>⭐ Choose a Sticker</p>
                   <div className="grid grid-cols-8 gap-2 max-h-32 overflow-y-auto mb-3">
                     {STICKERS.map((sticker, i) => (
-                      <motion.button
-                        key={i}
-                        onClick={() => setSelectedSticker(sticker)}
-                        className={`aspect-square rounded-xl text-2xl md:text-3xl flex items-center justify-center border-2 ${
-                          selectedSticker === sticker ? 'bg-yellow-200 border-yellow-500 scale-110' : 'bg-white border-white'
-                        }`}
-                        whileTap={{ scale: 0.9 }}
-                      >
+                      <motion.button key={i} onClick={() => setSelectedSticker(sticker)} className={`aspect-square rounded-xl text-2xl md:text-3xl flex items-center justify-center border-2 ${selectedSticker === sticker ? 'bg-yellow-200 border-yellow-500 scale-110' : 'bg-white border-white'}`} whileTap={{ scale: 0.9 }}>
                         {sticker}
                       </motion.button>
                     ))}
@@ -823,24 +653,11 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                     <p className="text-center text-xs font-black text-gray-700 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>📏 Sticker Size</p>
                     <div className="flex items-center justify-center gap-2 flex-wrap">
                       {STICKER_SIZES.map(({ size, label }) => (
-                        <motion.button
-                          key={size}
-                          onClick={() => setStickerSize(size)}
-                          className={`rounded-xl px-3 py-2 border-2 font-black text-sm ${
-                            stickerSize === size ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-white scale-110' : 'bg-white text-gray-600 border-yellow-300'
-                          }`}
-                          style={{ minWidth: '50px', minHeight: '40px', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}
-                          whileTap={{ scale: 0.9 }}
-                        >
+                        <motion.button key={size} onClick={() => setStickerSize(size)} className={`rounded-xl px-3 py-2 border-2 font-black text-sm ${stickerSize === size ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-white scale-110' : 'bg-white text-gray-600 border-yellow-300'}`} style={{ minWidth: '50px', minHeight: '40px', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }} whileTap={{ scale: 0.9 }}>
                           {label}
                         </motion.button>
                       ))}
                     </div>
-                    {selectedSticker && (
-                      <p className="text-center text-xs font-black text-gray-600 mt-2 bg-white rounded-full py-1">
-                        💡 Touch canvas to place, then use Move tool to reposition!
-                      </p>
-                    )}
                   </div>
                 </motion.div>
               )}
@@ -848,23 +665,11 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
 
             <AnimatePresence>
               {showShapes && (
-                <motion.div
-                  className="mt-3 bg-indigo-50 rounded-2xl p-3 border-4 border-indigo-200"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                >
+                <motion.div className="mt-3 bg-indigo-50 rounded-2xl p-3 border-4 border-indigo-200" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
                   <p className="text-center text-sm font-black text-gray-700 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>🔷 Choose a Shape</p>
                   <div className="grid grid-cols-6 gap-2 mb-3">
                     {SHAPES.map((shape) => (
-                      <motion.button
-                        key={shape.id}
-                        onClick={() => setSelectedShape(shape.id)}
-                        className={`aspect-square rounded-xl text-3xl md:text-4xl flex items-center justify-center border-2 ${
-                          selectedShape === shape.id ? 'bg-indigo-200 border-indigo-500 scale-110' : 'bg-white border-white'
-                        }`}
-                        whileTap={{ scale: 0.9 }}
-                      >
+                      <motion.button key={shape.id} onClick={() => setSelectedShape(shape.id)} className={`aspect-square rounded-xl text-3xl md:text-4xl flex items-center justify-center border-2 ${selectedShape === shape.id ? 'bg-indigo-200 border-indigo-500 scale-110' : 'bg-white border-white'}`} whileTap={{ scale: 0.9 }}>
                         {shape.icon}
                       </motion.button>
                     ))}
@@ -873,24 +678,11 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                     <p className="text-center text-xs font-black text-gray-700 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>📏 Shape Size</p>
                     <div className="flex items-center justify-center gap-2 flex-wrap">
                       {SHAPE_SIZES.map(({ size, label }) => (
-                        <motion.button
-                          key={size}
-                          onClick={() => setShapeSize(size)}
-                          className={`rounded-xl px-3 py-2 border-2 font-black text-sm ${
-                            shapeSize === size ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-white scale-110' : 'bg-white text-gray-600 border-indigo-300'
-                          }`}
-                          style={{ minWidth: '50px', minHeight: '40px', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}
-                          whileTap={{ scale: 0.9 }}
-                        >
+                        <motion.button key={size} onClick={() => setShapeSize(size)} className={`rounded-xl px-3 py-2 border-2 font-black text-sm ${shapeSize === size ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-white scale-110' : 'bg-white text-gray-600 border-indigo-300'}`} style={{ minWidth: '50px', minHeight: '40px', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }} whileTap={{ scale: 0.9 }}>
                           {label}
                         </motion.button>
                       ))}
                     </div>
-                    {selectedShape && (
-                      <p className="text-center text-xs font-black text-gray-600 mt-2 bg-white rounded-full py-1">
-                        💡 Touch canvas to place, then use Move tool to reposition!
-                      </p>
-                    )}
                   </div>
                 </motion.div>
               )}
@@ -898,243 +690,91 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
           </motion.div>
         </div>
 
-        {/* Canvas Area with Overlays */}
-<div 
-  className="flex-1 mx-3 mb-2 bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white relative"
-  onMouseMove={(e) => {
-    handleItemMove(e);
-    // Update cursor position for tool indicator
-    if (['eraser', 'brush', 'pencil', 'marker', 'fill'].includes(currentTool)) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setCursorPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-    }
-  }}
-  onTouchMove={(e) => {
-    handleItemMove(e);
-    if (['eraser', 'brush', 'pencil', 'marker', 'fill'].includes(currentTool)) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setCursorPos({ x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top });
-    }
-  }}
-  onMouseEnter={() => setShowCursor(true)}
-  onMouseLeave={() => {
-    setShowCursor(false);
-    handleItemMouseUp();
-  }}
-  onMouseUp={handleItemMouseUp}
-  onTouchEnd={handleItemMouseUp}
->
-  <canvas
-    ref={canvasRef}
-    className={`w-full h-full touch-none block ${
-      currentTool === 'eraser' 
-        ? 'cursor-none md:cursor-none' 
-        : 'cursor-crosshair'
-    }`}
-    onMouseDown={startDrawing}
-    onMouseMove={draw}
-    onMouseUp={stopDrawing}
-    onMouseLeave={stopDrawing}
-    onTouchStart={startDrawing}
-    onTouchMove={draw}
-    onTouchEnd={stopDrawing}
-  />
-  
-  {/* 🎯 Tool Cursor Indicator */}
-  {showCursor && cursorPos && (
-    <div
-      className="absolute pointer-events-none z-30"
-      style={{
-        left: `${cursorPos.x}px`,
-        top: `${cursorPos.y}px`,
-        transform: 'translate(-50%, -50%)',
-      }}
-    >
-      {currentTool === 'eraser' && (
-        <div className="relative">
-          {/* Eraser circle indicator */}
-          <div 
-            className="rounded-full bg-white/30 border-4 border-red-500"
-            style={{
-              width: `${brushSize * 2}px`,
-              height: `${brushSize * 2}px`,
-              boxShadow: '0 0 10px rgba(239, 68, 68, 0.5)',
-            }}
-          />
-          {/* Eraser icon */}
-          <div 
-            className="absolute -top-8 left-1/2 -translate-x-1/2 text-3xl"
-            style={{ filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.3))' }}
-          >
-            🧽
-          </div>
-        </div>
-      )}
-      
-      {currentTool === 'brush' && (
-        <div className="relative">
-          <div 
-            className="rounded-full border-2 border-white"
-            style={{
-              width: `${brushSize * 1.5}px`,
-              height: `${brushSize * 1.5}px`,
-              backgroundColor: currentColor + '80',
-              boxShadow: '0 0 8px rgba(0,0,0,0.3)',
-            }}
-          />
-          <div 
-            className="absolute -top-8 left-1/2 -translate-x-1/2 text-2xl"
-            style={{ filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.3))' }}
-          >
-            🖌️
-          </div>
-        </div>
-      )}
-      
-      {currentTool === 'pencil' && (
-        <div className="relative">
-          <div 
-            className="rounded-full border-2 border-gray-600"
-            style={{
-              width: `${brushSize}px`,
-              height: `${brushSize}px`,
-              backgroundColor: currentColor,
-            }}
-          />
-          <div 
-            className="absolute -top-8 left-1/2 -translate-x-1/2 text-2xl"
-            style={{ filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.3))' }}
-          >
-            ✏️
-          </div>
-        </div>
-      )}
-      
-      {currentTool === 'marker' && (
-        <div className="relative">
-          <div 
-            className="border-2 border-white opacity-70"
-            style={{
-              width: `${brushSize * 1.5}px`,
-              height: `${brushSize * 1.5}px`,
-              backgroundColor: currentColor,
-              borderRadius: '4px',
-              boxShadow: '0 0 8px rgba(0,0,0,0.3)',
-            }}
-          />
-          <div 
-            className="absolute -top-8 left-1/2 -translate-x-1/2 text-2xl"
-            style={{ filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.3))' }}
-          >
-            🖊️
-          </div>
-        </div>
-      )}
-      
-      {currentTool === 'fill' && (
-        <div className="relative">
-          <div 
-            className="text-4xl"
-            style={{ filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.4))' }}
-          >
-            🪣
-          </div>
-        </div>
-      )}
-    </div>
-  )}
-  
-  {/* Placed items overlay */}
-  {placedItems.map((item) => {
-    // ... rest of your existing code
+        <div 
+          className="flex-1 mx-3 mb-2 bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white relative"
+          onMouseMove={(e) => {
+            handleItemMove(e);
+            if (['eraser', 'brush', 'pencil', 'marker'].includes(currentTool)) {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setCursorPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+            }
+          }}
+          onTouchMove={(e) => {
+            handleItemMove(e);
+            if (['eraser', 'brush', 'pencil', 'marker'].includes(currentTool)) {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setCursorPos({ x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top });
+            }
+          }}
+          onMouseEnter={() => setShowCursor(true)}
+          onMouseLeave={() => { setShowCursor(false); handleItemMouseUp(); }}
+          onMouseUp={handleItemMouseUp}
+          onTouchEnd={handleItemMouseUp}
+        >
+          <canvas ref={canvasRef} className={`w-full h-full touch-none block ${currentTool === 'eraser' || currentTool === 'brush' || currentTool === 'pencil' || currentTool === 'marker' ? 'cursor-none' : 'cursor-crosshair'}`} onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={stopDrawing} onMouseLeave={stopDrawing} onTouchStart={startDrawing} onTouchMove={draw} onTouchEnd={stopDrawing} />
           
-          {/* Placed items overlay */}
+          {/* Custom cursor indicators */}
+          {showCursor && cursorPos && currentTool === 'eraser' && (
+            <div className="absolute pointer-events-none z-30" style={{ left: `${cursorPos.x}px`, top: `${cursorPos.y}px`, transform: 'translate(-50%, -50%)' }}>
+              <div className="rounded-full bg-white/30 border-4 border-red-500" style={{ width: `${brushSize * 2}px`, height: `${brushSize * 2}px`, boxShadow: '0 0 10px rgba(239, 68, 68, 0.5)' }} />
+              <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-3xl" style={{ filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.3))' }}>🧽</div>
+            </div>
+          )}
+          
+          {showCursor && cursorPos && currentTool === 'brush' && (
+            <div className="absolute pointer-events-none z-30" style={{ left: `${cursorPos.x}px`, top: `${cursorPos.y}px`, transform: 'translate(-50%, -50%)' }}>
+              <div className="rounded-full border-2 border-white" style={{ width: `${brushSize * 1.5}px`, height: `${brushSize * 1.5}px`, backgroundColor: currentColor + '80', boxShadow: '0 0 8px rgba(0,0,0,0.3)' }} />
+              <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-2xl" style={{ filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.3))' }}>🖌️</div>
+            </div>
+          )}
+          
+          {showCursor && cursorPos && currentTool === 'pencil' && (
+            <div className="absolute pointer-events-none z-30" style={{ left: `${cursorPos.x}px`, top: `${cursorPos.y}px`, transform: 'translate(-50%, -50%)' }}>
+              <div className="rounded-full border-2 border-gray-600" style={{ width: `${brushSize}px`, height: `${brushSize}px`, backgroundColor: currentColor }} />
+              <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-2xl" style={{ filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.3))' }}>✏️</div>
+            </div>
+          )}
+          
+          {showCursor && cursorPos && currentTool === 'marker' && (
+            <div className="absolute pointer-events-none z-30" style={{ left: `${cursorPos.x}px`, top: `${cursorPos.y}px`, transform: 'translate(-50%, -50%)' }}>
+              <div className="border-2 border-white opacity-70" style={{ width: `${brushSize * 1.5}px`, height: `${brushSize * 1.5}px`, backgroundColor: currentColor, borderRadius: '4px', boxShadow: '0 0 8px rgba(0,0,0,0.3)' }} />
+              <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-2xl" style={{ filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.3))' }}>🖊️</div>
+            </div>
+          )}
+
           {placedItems.map((item) => {
             const displayPos = canvasToDisplay(item.x, item.y);
             const displaySize = item.size * (canvasRef.current ? canvasRef.current.getBoundingClientRect().width / canvasRef.current.width : 1);
             const isSelected = selectedItemId === item.id;
             const isMoveMode = currentTool === 'move';
-            
             return (
-              <div
-                key={item.id}
-                className="absolute"
-                style={{
-                  left: `${displayPos.x}px`,
-                  top: `${displayPos.y}px`,
-                  transform: 'translate(-50%, -50%)',
-                  cursor: isMoveMode ? 'move' : 'default',
-                  zIndex: isSelected ? 20 : 10,
-                  pointerEvents: isMoveMode ? 'auto' : 'none',
-                }}
-                onMouseDown={(e) => handleItemMouseDown(e, item.id)}
-                onTouchStart={(e) => handleItemMouseDown(e, item.id)}
-              >
+              <div key={item.id} className="absolute" style={{ left: `${displayPos.x}px`, top: `${displayPos.y}px`, transform: 'translate(-50%, -50%)', cursor: isMoveMode ? 'move' : 'default', zIndex: isSelected ? 20 : 10, pointerEvents: isMoveMode ? 'auto' : 'none' }} onMouseDown={(e) => handleItemMouseDown(e, item.id)} onTouchStart={(e) => handleItemMouseDown(e, item.id)}>
                 {item.type === 'sticker' && (
-                  <div style={{ 
-                    fontSize: `${displaySize}px`,
-                    userSelect: 'none',
-                    filter: isSelected ? 'drop-shadow(0 0 8px #14B8A6)' : 'none',
-                  }}>
+                  <div style={{ fontSize: `${displaySize}px`, userSelect: 'none', filter: isSelected ? 'drop-shadow(0 0 8px #14B8A6)' : 'none' }}>
                     {item.emoji}
                   </div>
                 )}
                 {item.type === 'shape' && item.shape && item.color && item.brushSize && (
-                  <div style={{
-                    filter: isSelected ? 'drop-shadow(0 0 8px #14B8A6)' : 'none',
-                  }}>
+                  <div style={{ filter: isSelected ? 'drop-shadow(0 0 8px #14B8A6)' : 'none' }}>
                     {renderShapeSVG(item.shape, displaySize, item.color, item.brushSize * (canvasRef.current ? canvasRef.current.getBoundingClientRect().width / canvasRef.current.width : 1))}
                   </div>
-                )}
-                
-                {/* Selection indicator */}
-                {isSelected && (
-                  <div 
-                    className="absolute inset-0 border-4 border-teal-400 rounded-lg animate-pulse"
-                    style={{
-                      width: `${displaySize + 20}px`,
-                      height: `${displaySize + 20}px`,
-                      transform: 'translate(-50%, -50%)',
-                      left: '50%',
-                      top: '50%',
-                    }}
-                  />
                 )}
               </div>
             );
           })}
-          
-          {/* Preview during placement */}
+
           {previewPos && currentTool === 'sticker' && selectedSticker && (
-            <div
-              className="absolute pointer-events-none opacity-60"
-              style={{
-                left: `${previewPos.x}px`,
-                top: `${previewPos.y}px`,
-                fontSize: `${stickerSize / 1.5}px`,
-                transform: 'translate(-50%, -50%)',
-                zIndex: 15,
-              }}
-            >
+            <div className="absolute pointer-events-none opacity-60" style={{ left: `${previewPos.x}px`, top: `${previewPos.y}px`, fontSize: `${stickerSize / 1.5}px`, transform: 'translate(-50%, -50%)', zIndex: 15 }}>
               {selectedSticker}
             </div>
           )}
           {previewPos && currentTool === 'shape' && selectedShape && (
-            <div
-              className="absolute pointer-events-none opacity-70"
-              style={{
-                left: `${previewPos.x}px`,
-                top: `${previewPos.y}px`,
-                transform: 'translate(-50%, -50%)',
-                zIndex: 15,
-              }}
-            >
+            <div className="absolute pointer-events-none opacity-70" style={{ left: `${previewPos.x}px`, top: `${previewPos.y}px`, transform: 'translate(-50%, -50%)', zIndex: 15 }}>
               {renderShapeSVG(selectedShape, shapeSize / 2, currentColor, brushSize, true)}
             </div>
           )}
         </div>
 
-        {/* BOTTOM */}
         <div className="px-3 pb-3">
           <div className="bg-white/95 rounded-3xl p-3 shadow-2xl border-4 border-white">
             {currentTool !== 'sticker' && currentTool !== 'move' && (
@@ -1142,15 +782,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                 <p className="text-center text-xs font-black text-gray-600 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>✏️ Brush Size</p>
                 <div className="flex items-center justify-center gap-2">
                   {BRUSH_SIZES.map(({ size, label }) => (
-                    <motion.button
-                      key={size}
-                      onClick={() => setBrushSize(size)}
-                      className={`rounded-xl flex flex-col items-center justify-center border-2 ${
-                        brushSize === size ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-white scale-110' : 'bg-gray-100 text-gray-600 border-gray-200'
-                      }`}
-                      style={{ minWidth: '45px', minHeight: '45px', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}
-                      whileTap={{ scale: 0.95 }}
-                    >
+                    <motion.button key={size} onClick={() => setBrushSize(size)} className={`rounded-xl flex flex-col items-center justify-center border-2 ${brushSize === size ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-white scale-110' : 'bg-gray-100 text-gray-600 border-gray-200'}`} style={{ minWidth: '45px', minHeight: '45px', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }} whileTap={{ scale: 0.95 }}>
                       <div className={`rounded-full ${brushSize === size ? 'bg-white' : 'bg-gray-500'}`} style={{ width: `${Math.min(size, 20)}px`, height: `${Math.min(size, 20)}px` }} />
                       <span className="text-xs">{label}</span>
                     </motion.button>
@@ -1158,20 +790,11 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                 </div>
               </div>
             )}
-
             <div>
               <p className="text-center text-xs font-black text-gray-600 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>🎨 Colors</p>
               <div className="flex items-center gap-2 overflow-x-auto pb-1 justify-center flex-wrap">
                 {COLORS.map((color) => (
-                  <motion.button
-                    key={color}
-                    onClick={() => setCurrentColor(color)}
-                    className={`rounded-full flex-shrink-0 border-4 shadow-md ${
-                      currentColor === color ? 'border-gray-800 scale-125 ring-4 ring-offset-2 ring-yellow-300' : 'border-white'
-                    }`}
-                    style={{ backgroundColor: color, width: '40px', height: '40px' }}
-                    whileTap={{ scale: 0.9 }}
-                  />
+                  <motion.button key={color} onClick={() => setCurrentColor(color)} className={`rounded-full flex-shrink-0 border-4 shadow-md ${currentColor === color ? 'border-gray-800 scale-125 ring-4 ring-offset-2 ring-yellow-300' : 'border-white'}`} style={{ backgroundColor: color, width: '40px', height: '40px' }} whileTap={{ scale: 0.9 }} />
                 ))}
               </div>
             </div>
