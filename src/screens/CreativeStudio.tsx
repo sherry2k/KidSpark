@@ -899,24 +899,154 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
         </div>
 
         {/* Canvas Area with Overlays */}
-        <div 
-          className="flex-1 mx-3 mb-2 bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white relative"
-          onMouseMove={handleItemMove}
-          onTouchMove={handleItemMove}
-          onMouseUp={handleItemMouseUp}
-          onTouchEnd={handleItemMouseUp}
-        >
-          <canvas
-            ref={canvasRef}
-            className="w-full h-full cursor-crosshair touch-none block"
-            onMouseDown={startDrawing}
-            onMouseMove={draw}
-            onMouseUp={stopDrawing}
-            onMouseLeave={stopDrawing}
-            onTouchStart={startDrawing}
-            onTouchMove={draw}
-            onTouchEnd={stopDrawing}
+<div 
+  className="flex-1 mx-3 mb-2 bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white relative"
+  onMouseMove={(e) => {
+    handleItemMove(e);
+    // Update cursor position for tool indicator
+    if (['eraser', 'brush', 'pencil', 'marker', 'fill'].includes(currentTool)) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setCursorPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    }
+  }}
+  onTouchMove={(e) => {
+    handleItemMove(e);
+    if (['eraser', 'brush', 'pencil', 'marker', 'fill'].includes(currentTool)) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setCursorPos({ x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top });
+    }
+  }}
+  onMouseEnter={() => setShowCursor(true)}
+  onMouseLeave={() => {
+    setShowCursor(false);
+    handleItemMouseUp();
+  }}
+  onMouseUp={handleItemMouseUp}
+  onTouchEnd={handleItemMouseUp}
+>
+  <canvas
+    ref={canvasRef}
+    className={`w-full h-full touch-none block ${
+      currentTool === 'eraser' 
+        ? 'cursor-none md:cursor-none' 
+        : 'cursor-crosshair'
+    }`}
+    onMouseDown={startDrawing}
+    onMouseMove={draw}
+    onMouseUp={stopDrawing}
+    onMouseLeave={stopDrawing}
+    onTouchStart={startDrawing}
+    onTouchMove={draw}
+    onTouchEnd={stopDrawing}
+  />
+  
+  {/* 🎯 Tool Cursor Indicator */}
+  {showCursor && cursorPos && (
+    <div
+      className="absolute pointer-events-none z-30"
+      style={{
+        left: `${cursorPos.x}px`,
+        top: `${cursorPos.y}px`,
+        transform: 'translate(-50%, -50%)',
+      }}
+    >
+      {currentTool === 'eraser' && (
+        <div className="relative">
+          {/* Eraser circle indicator */}
+          <div 
+            className="rounded-full bg-white/30 border-4 border-red-500"
+            style={{
+              width: `${brushSize * 2}px`,
+              height: `${brushSize * 2}px`,
+              boxShadow: '0 0 10px rgba(239, 68, 68, 0.5)',
+            }}
           />
+          {/* Eraser icon */}
+          <div 
+            className="absolute -top-8 left-1/2 -translate-x-1/2 text-3xl"
+            style={{ filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.3))' }}
+          >
+            🧽
+          </div>
+        </div>
+      )}
+      
+      {currentTool === 'brush' && (
+        <div className="relative">
+          <div 
+            className="rounded-full border-2 border-white"
+            style={{
+              width: `${brushSize * 1.5}px`,
+              height: `${brushSize * 1.5}px`,
+              backgroundColor: currentColor + '80',
+              boxShadow: '0 0 8px rgba(0,0,0,0.3)',
+            }}
+          />
+          <div 
+            className="absolute -top-8 left-1/2 -translate-x-1/2 text-2xl"
+            style={{ filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.3))' }}
+          >
+            🖌️
+          </div>
+        </div>
+      )}
+      
+      {currentTool === 'pencil' && (
+        <div className="relative">
+          <div 
+            className="rounded-full border-2 border-gray-600"
+            style={{
+              width: `${brushSize}px`,
+              height: `${brushSize}px`,
+              backgroundColor: currentColor,
+            }}
+          />
+          <div 
+            className="absolute -top-8 left-1/2 -translate-x-1/2 text-2xl"
+            style={{ filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.3))' }}
+          >
+            ✏️
+          </div>
+        </div>
+      )}
+      
+      {currentTool === 'marker' && (
+        <div className="relative">
+          <div 
+            className="border-2 border-white opacity-70"
+            style={{
+              width: `${brushSize * 1.5}px`,
+              height: `${brushSize * 1.5}px`,
+              backgroundColor: currentColor,
+              borderRadius: '4px',
+              boxShadow: '0 0 8px rgba(0,0,0,0.3)',
+            }}
+          />
+          <div 
+            className="absolute -top-8 left-1/2 -translate-x-1/2 text-2xl"
+            style={{ filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.3))' }}
+          >
+            🖊️
+          </div>
+        </div>
+      )}
+      
+      {currentTool === 'fill' && (
+        <div className="relative">
+          <div 
+            className="text-4xl"
+            style={{ filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.4))' }}
+          >
+            🪣
+          </div>
+        </div>
+      )}
+    </div>
+  )}
+  
+  {/* Placed items overlay */}
+  {placedItems.map((item) => {
+    // ... rest of your existing code
           
           {/* Placed items overlay */}
           {placedItems.map((item) => {
