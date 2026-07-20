@@ -55,22 +55,21 @@ const SHAPE_SIZES = [
 ];
 
 const STICKERS = [
-  '⭐', '❤️', '🌟', '✨', '🎈', '🎨', '🎭', '🎪',
+  '⭐', '❤️', '😊', '😀', '🎈', '🎨', '🎭', '🎪',
   '🐶', '🐱', '🐰', '🦊', '🦁', '🐼', '🐨', '🦄',
   '🌸', '🌺', '🌻', '🌷', '🌹', '🌼', '🌵', '🌳',
   '🚗', '✈️', '🚀', '🎯', '⚽', '🏆', '👑', '💎',
-  '☀️', '🌙', '⛅', '🌈', '⚡', '🔥', '💫', '🎁',
+  '☀️', '🌙', '⛅', '🌈', '🌟', '🔥', '💫', '✨',
 ];
 
 const TOOLS: Array<{ id: Tool; icon: string; label: string; gradient: string; shadow: string }> = [
-  { id: 'brush', icon: '🖌️', label: 'Brush', gradient: 'from-purple-500 to-pink-500', shadow: '#6B21A8' },
+  { id: 'move', icon: '👆', label: 'Move', gradient: 'from-teal-500 to-cyan-600', shadow: '#0F766E' },
   { id: 'pencil', icon: '✏️', label: 'Pencil', gradient: 'from-gray-500 to-gray-700', shadow: '#374151' },
-  { id: 'marker', icon: '🖊️', label: 'Marker', gradient: 'from-blue-500 to-cyan-500', shadow: '#0369A1' },
-  { id: 'eraser', icon: '🧽', label: 'Eraser', gradient: 'from-orange-400 to-red-500', shadow: '#C2410C' },
-  { id: 'fill', icon: '🪣', label: 'Fill', gradient: 'from-green-500 to-emerald-500', shadow: '#047857' },
+  { id: 'brush', icon: '🖌️', label: 'Brush', gradient: 'from-purple-500 to-pink-500', shadow: '#6B21A8' },
   { id: 'shape', icon: '🔷', label: 'Shape', gradient: 'from-indigo-500 to-purple-500', shadow: '#4338CA' },
   { id: 'sticker', icon: '⭐', label: 'Sticker', gradient: 'from-yellow-400 to-orange-500', shadow: '#D97706' },
-  { id: 'move', icon: '👆', label: 'Move', gradient: 'from-teal-500 to-cyan-600', shadow: '#0F766E' },
+  { id: 'fill', icon: '🪣', label: 'Fill', gradient: 'from-green-500 to-emerald-500', shadow: '#047857' },
+  { id: 'eraser', icon: '🧽', label: 'Eraser', gradient: 'from-orange-400 to-red-500', shadow: '#C2410C' },
 ];
 
 const SHAPES: Array<{ id: Shape; icon: string; label: string }> = [
