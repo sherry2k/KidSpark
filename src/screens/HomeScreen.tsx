@@ -30,7 +30,7 @@ const GAME_MODE_STYLES: Record<string, {
   'coloring': { gradient: 'from-pink-400 to-rose-500', shadow: '#BE185D', difficulty: 'Easy', stars: '⭐' },
   'puzzle': { gradient: 'from-violet-500 to-purple-500', shadow: '#6D28D9', difficulty: 'Medium', stars: '⭐⭐' },
   'skills': { gradient: 'from-amber-400 to-orange-500', shadow: '#C2410C', difficulty: 'Fun', stars: '⭐⭐⭐' },
-  'creative': { gradient: 'from-purple-400 to-pink-400', shadow: '#7a2ec9', difficulty: 'Fun', stars: '⭐⭐' },
+  'creative': { gradient: 'from-pink-400 to-purple-500', shadow: '#7a2ec9', difficulty: 'Fun', stars: '⭐⭐' },
 };
 
 // Streak milestone messages
