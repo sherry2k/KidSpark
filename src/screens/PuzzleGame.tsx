@@ -39,7 +39,7 @@ const SHAPE_MATCH_LEVELS = [
 const PATTERN_LEVELS = [
   { pattern: ['🔴', '🟡', '🔴', '🟡'], next: '🔴', options: ['🔴', '🟢', '🔵'] },
   { pattern: ['⭐', '🌙', '⭐', '🌙'], next: '⭐', options: ['⭐', '☀️', '💫'] },
-  { pattern: ['🐶', '🐱', '🐶', '🐱'], next: '🐶', options: ['🐶', '🐰', '🦊'] },
+  { pattern: ['🐱', '🐶', '🐱', '🐶'], next: '🐱', options: ['🐱', '🐰', '🦊'] },
   { pattern: ['🍎', '🍌', '🍎', '🍌'], next: '🍎', options: ['🍎', '🍇', '🍓'] },
   { pattern: ['🔺', '🔵', '🔺', '🔵'], next: '🔺', options: ['🔺', '⬛', '❤️'] },
   { pattern: ['🍌', '🍎', '🍌', '🍎'], next: '🍌', options: ['🍌', '🍎', '🍇'] },
