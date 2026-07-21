@@ -37,12 +37,12 @@ const SHAPE_MATCH_LEVELS = [
 
 // Pattern puzzles
 const PATTERN_LEVELS = [
-  { pattern: ['🔴', '🟡', '🔴', '🟡'], next: '🔴', options: ['🔴', '🟢', '🔵'] },
+  { pattern: ['🔴', '🟡', '🔴', '🟡'], next: '🔴', options: ['🟢', '🔴', '🔵'] },
   { pattern: ['⭐', '🌙', '⭐', '🌙'], next: '⭐', options: ['⭐', '☀️', '💫'] },
-  { pattern: ['🐱', '🐶', '🐱', '🐶'], next: '🐱', options: ['🐱', '🐰', '🦊'] },
+  { pattern: ['🐱', '🐶', '🐱', '🐶'], next: '🐱', options: ['🐰', '🐱', '🦊'] },
   { pattern: ['🍎', '🍌', '🍎', '🍌'], next: '🍎', options: ['🍎', '🍇', '🍓'] },
   { pattern: ['🔺', '🔵', '🔺', '🔵'], next: '🔺', options: ['🔺', '⬛', '❤️'] },
-  { pattern: ['🍌', '🍎', '🍌', '🍎'], next: '🍌', options: ['🍌', '🍎', '🍇'] },
+  { pattern: ['🍌', '🍎', '🍌', '🍎'], next: '🍌', options: ['🍇', '🍎', '🍌'] },
 ];
 
 // Size sorting puzzles
