@@ -44,7 +44,7 @@ const TEMPLATES = [
   { id: 'butterfly', name: 'Butterfly', emoji: '🦋' },
   { id: 'fish', name: 'Fish', emoji: '🐟' },
   { id: 'cat', name: 'Cat', emoji: '🐱' },
-  { id: 'honeybee', name: 'Honeybee', emoji: '🐝' },
+  { id: 'cupcake', name: 'Cupcake', emoji: '🧁' },
 ];
 
 const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplete }) => {
