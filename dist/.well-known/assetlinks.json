@@ -1,0 +1,27 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.vercel.kidspark_bay.twa",
+      "sha256_cert_fingerprints": [
+        "66:EC:3F:8F:C7:6E:66:92:A1:1B:2D:B0:E0:D4:51:ED:27:A3:E1:FF:1A:95:AF:D1:72:75:D3:43:04:CA:98:1B",
+        "90:E2:8A:09:4C:F3:1C:8C:B3:9D:44:98:0C:34:61:ED:37:AD:87:99:DC:04:C4:6D:CD:2E:24:78:A2:98:CF:04"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.kid_spark.app",
+      "sha256_cert_fingerprints": [
+        "D7:C8:0E:70:65:A1:AF:62:50:87:8A:35:89:F7:98:06:AF:54:60:CA:C9:A7:A0:49:2E:0A:C0:1B:49:DA:03:92"
+      ]
+    }
+  }
+]

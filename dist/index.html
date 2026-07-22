@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+  <head>
+     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#a855f7" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Nunito:wght@800;900&display=swap" rel="stylesheet">
+    <title>KidSpark - Learn & Play!</title>
+    
+    <!-- 🎵 Background Music - TWA Optimized -->
+    <audio 
+      id="global-bg-music" 
+      loop 
+      preload="auto"
+      playsinline
+      webkit-playsinline
+      x5-video-player-type="h5"
+      x5-video-player-fullscreen="false"
+    >
+      <source src="/sounds/background-music.mp3" type="audio/mpeg">
+    </audio>
+    <style>
+  /* Custom cursors for Creative Studio */
+  .cursor-eraser {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctext x='0' y='24' font-size='24'%3E🧽%3C/text%3E%3C/svg%3E") 8 8, auto !important;
+  }
+  
+  .cursor-move {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctext x='0' y='24' font-size='24'%3E👆%3C/text%3E%3C/svg%3E") 8 8, move !important;
+  }
+  
+  .cursor-fill {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctext x='0' y='24' font-size='24'%3E🪣%3C/text%3E%3C/svg%3E") 8 8, auto !important;
+  }
+</style>
+    <script type="module" crossorigin src="/assets/index-D8MpihwE.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-kJL2h_f5.css">
+  <script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
+  <body>
+    <div id="root"></div>
+    
+    <!-- 🎵 Global Music Controller - Bulletproof for TWA -->
+    <script>
+      (function() {
+        var audio = document.getElementById('global-bg-music');
+        var isPlaying = false;
+        var shouldPlay = false;
+        var retryCount = 0;
+        var maxRetries = 50;
+        var recoveryInterval = null;
+        
+        // Force audio to keep playing (TWA workaround)
+        function keepPlaying() {
+          if (shouldPlay && audio.paused && retryCount < maxRetries) {
+            retryCount++;
+            console.log('🔄 Recovering audio... attempt', retryCount);
+            audio.currentTime = audio.currentTime || 0;
+            audio.play().catch(function(e) {
+              console.log('⚠️ Recovery failed:', e.message);
+            });
+          }
+        }
+        
+        // Start recovery watchdog
+        function startWatchdog() {
+          if (recoveryInterval) clearInterval(recoveryInterval);
+          recoveryInterval = setInterval(function() {
+            if (shouldPlay && audio.paused) {
+              keepPlaying();
+            }
+          }, 500); // Check every 500ms
+        }
+        
+        function stopWatchdog() {
+          if (recoveryInterval) {
+            clearInterval(recoveryInterval);
+            recoveryInterval = null;
+          }
+        }
+        
+        // Listen to audio events
+        audio.addEventListener('play', function() {
+          console.log('▶️ Audio play event');
+          isPlaying = true;
+          retryCount = 0;
+        });
+        
+        audio.addEventListener('pause', function() {
+          console.log('⏸️ Audio pause event, shouldPlay:', shouldPlay);
+          isPlaying = false;
+          // If should still be playing, try to resume
+          if (shouldPlay) {
+            setTimeout(keepPlaying, 100);
+          }
+        });
+        
+        audio.addEventListener('ended', function() {
+          console.log('🔚 Audio ended');
+          if (shouldPlay) {
+            audio.currentTime = 0;
+            audio.play().catch(function(e) {
+              console.log('Loop failed:', e);
+            });
+          }
+        });
+        
+        audio.addEventListener('stalled', function() {
+          console.log('⚠️ Audio stalled');
+          if (shouldPlay) {
+            setTimeout(keepPlaying, 500);
+          }
+        });
+        
+        audio.addEventListener('waiting', function() {
+          console.log('⏳ Audio waiting for data');
+        });
+        
+        audio.addEventListener('canplaythrough', function() {
+          console.log('✅ Audio ready to play through');
+        });
+        
+        audio.addEventListener('error', function(e) {
+          console.error('❌ Audio error:', e);
+        });
+        
+        // Global music controller
+        window.__kidsparkMusic = {
+          audio: audio,
+          
+          play: function() {
+            console.log('🎵 Play called');
+            shouldPlay = true;
+            audio.volume = 0.3;
+            audio.muted = false;
+            
+            var playPromise = audio.play();
+            if (playPromise !== undefined) {
+              playPromise
+                .then(function() {
+                  console.log('✅ Music playing successfully');
+                  isPlaying = true;
+                  retryCount = 0;
+                  startWatchdog();
+                })
+                .catch(function(err) {
+                  console.log('❌ Music play failed:', err.message);
+                  // Try again on next user interaction
+                  setTimeout(function() {
+                    if (shouldPlay) keepPlaying();
+                  }, 100);
+                });
+            }
+          },
+          
+          pause: function() {
+            console.log('⏸️ Pause called');
+            shouldPlay = false;
+            stopWatchdog();
+            audio.pause();
+            isPlaying = false;
+          },
+          
+          setVolume: function(vol) {
+            audio.volume = Math.max(0, Math.min(1, vol));
+          },
+          
+          isPlaying: function() {
+            return isPlaying && !audio.paused;
+          }
+        };
+        
+        // Prevent Android from killing audio when page focus changes
+        document.addEventListener('visibilitychange', function() {
+          console.log('👁️ Visibility change, hidden:', document.hidden);
+          if (!document.hidden && shouldPlay && audio.paused) {
+            setTimeout(function() {
+              if (shouldPlay) keepPlaying();
+            }, 300);
+          }
+        });
+        
+        // Handle window focus (for TWA)
+        window.addEventListener('focus', function() {
+          console.log('🎯 Window focused');
+          if (shouldPlay && audio.paused) {
+            setTimeout(keepPlaying, 300);
+          }
+        });
+        
+        // Handle page show (for back/forward navigation)
+        window.addEventListener('pageshow', function() {
+          console.log('📄 Page shown');
+          if (shouldPlay && audio.paused) {
+            setTimeout(keepPlaying, 300);
+          }
+        });
+        
+        console.log('✅ KidSpark music system initialized (TWA optimized)');
+      })();
+    </script>
+  </body>
+</html>
