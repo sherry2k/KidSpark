@@ -23,7 +23,6 @@ export default defineConfig({
       includeAssets: [
         "icons/*.png",
         "sounds/*.mp3",
-        "image/*.png",
       ],
       manifest: {
         name: "KidSpark",
@@ -59,7 +58,6 @@ export default defineConfig({
             purpose: "maskable"
           }
         ],
-      
         shortcuts: [
           {
             name: "Start Learning",
