@@ -59,15 +59,7 @@ export default defineConfig({
             purpose: "maskable"
           }
         ],
-        screenshots: [
-          {
-            src: "/image/screenshot-1.png",
-            sizes: "1080x1920",
-            type: "image/png",
-            form_factor: "narrow",
-            label: "Home Screen"
-          }
-        ],
+      
         shortcuts: [
           {
             name: "Start Learning",
