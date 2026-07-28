@@ -32,39 +32,47 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ progress, onBack, onAnswer, onC
   const question = questions[currentQ];
 
   const handleAnswer = useCallback((index: number) => {
-    if (selectedAnswer !== null) return;
+  if (selectedAnswer !== null) return;
 
-    setSelectedAnswer(index);
-    const correct = index === question.correct;
-    setFeedbackCorrect(correct);
+  setSelectedAnswer(index);
+  const correct = index === question.correct;
+  setFeedbackCorrect(correct);
+
+  if (correct) {
+    setScore((s) => s + 1);
+    const msgs = encouragementMessages.correct;
+    setFeedbackMessage(msgs[Math.floor(Math.random() * msgs.length)]);
+  } else {
+    const msgs = encouragementMessages.incorrect;
+    setFeedbackMessage(msgs[Math.floor(Math.random() * msgs.length)]);
+  }
+
+  onAnswer(correct);
+  setShowFeedback(true);
+
+  setTimeout(() => {
+    setShowFeedback(false);
+    setSelectedAnswer(null);
 
     if (correct) {
-      setScore((s) => s + 1);
-      const msgs = encouragementMessages.correct;
-      setFeedbackMessage(msgs[Math.floor(Math.random() * msgs.length)]);
-    } else {
-      const msgs = encouragementMessages.incorrect;
-      setFeedbackMessage(msgs[Math.floor(Math.random() * msgs.length)]);
-    }
-
-    onAnswer(correct);
-    setShowFeedback(true);
-
-    setTimeout(() => {
-      setShowFeedback(false);
-      setSelectedAnswer(null);
-
       if (currentQ < questions.length - 1) {
         setCurrentQ((q) => q + 1);
       } else {
-        const starsEarned = correct ? score + 1 : score;
-        const starRating = starsEarned >= questions.length * 0.8 ? 3 : starsEarned >= questions.length * 0.5 ? 2 : 1;
+        const finalScore = score + 1;
+        const starRating =
+          finalScore >= questions.length * 0.8
+            ? 3
+            : finalScore >= questions.length * 0.5
+            ? 2
+            : 1;
+
         setIsFinished(true);
         setShowCelebration(true);
         onComplete(starRating);
       }
-    }, 1500);
-  }, [selectedAnswer, question, currentQ, questions.length, score, onAnswer, onComplete]);
+    }
+  }, 1500);
+}, [selectedAnswer, question, currentQ, questions.length, score, onAnswer, onComplete]);
 
   // Colorful gradients for answer buttons
   const optionStyles = [
