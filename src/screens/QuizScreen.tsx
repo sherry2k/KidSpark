@@ -55,22 +55,23 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ progress, onBack, onAnswer, onC
     setSelectedAnswer(null);
 
     if (correct) {
+      const newScore = score + 1; // ✅ Calculate what the new score WILL be
+      
       if (currentQ < questions.length - 1) {
         setCurrentQ((q) => q + 1);
       } else {
-        const finalScore = score + 1;
-        const starRating =
-          finalScore >= questions.length * 0.8
-            ? 3
-            : finalScore >= questions.length * 0.5
-            ? 2
-            : 1;
-
+        // ✅ Use newScore which includes this correct answer
+        const starRating = newScore >= questions.length * 0.8 
+          ? 3 
+          : newScore >= questions.length * 0.5 
+          ? 2 
+          : 1;
         setIsFinished(true);
         setShowCelebration(true);
         onComplete(starRating);
       }
     }
+    // If wrong answer: stay on same question, do nothing
   }, 1500);
 }, [selectedAnswer, question, currentQ, questions.length, score, onAnswer, onComplete]);
 
