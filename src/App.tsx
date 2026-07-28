@@ -39,7 +39,7 @@ import {
 } from './store/gameStore';
 
 // Achievement checking
-import { achievements } from './data/gameData';
+import { achievements, dailyChallenges } from './data/gameData';
 
 // 🎵 Background Music Hook
 import { useBackgroundMusic } from './hooks/useBackgroundMusic';
@@ -69,10 +69,8 @@ const KidSparkApp: React.FC = () => {
   const [progress, setProgress] = useState<GameProgress>(loadProgress);
   const [settings, setSettings] = useState<GameSettings>(loadSettings);
   
-  // 🎵 Track if user has interacted (required by browsers for autoplay)
   const [hasStarted, setHasStarted] = useState(false);
 
-  // 🎵 Initialize background music
   const { fadeIn } = useBackgroundMusic({
     enabled: hasStarted && (settings.musicEnabled ?? true),
     volume: 0.3,
@@ -123,10 +121,8 @@ const KidSparkApp: React.FC = () => {
   }, [checkAchievements]);
 
   const handleSplashComplete = useCallback(() => {
-    // 🎵 Mark that user has interacted - now music can play
     setHasStarted(true);
     
-    // 🎵 Start music with fade-in effect
     setTimeout(() => {
       if (settings.musicEnabled ?? true) {
         fadeIn(2000);
@@ -255,6 +251,7 @@ const KidSparkApp: React.FC = () => {
           : "'Fredoka', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
       }}
     >
+      
       <AnimatePresence mode="wait">
         <motion.div
           key={currentScreen}
@@ -271,7 +268,6 @@ const KidSparkApp: React.FC = () => {
   );
 };
 
-// Main App - No routing needed anymore
 export default function App() {
   return <KidSparkApp />;
 }

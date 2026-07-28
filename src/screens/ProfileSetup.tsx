@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { avatarOptions } from '../data/gameData';
 import { PlayerProfile } from '../store/gameStore';
+import { playClick, playCorrect, playComplete } from '../utils/sounds';
 
 interface ProfileSetupProps {
   onComplete: (profile: PlayerProfile) => void;
@@ -14,6 +15,8 @@ const ProfileSetup: React.FC<ProfileSetupProps> = ({ onComplete }) => {
   const [age, setAge] = useState(5);
 
   const handleFinish = () => {
+    // 🎵 Setup complete!
+    playComplete();
     const difficulty = age <= 5 ? 'easy' : age <= 6 ? 'medium' : 'hard';
     onComplete({ name: name || 'Little Star', avatar, age, difficulty: difficulty as 'easy' | 'medium' | 'hard' });
   };
@@ -68,7 +71,7 @@ const ProfileSetup: React.FC<ProfileSetupProps> = ({ onComplete }) => {
               autoFocus
             />
             <motion.button
-              onClick={() => setStep(1)}
+              onClick={() => { playClick(); setStep(1); }}
               className="mt-6 w-full bg-gradient-to-r from-purple-400 to-pink-400 text-white rounded-2xl py-4 text-xl font-bold shadow-lg"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -93,7 +96,7 @@ const ProfileSetup: React.FC<ProfileSetupProps> = ({ onComplete }) => {
               {avatarOptions.map((opt) => (
                 <motion.button
                   key={opt.id}
-                  onClick={() => setAvatar(opt.emoji)}
+                  onClick={() => { playCorrect(); setAvatar(opt.emoji); }}
                   className={`text-4xl md:text-5xl p-3 rounded-2xl transition-all ${
                     avatar === opt.emoji
                       ? 'bg-purple-100 ring-4 ring-purple-400 scale-110 shadow-lg'
@@ -108,14 +111,14 @@ const ProfileSetup: React.FC<ProfileSetupProps> = ({ onComplete }) => {
             </div>
             <div className="flex gap-3">
               <motion.button
-                onClick={() => setStep(0)}
+                onClick={() => { playClick(); setStep(0); }}
                 className="flex-1 bg-gray-100 text-gray-600 rounded-2xl py-3 text-lg font-bold"
                 whileTap={{ scale: 0.98 }}
               >
                 ◀️ Back
               </motion.button>
               <motion.button
-                onClick={() => setStep(2)}
+                onClick={() => { playClick(); setStep(2); }}
                 className="flex-1 bg-gradient-to-r from-purple-400 to-pink-400 text-white rounded-2xl py-3 text-lg font-bold shadow-lg"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -147,7 +150,7 @@ const ProfileSetup: React.FC<ProfileSetupProps> = ({ onComplete }) => {
             
             <div className="flex items-center justify-center gap-4 mb-6">
               <motion.button
-                onClick={() => setAge(Math.max(3, age - 1))}
+                onClick={() => { playClick(); setAge(Math.max(3, age - 1)); }}
                 className="w-14 h-14 bg-pink-100 rounded-full text-2xl font-bold text-pink-600 flex items-center justify-center shadow-md"
                 whileTap={{ scale: 0.9 }}
               >
@@ -163,7 +166,7 @@ const ProfileSetup: React.FC<ProfileSetupProps> = ({ onComplete }) => {
                 {age}
               </motion.div>
               <motion.button
-                onClick={() => setAge(Math.min(10, age + 1))}
+                onClick={() => { playClick(); setAge(Math.min(10, age + 1)); }}
                 className="w-14 h-14 bg-blue-100 rounded-full text-2xl font-bold text-blue-600 flex items-center justify-center shadow-md"
                 whileTap={{ scale: 0.9 }}
               >
@@ -177,7 +180,7 @@ const ProfileSetup: React.FC<ProfileSetupProps> = ({ onComplete }) => {
 
             <div className="flex gap-3">
               <motion.button
-                onClick={() => setStep(1)}
+                onClick={() => { playClick(); setStep(1); }}
                 className="flex-1 bg-gray-100 text-gray-600 rounded-2xl py-3 text-lg font-bold"
                 whileTap={{ scale: 0.98 }}
               >

@@ -6,6 +6,7 @@ import Celebration, { FeedbackPopup } from '../components/Celebration';
 import { encouragementMessages } from '../data/gameData';
 import { useContent } from '../context/ContentContext';
 import { GameProgress } from '../store/gameStore';
+import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds';
 
 interface WordBuilderProps {
   progress: GameProgress;
@@ -38,10 +39,15 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete 
 
   const handleLetterClick = useCallback((index: number) => {
     if (selectedLetters.includes(index)) {
+      // 🎵 Play click when removing letter
+      playClick();
       setSelectedLetters((prev) => prev.filter((i) => i !== index));
       return;
     }
 
+    // 🎵 Play click when adding letter
+    playClick();
+    
     const newSelected = [...selectedLetters, index];
     setSelectedLetters(newSelected);
 
@@ -51,10 +57,14 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete 
 
       setFeedbackCorrect(correct);
       if (correct) {
+        // 🎵 Correct word built!
+        playCorrect();
         setScore((s) => s + 1);
         const msgs = encouragementMessages.correct;
         setFeedbackMessage(msgs[Math.floor(Math.random() * msgs.length)]);
       } else {
+        // 🎵 Wrong word built!
+        playWrong();
         const msgs = encouragementMessages.incorrect;
         setFeedbackMessage(msgs[Math.floor(Math.random() * msgs.length)]);
       }
@@ -74,6 +84,10 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete 
           } else {
             const finalScore = score + 1;
             const stars = finalScore >= totalWords * 0.8 ? 3 : finalScore >= totalWords * 0.5 ? 2 : 1;
+            
+            // 🎵 All words complete!
+            playComplete();
+            
             setIsFinished(true);
             setShowCelebration(true);
             onComplete(stars);
@@ -115,7 +129,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete 
             </div>
             <div className="grid grid-cols-2 gap-3">
               <motion.button 
-                onClick={onBack} 
+                onClick={() => { playClick(); onBack(); }}
                 className="bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-2xl py-4 font-bold shadow-lg border-4 border-white"
                 style={{
                   boxShadow: '0 4px 0 #374151, 0 6px 15px rgba(0,0,0,0.2)',
@@ -127,6 +141,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete 
               </motion.button>
               <motion.button
                 onClick={() => {
+                  playClick();
                   const shuffled = [...wordBuilderWords].sort(() => Math.random() - 0.5).slice(0, totalWords);
                   setCurrentIndex(0);
                   setScore(0);
@@ -156,7 +171,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete 
       <div className="h-full flex flex-col">
         <Navigation
           title="📝 Words"
-          onBack={onBack}
+          onBack={() => { playClick(); onBack(); }}
           stars={progress.stars}
           showProgress
           progress={((currentIndex + 1) / words.length) * 100}
@@ -174,7 +189,6 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete 
               exit={{ x: -80, opacity: 0 }}
               transition={{ type: 'spring' }}
             >
-              {/* Score Bar */}
               <motion.div
                 className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-3 mb-3 text-white shadow-lg border-4 border-white flex items-center justify-between"
                 initial={{ y: -10, opacity: 0 }}
@@ -195,13 +209,11 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete 
                 </div>
               </motion.div>
 
-              {/* Main Card */}
               <motion.div
                 className="bg-white/95 backdrop-blur-xl rounded-3xl p-5 md:p-6 shadow-2xl border-4 border-white"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
               >
-                {/* Big Emoji */}
                 <motion.div
                   className="text-8xl md:text-9xl mb-3 text-center"
                   animate={{ 
@@ -213,7 +225,6 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete 
                   {currentWord.emoji}
                 </motion.div>
 
-                {/* Instructions */}
                 <motion.div
                   className="text-center mb-4"
                   initial={{ opacity: 0 }}
@@ -230,7 +241,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete 
                 {/* Hint Button */}
                 <motion.div className="text-center mb-4">
                   <motion.button
-                    onClick={() => setShowHint(!showHint)}
+                    onClick={() => { playClick(); setShowHint(!showHint); }}
                     className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white rounded-full px-6 py-3 font-bold shadow-lg border-4 border-white text-base md:text-lg"
                     style={{
                       boxShadow: '0 4px 0 #B45309, 0 6px 15px rgba(0,0,0,0.15)',
@@ -243,7 +254,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete 
                   </motion.button>
                 </motion.div>
 
-                {/* Word Slots - BIGGER */}
+                {/* Word Slots */}
                 <div className="flex justify-center gap-2 md:gap-3 mb-6 flex-wrap">
                   {currentWord.word.split('').map((_letter, i) => {
                     const filled = i < selectedLetters.length;
@@ -254,6 +265,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete 
                         key={i}
                         onClick={() => {
                           if (filled) {
+                            playClick();
                             setSelectedLetters((prev) => prev.slice(0, i));
                           }
                         }}
@@ -292,7 +304,6 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete 
                   })}
                 </div>
 
-                {/* Section Header */}
                 <p 
                   className="text-center text-base md:text-lg font-bold text-gray-700 mb-3"
                   style={{ fontFamily: "'Bubblegum One', cursive" }}
@@ -300,7 +311,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete 
                   👆 Tap the letters:
                 </p>
 
-                {/* Available Letters - MUCH BIGGER */}
+                {/* Available Letters */}
                 <div className="flex justify-center gap-2 md:gap-3 flex-wrap">
                   {availableLetters.map((letter, i) => {
                     const isUsed = selectedLetters.includes(i);
@@ -344,7 +355,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete 
                 {selectedLetters.length > 0 && (
                   <motion.div className="mt-6 text-center">
                     <motion.button
-                      onClick={() => setSelectedLetters([])}
+                      onClick={() => { playClick(); setSelectedLetters([]); }}
                       className="bg-gradient-to-r from-red-400 to-pink-500 text-white rounded-2xl px-6 py-3 font-bold shadow-lg border-4 border-white"
                       style={{
                         boxShadow: '0 4px 0 #B91C1C, 0 6px 15px rgba(0,0,0,0.15)',

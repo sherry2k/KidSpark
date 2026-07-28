@@ -1,50 +1,128 @@
-// Simple sound effects using Web Audio API
-const audioCtx = typeof window !== 'undefined' ? new (window.AudioContext || (window as any).webkitAudioContext)() : null;
+// src/utils/sounds.ts
+import { Howl, Howler } from 'howler';
 
-function playTone(frequency: number, duration: number, type: OscillatorType = 'sine', volume = 0.15) {
-  if (!audioCtx) return;
+// Sound file paths - ONLY files you actually have
+const SOUND_FILES = {
+  click: '/sounds/click.mp3',
+  correct: '/sounds/correct.mp3',
+  wrong: '/sounds/wrong.mp3',
+  complete: '/sounds/complete.mp3',
+  win: '/sounds/win.mp3',
+  star: '/sounds/star.mp3',
+};
+
+type SoundName = keyof typeof SOUND_FILES;
+
+// Cache sounds
+const soundsCache: { [key: string]: Howl } = {};
+
+// Sound enabled state
+let soundEnabled = true;
+
+// Load saved settings
+if (typeof window !== 'undefined') {
+  const saved = localStorage.getItem('soundEffectsEnabled');
+  soundEnabled = saved === null ? true : saved === 'true';
+}
+
+// Get or create sound
+function getSound(name: SoundName): Howl | null {
+  if (soundsCache[name]) {
+    return soundsCache[name];
+  }
+
   try {
-    audioCtx.resume();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    oscillator.type = type;
-    oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
-    gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-    oscillator.start(audioCtx.currentTime);
-    oscillator.stop(audioCtx.currentTime + duration);
-  } catch (e) {
-    // silently fail
+    const sound = new Howl({
+      src: [SOUND_FILES[name]],
+      volume: 0.5,
+      preload: true,
+      html5: false,
+      onload: () => console.log(`✅ Sound loaded: ${name}`),
+      onloaderror: (_, error) => console.log(`❌ Load error for ${name}:`, error),
+    });
+    soundsCache[name] = sound;
+    return sound;
+  } catch (error) {
+    console.log(`Error creating sound ${name}:`, error);
+    return null;
   }
 }
 
+// Play a sound
+function playSoundEffect(name: SoundName, volume?: number) {
+  if (!soundEnabled) return;
+
+  const sound = getSound(name);
+  if (!sound) return;
+
+  try {
+    if (volume !== undefined) {
+      sound.volume(volume);
+    }
+
+    if (Howler.ctx && Howler.ctx.state === 'suspended') {
+      Howler.ctx.resume().then(() => sound.play());
+    } else {
+      sound.play();
+    }
+  } catch (error) {
+    console.log(`Play error (${name}):`, error);
+  }
+}
+
+// ============================================
+// PUBLIC SOUND FUNCTIONS
+// ============================================
+
+// Basic sounds
+export function playClick() {
+  playSoundEffect('click', 0.4);
+}
+
 export function playCorrect() {
-  playTone(523.25, 0.15, 'sine', 0.12);
-  setTimeout(() => playTone(659.25, 0.15, 'sine', 0.12), 100);
-  setTimeout(() => playTone(783.99, 0.2, 'sine', 0.12), 200);
+  playSoundEffect('correct', 0.5);
 }
 
 export function playWrong() {
-  playTone(200, 0.3, 'square', 0.08);
-}
-
-export function playClick() {
-  playTone(800, 0.05, 'sine', 0.08);
+  playSoundEffect('wrong', 0.4);
 }
 
 export function playComplete() {
-  const notes = [523.25, 659.25, 783.99, 1046.50];
-  notes.forEach((note, i) => {
-    setTimeout(() => playTone(note, 0.3, 'sine', 0.12), i * 150);
-  });
+  playSoundEffect('complete', 0.6);
+}
+
+export function playWin() {
+  playSoundEffect('win', 0.6);
+}
+
+export function playStar() {
+  playSoundEffect('star', 0.5);
+}
+
+// Mapped sounds (using existing files)
+export function playFlip() {
+  playSoundEffect('click', 0.3); // Use click sound for flip (lower volume)
 }
 
 export function playPop() {
-  playTone(1200, 0.08, 'sine', 0.1);
+  playSoundEffect('click', 0.4); // Use click sound for pop
 }
 
-export function playFlip() {
-  playTone(600, 0.1, 'sine', 0.08);
+// ============================================
+// SOUND CONTROL
+// ============================================
+
+export function toggleSound(): boolean {
+  soundEnabled = !soundEnabled;
+  localStorage.setItem('soundEffectsEnabled', String(soundEnabled));
+  return soundEnabled;
+}
+
+export function isSoundEnabled(): boolean {
+  return soundEnabled;
+}
+
+export function setSoundEnabled(enabled: boolean) {
+  soundEnabled = enabled;
+  localStorage.setItem('soundEffectsEnabled', String(soundEnabled));
 }

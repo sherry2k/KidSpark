@@ -4,6 +4,7 @@ import { GameBackground } from '../components/Background';
 import Navigation from '../components/Navigation';
 import Celebration from '../components/Celebration';
 import { GameProgress } from '../store/gameStore';
+import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds';
 
 interface PuzzleGameProps {
   progress: GameProgress;
@@ -13,7 +14,6 @@ interface PuzzleGameProps {
 
 type PuzzleType = 'shape-match' | 'pattern' | 'size-sort' | null;
 
-// Shape matching data
 const SHAPE_MATCH_LEVELS = [
   { items: [
     { id: '1', emoji: '🐶', shadow: '🐕' },
@@ -35,7 +35,6 @@ const SHAPE_MATCH_LEVELS = [
   ]},
 ];
 
-// Pattern puzzles
 const PATTERN_LEVELS = [
   { pattern: ['🔴', '🟡', '🔴', '🟡'], next: '🔴', options: ['🟢', '🔴', '🔵'] },
   { pattern: ['⭐', '🌙', '⭐', '🌙'], next: '⭐', options: ['⭐', '☀️', '💫'] },
@@ -45,7 +44,6 @@ const PATTERN_LEVELS = [
   { pattern: ['🍌', '🍎', '🍌', '🍎'], next: '🍌', options: ['🍇', '🍎', '🍌'] },
 ];
 
-// Size sorting puzzles
 const SIZE_SORT_LEVELS = [
   { items: [
     { emoji: '🐘', size: 4, label: 'Elephant' },
@@ -71,21 +69,17 @@ const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete })
   const [puzzleType, setPuzzleType] = useState<PuzzleType>(null);
   const [currentLevel, setCurrentLevel] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [showQuickSuccess, setShowQuickSuccess] = useState(false); // NEW!
+  const [showQuickSuccess, setShowQuickSuccess] = useState(false);
 
-  // Shape match state
   const [matches, setMatches] = useState<Record<string, string>>({});
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
 
-  // Pattern state
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
-  // Size sort state
   const [sortedItems, setSortedItems] = useState<any[]>([]);
   const [availableItems, setAvailableItems] = useState<any[]>([]);
 
-  // Reset states when changing puzzle
   useEffect(() => {
     setMatches({});
     setSelectedItem(null);
@@ -106,30 +100,31 @@ const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete })
     const isLastLevel = currentLevel >= totalLevels - 1;
     
     if (isLastLevel) {
-      // Show celebration only on final level
+      // 🎵 All puzzles complete!
+      playComplete();
       setShowCelebration(true);
       setTimeout(() => {
         onComplete(3);
       }, 500);
     } else {
-      // Show quick success feedback
+      // 🎵 Level complete - correct sound
+      playCorrect();
       setShowQuickSuccess(true);
       
-      // Auto-advance to next level after brief delay
       setTimeout(() => {
         setShowQuickSuccess(false);
         setCurrentLevel(currentLevel + 1);
-        // Reset states for next level
         setMatches({});
         setSelectedItem(null);
         setSelectedAnswer(null);
         setIsCorrect(null);
         setSortedItems([]);
-      }, 1500); // 1.5 second delay to show success
+      }, 1500);
     }
   }, [currentLevel, puzzleType, onComplete]);
 
   const nextLevel = () => {
+    playClick();
     setShowCelebration(false);
     setPuzzleType(null);
     setCurrentLevel(0);
@@ -142,7 +137,7 @@ const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete })
     return (
       <GameBackground variant="game">
         <div className="h-full flex flex-col">
-          <Navigation title="🧩 Puzzle Games" onBack={onBack} stars={progress.stars} />
+          <Navigation title="🧩 Puzzle Games" onBack={() => { playClick(); onBack(); }} stars={progress.stars} />
           <div className="flex-1 flex flex-col items-center justify-center px-4 overflow-y-auto py-4">
             <motion.h2
               className="text-2xl md:text-3xl font-black text-gray-800 mb-6 text-center"
@@ -156,7 +151,7 @@ const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete })
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl w-full">
               {/* Shape Match */}
               <motion.button
-                onClick={() => { setPuzzleType('shape-match'); setCurrentLevel(0); }}
+                onClick={() => { playClick(); setPuzzleType('shape-match'); setCurrentLevel(0); }}
                 className="bg-gradient-to-br from-blue-400 to-cyan-500 rounded-3xl p-6 text-white shadow-xl border-4 border-white"
                 style={{
                   boxShadow: '0 8px 0 #0369A1, 0 12px 25px rgba(0,0,0,0.2)',
@@ -187,7 +182,7 @@ const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete })
 
               {/* Pattern Puzzle */}
               <motion.button
-                onClick={() => { setPuzzleType('pattern'); setCurrentLevel(0); }}
+                onClick={() => { playClick(); setPuzzleType('pattern'); setCurrentLevel(0); }}
                 className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl p-6 text-white shadow-xl border-4 border-white"
                 style={{
                   boxShadow: '0 8px 0 #6B21A8, 0 12px 25px rgba(0,0,0,0.2)',
@@ -218,7 +213,7 @@ const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete })
 
               {/* Size Sort */}
               <motion.button
-                onClick={() => { setPuzzleType('size-sort'); setCurrentLevel(0); }}
+                onClick={() => { playClick(); setPuzzleType('size-sort'); setCurrentLevel(0); }}
                 className="bg-gradient-to-br from-orange-400 to-red-500 rounded-3xl p-6 text-white shadow-xl border-4 border-white"
                 style={{
                   boxShadow: '0 8px 0 #991B1B, 0 12px 25px rgba(0,0,0,0.2)',
@@ -254,7 +249,7 @@ const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete })
   }
 
   // ========================================
-  // FINAL CELEBRATION SCREEN (Only after ALL levels)
+  // FINAL CELEBRATION SCREEN
   // ========================================
   if (showCelebration) {
     return (
@@ -283,7 +278,7 @@ const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete })
             <p className="text-gray-600 mb-6">You completed all levels!</p>
             <div className="grid grid-cols-2 gap-3">
               <motion.button 
-                onClick={() => { setPuzzleType(null); setCurrentLevel(0); setShowCelebration(false); }}
+                onClick={() => { playClick(); setPuzzleType(null); setCurrentLevel(0); setShowCelebration(false); }}
                 className="bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-2xl py-4 font-black shadow-lg border-4 border-white"
                 style={{
                   boxShadow: '0 4px 0 #374151, 0 6px 15px rgba(0,0,0,0.2)',
@@ -324,6 +319,8 @@ const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete })
 
     const handleItemClick = (id: string) => {
       if (matches[id]) return;
+      // 🎵 Play click when selecting item
+      playClick();
       setSelectedItem(id === selectedItem ? null : id);
     };
 
@@ -332,9 +329,13 @@ const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete })
       if (Object.values(matches).includes(shadowId)) return;
       
       if (selectedItem === shadowId) {
+        // 🎵 Correct match!
+        playCorrect();
         setMatches({ ...matches, [selectedItem]: shadowId });
         setSelectedItem(null);
       } else {
+        // 🎵 Wrong match!
+        playWrong();
         setSelectedItem(null);
       }
     };
@@ -344,11 +345,10 @@ const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete })
         <div className="h-full flex flex-col">
           <Navigation 
             title={`🎯 Match ${currentLevel + 1}/${SHAPE_MATCH_LEVELS.length}`} 
-            onBack={() => setPuzzleType(null)} 
+            onBack={() => { playClick(); setPuzzleType(null); }} 
             stars={progress.stars} 
           />
           
-          {/* 🎉 NEW: Quick Success Overlay */}
           <AnimatePresence>
             {showQuickSuccess && (
               <motion.div
@@ -474,13 +474,18 @@ const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete })
     const level = PATTERN_LEVELS[currentLevel];
 
     const handleAnswerClick = (answer: string) => {
+      // 🎵 Play click on selection
+      playClick();
       setSelectedAnswer(answer);
       const correct = answer === level.next;
       setIsCorrect(correct);
       
       if (correct) {
+        // 🎵 Correct sound (playCorrect is called in handleLevelComplete)
         setTimeout(() => handleLevelComplete(), 800);
       } else {
+        // 🎵 Wrong sound
+        playWrong();
         setTimeout(() => {
           setSelectedAnswer(null);
           setIsCorrect(null);
@@ -493,11 +498,10 @@ const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete })
         <div className="h-full flex flex-col">
           <Navigation 
             title={`🌈 Pattern ${currentLevel + 1}/${PATTERN_LEVELS.length}`} 
-            onBack={() => setPuzzleType(null)} 
+            onBack={() => { playClick(); setPuzzleType(null); }} 
             stars={progress.stars} 
           />
           
-          {/* 🎉 Quick Success Overlay */}
           <AnimatePresence>
             {showQuickSuccess && (
               <motion.div
@@ -618,6 +622,8 @@ const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete })
     const level = SIZE_SORT_LEVELS[currentLevel];
 
     const handleItemPick = (item: any) => {
+      // 🎵 Play click on pick
+      playClick();
       setSortedItems([...sortedItems, item]);
       setAvailableItems(availableItems.filter(i => i.emoji !== item.emoji));
       
@@ -630,6 +636,8 @@ const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete })
         if (isCorrect) {
           setTimeout(() => handleLevelComplete(), 500);
         } else {
+          // 🎵 Wrong order!
+          playWrong();
           setTimeout(() => {
             const shuffled = [...level.items].sort(() => Math.random() - 0.5);
             setAvailableItems(shuffled);
@@ -640,6 +648,7 @@ const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete })
     };
 
     const handleReset = () => {
+      playClick();
       const shuffled = [...level.items].sort(() => Math.random() - 0.5);
       setAvailableItems(shuffled);
       setSortedItems([]);
@@ -650,11 +659,10 @@ const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete })
         <div className="h-full flex flex-col">
           <Navigation 
             title={`📏 Sort ${currentLevel + 1}/${SIZE_SORT_LEVELS.length}`} 
-            onBack={() => setPuzzleType(null)} 
+            onBack={() => { playClick(); setPuzzleType(null); }} 
             stars={progress.stars} 
           />
           
-          {/* 🎉 Quick Success Overlay */}
           <AnimatePresence>
             {showQuickSuccess && (
               <motion.div

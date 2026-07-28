@@ -5,6 +5,7 @@ import Navigation from '../components/Navigation';
 import Celebration from '../components/Celebration';
 import { matchItems } from '../data/gameData';
 import { GameProgress } from '../store/gameStore';
+import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds';
 
 interface MatchGameProps {
   progress: GameProgress;
@@ -21,7 +22,6 @@ const MatchGame: React.FC<MatchGameProps> = ({ progress, onBack, onComplete }) =
     Vegetable: '🥕' 
   };
   
-  // Colorful gradients for each category
   const categoryStyles: Record<string, { 
     gradient: string; 
     shadow: string; 
@@ -64,22 +64,32 @@ const MatchGame: React.FC<MatchGameProps> = ({ progress, onBack, onComplete }) =
 
   const handleItemClick = useCallback((itemId: string) => {
     if (matched.includes(itemId)) return;
+    
+    // 🎵 Play click sound when selecting item
+    playClick();
+    
     setSelectedItem(itemId);
     setWrongMatch(false);
 
     if (selectedCategory) {
       const item = items.find((i) => i.id === itemId);
       if (item && item.category === selectedCategory) {
+        // 🎵 Correct match!
+        playCorrect();
         setMatched((prev) => [...prev, itemId]);
         setSelectedItem(null);
         setSelectedCategory(null);
 
         if (matched.length + 1 === items.length) {
+          // 🎵 All matched - completion!
+          setTimeout(() => playComplete(), 500);
           setShowCelebration(true);
           const stars = mistakes <= 2 ? 3 : mistakes <= 5 ? 2 : 1;
           onComplete(stars);
         }
       } else {
+        // 🎵 Wrong match!
+        playWrong();
         setMistakes((m) => m + 1);
         setWrongMatch(true);
         setTimeout(() => {
@@ -92,22 +102,31 @@ const MatchGame: React.FC<MatchGameProps> = ({ progress, onBack, onComplete }) =
   }, [matched, selectedCategory, items, mistakes, onComplete]);
 
   const handleCategoryClick = useCallback((cat: string) => {
+    // 🎵 Play click sound when selecting category
+    playClick();
+    
     setSelectedCategory(cat);
     setWrongMatch(false);
 
     if (selectedItem) {
       const item = items.find((i) => i.id === selectedItem);
       if (item && item.category === cat) {
+        // 🎵 Correct match!
+        playCorrect();
         setMatched((prev) => [...prev, selectedItem]);
         setSelectedItem(null);
         setSelectedCategory(null);
 
         if (matched.length + 1 === items.length) {
+          // 🎵 All matched - completion!
+          setTimeout(() => playComplete(), 500);
           setShowCelebration(true);
           const stars = mistakes <= 2 ? 3 : mistakes <= 5 ? 2 : 1;
           onComplete(stars);
         }
       } else {
+        // 🎵 Wrong match!
+        playWrong();
         setMistakes((m) => m + 1);
         setWrongMatch(true);
         setTimeout(() => {
@@ -152,7 +171,7 @@ const MatchGame: React.FC<MatchGameProps> = ({ progress, onBack, onComplete }) =
             </p>
             <div className="grid grid-cols-2 gap-3">
               <motion.button 
-                onClick={onBack} 
+                onClick={() => { playClick(); onBack(); }}
                 className="bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-2xl py-4 font-bold shadow-lg border-4 border-white"
                 style={{
                   boxShadow: '0 4px 0 #374151, 0 6px 15px rgba(0,0,0,0.2)',
@@ -164,6 +183,7 @@ const MatchGame: React.FC<MatchGameProps> = ({ progress, onBack, onComplete }) =
               </motion.button>
               <motion.button
                 onClick={() => { 
+                  playClick();
                   setMatched([]); 
                   setMistakes(0); 
                   setShowCelebration(false); 
@@ -191,7 +211,7 @@ const MatchGame: React.FC<MatchGameProps> = ({ progress, onBack, onComplete }) =
       <div className="h-full flex flex-col">
         <Navigation
           title="🎯 Match"
-          onBack={onBack}
+          onBack={() => { playClick(); onBack(); }}
           stars={progress.stars}
           showProgress
           progress={(matched.length / items.length) * 100}
@@ -250,7 +270,7 @@ const MatchGame: React.FC<MatchGameProps> = ({ progress, onBack, onComplete }) =
               </p>
             </motion.div>
 
-            {/* Categories - BIGGER AND MORE COLORFUL */}
+            {/* Categories */}
             <div className="mb-4">
               <p 
                 className="text-center text-base md:text-lg font-bold text-gray-700 mb-3"
@@ -293,7 +313,6 @@ const MatchGame: React.FC<MatchGameProps> = ({ progress, onBack, onComplete }) =
                         boxShadow: `0 2px 0 ${style.shadow}, 0 4px 10px rgba(0,0,0,0.15)`
                       } : {}}
                     >
-                      {/* Sparkle */}
                       {!isComplete && (
                         <motion.div
                           className="absolute top-1 right-1 text-yellow-200 text-sm opacity-70"
@@ -308,7 +327,6 @@ const MatchGame: React.FC<MatchGameProps> = ({ progress, onBack, onComplete }) =
                         </motion.div>
                       )}
                       
-                      {/* Check mark when complete */}
                       {isComplete && (
                         <motion.div
                           className="absolute top-1 right-1 bg-white text-green-500 rounded-full w-6 h-6 flex items-center justify-center font-bold text-sm shadow-lg border-2 border-green-400"
@@ -358,7 +376,7 @@ const MatchGame: React.FC<MatchGameProps> = ({ progress, onBack, onComplete }) =
               🎨 Items to Sort
             </p>
 
-            {/* Items grid - BIGGER */}
+            {/* Items grid */}
             <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
               <AnimatePresence>
                 {items.map((item, i) => {

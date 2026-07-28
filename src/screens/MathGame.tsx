@@ -5,6 +5,7 @@ import Navigation from '../components/Navigation';
 import Celebration, { FeedbackPopup } from '../components/Celebration';
 import { generateMathProblem, encouragementMessages } from '../data/gameData';
 import { GameProgress, PlayerProfile } from '../store/gameStore';
+import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds';
 
 interface MathGameProps {
   profile: PlayerProfile;
@@ -35,11 +36,14 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
     const correct = answer === problem.answer;
     setFeedbackCorrect(correct);
 
+    // 🎵 Play sound based on answer
     if (correct) {
+      playCorrect();
       setScore((s) => s + 1);
       const msgs = encouragementMessages.correct;
       setFeedbackMessage(msgs[Math.floor(Math.random() * msgs.length)]);
     } else {
+      playWrong();
       const msgs = encouragementMessages.incorrect;
       setFeedbackMessage(msgs[Math.floor(Math.random() * msgs.length)]);
     }
@@ -57,6 +61,10 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
       } else {
         const finalScore = correct ? score + 1 : score;
         const stars = finalScore >= totalQuestions * 0.8 ? 3 : finalScore >= totalQuestions * 0.5 ? 2 : 1;
+        
+        // 🎵 Play completion sound
+        playComplete();
+        
         setIsFinished(true);
         setShowCelebration(true);
         onComplete(stars);
@@ -64,7 +72,6 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
     }, 1500);
   }, [selectedAnswer, problem, currentQ, score, difficulty, onAnswer, onComplete]);
 
-  // Colorful gradients for answer buttons
   const optionStyles = [
     { gradient: 'from-blue-500 to-cyan-500', shadow: '#0369A1' },
     { gradient: 'from-green-500 to-emerald-500', shadow: '#047857' },
@@ -105,7 +112,7 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
             </p>
             <div className="grid grid-cols-2 gap-3">
               <motion.button 
-                onClick={onBack} 
+                onClick={() => { playClick(); onBack(); }}
                 className="bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-2xl py-4 font-bold shadow-lg border-4 border-white"
                 style={{
                   boxShadow: '0 4px 0 #374151, 0 6px 15px rgba(0,0,0,0.2)',
@@ -116,7 +123,14 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
                 🏠 Home
               </motion.button>
               <motion.button
-                onClick={() => { setCurrentQ(0); setScore(0); setIsFinished(false); setShowCelebration(false); setProblem(generateMathProblem(difficulty)); }}
+                onClick={() => { 
+                  playClick(); 
+                  setCurrentQ(0); 
+                  setScore(0); 
+                  setIsFinished(false); 
+                  setShowCelebration(false); 
+                  setProblem(generateMathProblem(difficulty)); 
+                }}
                 className="bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-2xl py-4 font-bold shadow-lg border-4 border-white"
                 style={{
                   boxShadow: '0 4px 0 #B91C1C, 0 6px 15px rgba(0,0,0,0.2)',
@@ -138,7 +152,7 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
       <div className="h-full flex flex-col">
         <Navigation
           title="🧮 Math"
-          onBack={onBack}
+          onBack={() => { playClick(); onBack(); }}
           stars={progress.stars}
           showProgress
           progress={((currentQ + 1) / totalQuestions) * 100}
@@ -190,7 +204,6 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
               >
-                {/* Title */}
                 <motion.div
                   className="text-center mb-4"
                   initial={{ opacity: 0 }}
@@ -204,7 +217,6 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
                   </h2>
                 </motion.div>
 
-                {/* BIG Math Problem Display */}
                 <motion.div 
                   className="bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 rounded-3xl p-6 md:p-8 mb-6 border-4 border-white shadow-lg"
                   style={{
@@ -214,7 +226,6 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
                   animate={{ y: 0, opacity: 1 }}
                 >
                   <div className="flex items-center justify-center gap-3 md:gap-6 flex-wrap" style={{ fontFamily: "'Bubblegum One', cursive" }}>
-                    {/* First Number */}
                     <motion.div
                       className="bg-white rounded-2xl px-4 py-3 md:px-6 md:py-4 shadow-lg border-4 border-blue-400"
                       style={{
@@ -235,7 +246,6 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
                       </span>
                     </motion.div>
 
-                    {/* Operator */}
                     <motion.div
                       className="bg-purple-500 text-white rounded-full w-14 h-14 md:w-20 md:h-20 flex items-center justify-center shadow-lg border-4 border-white"
                       style={{
@@ -255,7 +265,6 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
                       </span>
                     </motion.div>
 
-                    {/* Second Number */}
                     <motion.div
                       className="bg-white rounded-2xl px-4 py-3 md:px-6 md:py-4 shadow-lg border-4 border-pink-400"
                       style={{
@@ -276,7 +285,6 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
                       </span>
                     </motion.div>
 
-                    {/* Equals */}
                     <motion.span
                       className="text-gray-500 text-4xl md:text-5xl font-bold"
                       initial={{ opacity: 0, scale: 0 }}
@@ -286,7 +294,6 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
                       =
                     </motion.span>
 
-                    {/* Question Mark */}
                     <motion.div
                       className="bg-yellow-400 rounded-2xl px-4 py-3 md:px-6 md:py-4 shadow-lg border-4 border-white"
                       style={{
@@ -314,7 +321,6 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
                     </motion.div>
                   </div>
 
-                  {/* Visual counting aids for easy mode */}
                   {difficulty === 'easy' && problem.operator === '+' && (
                     <motion.div 
                       className="mt-6 bg-white/70 rounded-2xl p-4 flex items-center justify-center gap-3 md:gap-4 flex-wrap"
@@ -353,7 +359,6 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
                   )}
                 </motion.div>
 
-                {/* Answer Section Header */}
                 <p 
                   className="text-center text-base md:text-lg font-bold text-gray-700 mb-3"
                   style={{ fontFamily: "'Bubblegum One', cursive" }}
@@ -361,7 +366,6 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
                   👆 Choose your answer:
                 </p>
 
-                {/* Answer options - BIGGER */}
                 <div className="grid grid-cols-2 gap-3 md:gap-4">
                   {problem.options.map((option, i) => {
                     const isSelected = selectedAnswer === option;

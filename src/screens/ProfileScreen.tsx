@@ -4,6 +4,7 @@ import { GameBackground } from '../components/Background';
 import Navigation from '../components/Navigation';
 import { avatarOptions } from '../data/gameData';
 import { PlayerProfile, GameProgress } from '../store/gameStore';
+import { playClick, playCorrect } from '../utils/sounds';
 
 interface ProfileScreenProps {
   profile: PlayerProfile;
@@ -18,11 +19,15 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ profile, progress, onBack
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   const handleSaveName = () => {
+    // 🎵 Success sound on save
+    playCorrect();
     onUpdateProfile({ ...profile, name: name || 'Little Star' });
     setEditingName(false);
   };
 
   const handleSelectAvatar = (emoji: string) => {
+    // 🎵 Success sound on avatar select
+    playCorrect();
     onUpdateProfile({ ...profile, avatar: emoji });
     setShowAvatarPicker(false);
   };
@@ -34,7 +39,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ profile, progress, onBack
   return (
     <GameBackground variant="home">
       <div className="h-full flex flex-col">
-        <Navigation title="👤 Profile" onBack={onBack} />
+        <Navigation title="👤 Profile" onBack={() => { playClick(); onBack(); }} />
 
         <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-8">
           <div className="max-w-md mx-auto">
@@ -45,7 +50,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ profile, progress, onBack
               animate={{ y: 0, opacity: 1 }}
             >
               <motion.button
-                onClick={() => setShowAvatarPicker(!showAvatarPicker)}
+                onClick={() => { playClick(); setShowAvatarPicker(!showAvatarPicker); }}
                 className="text-7xl mb-3 block mx-auto"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
@@ -96,7 +101,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ profile, progress, onBack
                 </div>
               ) : (
                 <motion.button
-                  onClick={() => setEditingName(true)}
+                  onClick={() => { playClick(); setEditingName(true); }}
                   className="text-2xl font-bold text-gray-800 mb-1"
                   style={{ fontFamily: "'Bubblegum One', cursive" }}
                   whileHover={{ scale: 1.02 }}

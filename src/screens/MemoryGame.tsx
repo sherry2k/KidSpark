@@ -5,6 +5,7 @@ import Navigation from '../components/Navigation';
 import Celebration from '../components/Celebration';
 import { memoryGameSets } from '../data/gameData';
 import { GameProgress } from '../store/gameStore';
+import { playClick, playCorrect, playWrong, playComplete, playFlip, playPop } from '../utils/sounds';
 
 interface MemoryCard {
   id: string;
@@ -23,7 +24,6 @@ interface MemoryGameProps {
 
 type GameType = 'menu' | 'memory' | 'quicktap' | 'colormemory';
 
-// Color Memory game data
 const COLOR_SEQUENCE = [
   { color: '#ef4444', name: 'Red', emoji: '🔴' },
   { color: '#3b82f6', name: 'Blue', emoji: '🔵' },
@@ -31,7 +31,6 @@ const COLOR_SEQUENCE = [
   { color: '#eab308', name: 'Yellow', emoji: '🟡' },
 ];
 
-// Quick Tap items
 const QUICK_TAP_ITEMS = [
   { emoji: '⭐', target: true },
   { emoji: '🎈', target: false },
@@ -43,7 +42,6 @@ const QUICK_TAP_ITEMS = [
 const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete }) => {
   const [gameType, setGameType] = useState<GameType>('menu');
   
-  // Memory Game state
   const [selectedSet, setSelectedSet] = useState<string | null>(null);
   const [cards, setCards] = useState<MemoryCard[]>([]);
   const [flippedCards, setFlippedCards] = useState<number[]>([]);
@@ -52,16 +50,13 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
   const [isLocked, setIsLocked] = useState(false);
   const [totalPairs, setTotalPairs] = useState(0);
   
-  // Shared state
   const [showCelebration, setShowCelebration] = useState(false);
   
-  // Quick Tap state
   const [quickTapItems, setQuickTapItems] = useState<any[]>([]);
   const [quickTapScore, setQuickTapScore] = useState(0);
   const [quickTapTimeLeft, setQuickTapTimeLeft] = useState(30);
   const [quickTapActive, setQuickTapActive] = useState(false);
   
-  // Color Memory state
   const [colorSequence, setColorSequence] = useState<number[]>([]);
   const [playerSequence, setPlayerSequence] = useState<number[]>([]);
   const [currentColorLevel, setCurrentColorLevel] = useState(1);
@@ -103,6 +98,9 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
   const handleCardClick = useCallback((index: number) => {
     if (isLocked || cards[index].flipped || cards[index].matched || flippedCards.length >= 2) return;
 
+    // 🎵 Play flip sound when card is clicked
+    playFlip();
+
     const newCards = [...cards];
     newCards[index].flipped = true;
     setCards(newCards);
@@ -116,7 +114,9 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
 
       const [first, second] = newFlipped;
       if (newCards[first].pairId === newCards[second].pairId) {
+        // 🎵 Play match found sound
         setTimeout(() => {
+          playCorrect();
           const matched = [...newCards];
           matched[first].matched = true;
           matched[second].matched = true;
@@ -128,13 +128,17 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
           setMatchedPairs(newMatchedPairs);
 
           if (newMatchedPairs === totalPairs) {
+            // 🎵 Play completion sound
+            setTimeout(() => playComplete(), 500);
             setShowCelebration(true);
             const stars = moves < totalPairs * 2 ? 3 : moves < totalPairs * 3 ? 2 : 1;
             onComplete(stars);
           }
         }, 500);
       } else {
+        // 🎵 Play wrong match sound
         setTimeout(() => {
+          playWrong();
           const reset = [...newCards];
           reset[first].flipped = false;
           reset[second].flipped = false;
@@ -164,6 +168,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
   };
 
   const startQuickTap = () => {
+    playClick();
     setQuickTapScore(0);
     setQuickTapTimeLeft(30);
     setQuickTapActive(true);
@@ -176,6 +181,8 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
     if (newItems[index].tapped) return;
     
     if (newItems[index].target) {
+      // 🎵 Correct tap sound
+      playPop();
       setQuickTapScore(s => s + 1);
       newItems[index].tapped = true;
       setQuickTapItems(newItems);
@@ -184,6 +191,8 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
         setQuickTapItems(generateQuickTapItems());
       }, 200);
     } else {
+      // 🎵 Wrong tap sound
+      playWrong();
       setQuickTapScore(s => Math.max(0, s - 1));
       newItems[index].tapped = true;
       setQuickTapItems(newItems);
@@ -195,13 +204,14 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
     }
   };
 
-  // Quick Tap timer
   useEffect(() => {
     if (!quickTapActive) return;
     const timer = setInterval(() => {
       setQuickTapTimeLeft((t) => {
         if (t <= 1) {
           setQuickTapActive(false);
+          // 🎵 Time up sound
+          playComplete();
           setShowCelebration(true);
           const stars = quickTapScore >= 20 ? 3 : quickTapScore >= 10 ? 2 : 1;
           onComplete(stars);
@@ -217,6 +227,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
   // COLOR MEMORY FUNCTIONS
   // ============================================
   const startColorMemory = () => {
+    playClick();
     setColorGameActive(true);
     setCurrentColorLevel(1);
     setPlayerSequence([]);
@@ -231,6 +242,8 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
     
     sequence.forEach((color, i) => {
       setTimeout(() => {
+        // 🎵 Play sound with each color in sequence
+        playPop();
         setActiveColorIndex(color);
         setTimeout(() => {
           setActiveColorIndex(null);
@@ -245,15 +258,19 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
   const handleColorTap = (index: number) => {
     if (showingSequence || !colorGameActive) return;
     
+    // 🎵 Play tap sound
+    playPop();
+    
     setActiveColorIndex(index);
     setTimeout(() => setActiveColorIndex(null), 300);
     
     const newPlayerSeq = [...playerSequence, index];
     setPlayerSequence(newPlayerSeq);
     
-    // Check if wrong
     if (newPlayerSeq[newPlayerSeq.length - 1] !== colorSequence[newPlayerSeq.length - 1]) {
+      // 🎵 Wrong sequence sound
       setTimeout(() => {
+        playWrong();
         setColorGameActive(false);
         setShowCelebration(true);
         const stars = currentColorLevel >= 8 ? 3 : currentColorLevel >= 5 ? 2 : 1;
@@ -262,9 +279,10 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
       return;
     }
     
-    // Check if complete sequence
     if (newPlayerSeq.length === colorSequence.length) {
+      // 🎵 Level complete sound
       setTimeout(() => {
+        playCorrect();
         setCurrentColorLevel(l => l + 1);
         const newSeq = [...colorSequence, Math.floor(Math.random() * 4)];
         setColorSequence(newSeq);
@@ -280,7 +298,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
     return (
       <GameBackground variant="game">
         <div className="h-full flex flex-col">
-          <Navigation title="🧠 Memory Games" onBack={onBack} stars={progress.stars} />
+          <Navigation title="🧠 Memory Games" onBack={() => { playClick(); onBack(); }} stars={progress.stars} />
           <div className="flex-1 flex flex-col items-center justify-center px-4 pb-8">
             <motion.h2
               className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 text-center"
@@ -294,7 +312,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl w-full">
               {/* Memory Match */}
               <motion.button
-                onClick={() => setGameType('memory')}
+                onClick={() => { playClick(); setGameType('memory'); }}
                 className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl p-6 text-white shadow-xl border-4 border-white relative overflow-hidden"
                 style={{
                   boxShadow: '0 8px 0 #6B21A8, 0 12px 25px rgba(0,0,0,0.2)',
@@ -312,10 +330,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
               >
                 <motion.div
                   className="absolute top-2 right-2 text-yellow-200 text-lg"
-                  animate={{
-                    scale: [1, 1.3, 1],
-                    rotate: [0, 180, 360]
-                  }}
+                  animate={{ scale: [1, 1.3, 1], rotate: [0, 180, 360] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
                   ✨
@@ -348,7 +363,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
 
               {/* Quick Tap */}
               <motion.button
-                onClick={() => setGameType('quicktap')}
+                onClick={() => { playClick(); setGameType('quicktap'); }}
                 className="bg-gradient-to-br from-orange-500 to-red-500 rounded-3xl p-6 text-white shadow-xl border-4 border-white relative overflow-hidden"
                 style={{
                   boxShadow: '0 8px 0 #C2410C, 0 12px 25px rgba(0,0,0,0.2)',
@@ -366,10 +381,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
               >
                 <motion.div
                   className="absolute top-2 right-2 text-yellow-200 text-lg"
-                  animate={{
-                    scale: [1, 1.3, 1],
-                    rotate: [0, 180, 360]
-                  }}
+                  animate={{ scale: [1, 1.3, 1], rotate: [0, 180, 360] }}
                   transition={{ duration: 2, repeat: Infinity, delay: 0.2 }}
                 >
                   ✨
@@ -402,7 +414,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
 
               {/* Color Memory */}
               <motion.button
-                onClick={() => setGameType('colormemory')}
+                onClick={() => { playClick(); setGameType('colormemory'); }}
                 className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-3xl p-6 text-white shadow-xl border-4 border-white relative overflow-hidden"
                 style={{
                   boxShadow: '0 8px 0 #0369A1, 0 12px 25px rgba(0,0,0,0.2)',
@@ -420,10 +432,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
               >
                 <motion.div
                   className="absolute top-2 right-2 text-yellow-200 text-lg"
-                  animate={{
-                    scale: [1, 1.3, 1],
-                    rotate: [0, 180, 360]
-                  }}
+                  animate={{ scale: [1, 1.3, 1], rotate: [0, 180, 360] }}
                   transition={{ duration: 2, repeat: Infinity, delay: 0.4 }}
                 >
                   ✨
@@ -519,6 +528,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
             <div className="grid grid-cols-2 gap-3">
               <motion.button
                 onClick={() => {
+                  playClick();
                   setGameType('menu');
                   setSelectedSet(null);
                   setShowCelebration(false);
@@ -536,6 +546,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
               </motion.button>
               <motion.button
                 onClick={() => {
+                  playClick();
                   setShowCelebration(false);
                   if (gameType === 'memory' && selectedSet) initMemoryGame(selectedSet);
                   else if (gameType === 'quicktap') startQuickTap();
@@ -558,13 +569,13 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
   }
 
   // ============================================
-  // MEMORY MATCH GAME
+  // MEMORY MATCH GAME - Category Selection
   // ============================================
   if (gameType === 'memory' && !selectedSet) {
     return (
       <GameBackground variant="game">
         <div className="h-full flex flex-col">
-          <Navigation title="🧠 Memory Match" onBack={() => setGameType('menu')} stars={progress.stars} />
+          <Navigation title="🧠 Memory Match" onBack={() => { playClick(); setGameType('menu'); }} stars={progress.stars} />
           <div className="flex-1 flex flex-col items-center justify-center px-4">
             <motion.h2
               className="text-xl md:text-2xl font-bold text-gray-800 mb-6 text-center"
@@ -587,7 +598,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
                 return (
                   <motion.button
                     key={key}
-                    onClick={() => initMemoryGame(key)}
+                    onClick={() => { playClick(); initMemoryGame(key); }}
                     className={`bg-gradient-to-br ${style.gradient} rounded-3xl p-6 text-white shadow-xl border-4 border-white`}
                     style={{
                       boxShadow: `0 8px 0 ${style.shadow}, 0 12px 25px rgba(0,0,0,0.2)`,
@@ -635,7 +646,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
         <div className="h-full flex flex-col">
           <Navigation
             title="🧠 Memory Match"
-            onBack={() => { setSelectedSet(null); }}
+            onBack={() => { playClick(); setSelectedSet(null); }}
             stars={progress.stars}
             showProgress
             progress={(matchedPairs / totalPairs) * 100}
@@ -643,7 +654,6 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
 
           <div className="flex-1 overflow-y-auto px-3 pb-4">
             <div className="max-w-2xl mx-auto">
-              {/* Score Bar */}
               <motion.div
                 className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-3 mb-3 text-white shadow-lg border-4 border-white flex items-center justify-between"
                 initial={{ y: -10, opacity: 0 }}
@@ -671,7 +681,6 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
                 </div>
               </motion.div>
 
-              {/* Cards Grid */}
               <div className="grid grid-cols-4 gap-2 md:gap-3">
                 {cards.map((card, index) => (
                   <motion.button
@@ -727,7 +736,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
     return (
       <GameBackground variant="game">
         <div className="h-full flex flex-col">
-          <Navigation title="⚡ Quick Tap" onBack={() => { setGameType('menu'); setQuickTapActive(false); }} stars={progress.stars} />
+          <Navigation title="⚡ Quick Tap" onBack={() => { playClick(); setGameType('menu'); setQuickTapActive(false); }} stars={progress.stars} />
 
           <div className="flex-1 overflow-y-auto px-3 pb-4">
             <div className="max-w-2xl mx-auto">
@@ -769,7 +778,6 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
                 </motion.div>
               ) : (
                 <>
-                  {/* Score Bar */}
                   <motion.div
                     className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-3 mb-3 text-white shadow-lg border-4 border-white flex items-center justify-between"
                     initial={{ y: -10, opacity: 0 }}
@@ -790,7 +798,6 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
                     </div>
                   </motion.div>
 
-                  {/* Instruction */}
                   <div className="text-center mb-3">
                     <p 
                       className="inline-block px-6 py-3 rounded-2xl bg-white/95 text-gray-700 font-bold shadow-lg border-4 border-white text-lg"
@@ -800,7 +807,6 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
                     </p>
                   </div>
 
-                  {/* Items Grid */}
                   <div className="grid grid-cols-3 gap-3">
                     {quickTapItems.map((item, i) => (
                       <motion.button
@@ -846,7 +852,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
     return (
       <GameBackground variant="game">
         <div className="h-full flex flex-col">
-          <Navigation title="🌈 Color Memory" onBack={() => { setGameType('menu'); setColorGameActive(false); }} stars={progress.stars} />
+          <Navigation title="🌈 Color Memory" onBack={() => { playClick(); setGameType('menu'); setColorGameActive(false); }} stars={progress.stars} />
 
           <div className="flex-1 overflow-y-auto px-3 pb-4">
             <div className="max-w-2xl mx-auto">
@@ -888,7 +894,6 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
                 </motion.div>
               ) : (
                 <>
-                  {/* Score Bar */}
                   <motion.div
                     className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl p-3 mb-3 text-white shadow-lg border-4 border-white flex items-center justify-between"
                     initial={{ y: -10, opacity: 0 }}
@@ -909,7 +914,6 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
                     </div>
                   </motion.div>
 
-                  {/* Instruction */}
                   <div className="text-center mb-4">
                     <p 
                       className="inline-block px-6 py-3 rounded-2xl bg-white/95 text-gray-700 font-bold shadow-lg border-4 border-white text-lg"
@@ -919,7 +923,6 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
                     </p>
                   </div>
 
-                  {/* Color Buttons */}
                   <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
                     {COLOR_SEQUENCE.map((color, i) => (
                       <motion.button

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { GameBackground } from '../components/Background';
 import Navigation from '../components/Navigation';
 import { GameProgress } from '../store/gameStore';
+import { playClick, playCorrect } from '../utils/sounds';
 
 interface CreativeStudioProps {
   progress: GameProgress;
@@ -530,12 +531,14 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
 
   const handleUndo = () => {
     if (placedItems.length > 0) {
+      playClick();
       setPlacedItems(items => items.slice(0, -1));
       setSelectedItemId(null);
     }
   };
 
   const handleClear = () => {
+    playClick();
     if (confirm('Clear the drawing? 🎨')) {
       initCanvas();
       setPlacedItems([]);
@@ -544,6 +547,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
   };
 
   const handleSave = async () => {
+    playCorrect();
     const dataUrl = await mergeAndSave();
     if (!dataUrl) return;
     const timestamp = new Date().toISOString();
@@ -556,6 +560,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
   };
 
   const handleExport = async () => {
+    playCorrect();
     const dataUrl = await mergeAndSave();
     if (!dataUrl) return;
     const link = document.createElement('a');
@@ -569,7 +574,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
   return (
     <GameBackground variant="game">
       <div className="h-full flex flex-col">
-        <Navigation title="🎨 Creative Studio" onBack={onBack} stars={progress.stars} />
+        <Navigation title="🎨 Creative Studio" onBack={() => { playClick(); onBack(); }} stars={progress.stars} />
 
         <AnimatePresence>
           {savedMessage && (
@@ -577,6 +582,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
               <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-full px-6 py-3 shadow-2xl border-4 border-white text-white font-black text-xl" style={{ boxShadow: '0 6px 0 #047857, 0 8px 20px rgba(0,0,0,0.3)', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>
                 {savedMessage}
               </div>
+            
             </motion.div>
           )}
         </AnimatePresence>
@@ -614,14 +620,15 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                 const isActive = currentTool === tool.id;
                 return (
                   <motion.button key={tool.id} onClick={() => {
-                    setCurrentTool(tool.id);
-                    setShowStickers(tool.id === 'sticker');
-                    setShowShapes(tool.id === 'shape');
-                    if (tool.id !== 'sticker') setSelectedSticker(null);
-                    if (tool.id !== 'shape') setSelectedShape(null);
-                    setPreviewPos(null);
-                    if (tool.id !== 'move') setSelectedItemId(null);
-                  }} className={`rounded-2xl p-2 md:p-3 shadow-md border-4 border-white flex flex-col items-center flex-shrink-0 ${isActive ? `bg-gradient-to-br ${tool.gradient} text-white scale-110` : 'bg-gray-100 text-gray-600'}`} style={{ minWidth: '55px', minHeight: '55px', boxShadow: isActive ? `0 4px 0 ${tool.shadow}` : '0 3px 0 rgba(0,0,0,0.1)' }} whileTap={{ scale: 0.95 }}>
+    playClick();
+    setCurrentTool(tool.id);
+    setShowStickers(tool.id === 'sticker');
+    setShowShapes(tool.id === 'shape');
+    if (tool.id !== 'sticker') setSelectedSticker(null);
+    if (tool.id !== 'shape') setSelectedShape(null);
+    setPreviewPos(null);
+    if (tool.id !== 'move') setSelectedItemId(null);
+  }} className={`rounded-2xl p-2 md:p-3 shadow-md border-4 border-white flex flex-col items-center flex-shrink-0 ${isActive ? `bg-gradient-to-br ${tool.gradient} text-white scale-110` : 'bg-gray-100 text-gray-600'}`} style={{ minWidth: '55px', minHeight: '55px', boxShadow: isActive ? `0 4px 0 ${tool.shadow}` : '0 3px 0 rgba(0,0,0,0.1)' }} whileTap={{ scale: 0.95 }}>
                     <span className="text-xl md:text-2xl">{tool.icon}</span>
                     <span className="text-xs font-black mt-0.5" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>{tool.label}</span>
                   </motion.button>
@@ -642,7 +649,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                   <p className="text-center text-sm font-black text-gray-700 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>⭐ Choose a Sticker</p>
                   <div className="grid grid-cols-8 gap-2 max-h-32 overflow-y-auto mb-3">
                     {STICKERS.map((sticker, i) => (
-                      <motion.button key={i} onClick={() => setSelectedSticker(sticker)} className={`aspect-square rounded-xl text-2xl md:text-3xl flex items-center justify-center border-2 ${selectedSticker === sticker ? 'bg-yellow-200 border-yellow-500 scale-110' : 'bg-white border-white'}`} whileTap={{ scale: 0.9 }}>
+                      <motion.button key={i} onClick={() => { playClick(); setSelectedSticker(sticker); }} className={`aspect-square rounded-xl text-2xl md:text-3xl flex items-center justify-center border-2 ${selectedSticker === sticker ? 'bg-yellow-200 border-yellow-500 scale-110' : 'bg-white border-white'}`} whileTap={{ scale: 0.9 }}>
                         {sticker}
                       </motion.button>
                     ))}
@@ -651,7 +658,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                     <p className="text-center text-xs font-black text-gray-700 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>📏 Sticker Size</p>
                     <div className="flex items-center justify-center gap-2 flex-wrap">
                       {STICKER_SIZES.map(({ size, label }) => (
-                        <motion.button key={size} onClick={() => setStickerSize(size)} className={`rounded-xl px-3 py-2 border-2 font-black text-sm ${stickerSize === size ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-white scale-110' : 'bg-white text-gray-600 border-yellow-300'}`} style={{ minWidth: '50px', minHeight: '40px', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }} whileTap={{ scale: 0.9 }}>
+                        <motion.button key={size} onClick={() => { playClick(); setStickerSize(size); }} className={`rounded-xl px-3 py-2 border-2 font-black text-sm ${stickerSize === size ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-white scale-110' : 'bg-white text-gray-600 border-yellow-300'}`} style={{ minWidth: '50px', minHeight: '40px', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }} whileTap={{ scale: 0.9 }}>
                           {label}
                         </motion.button>
                       ))}
@@ -667,7 +674,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                   <p className="text-center text-sm font-black text-gray-700 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>🔷 Choose a Shape</p>
                   <div className="grid grid-cols-6 gap-2 mb-3">
                     {SHAPES.map((shape) => (
-                      <motion.button key={shape.id} onClick={() => setSelectedShape(shape.id)} className={`aspect-square rounded-xl text-3xl md:text-4xl flex items-center justify-center border-2 ${selectedShape === shape.id ? 'bg-indigo-200 border-indigo-500 scale-110' : 'bg-white border-white'}`} whileTap={{ scale: 0.9 }}>
+                      <motion.button key={shape.id} onClick={() => { playClick(); setSelectedShape(shape.id); }} className={`aspect-square rounded-xl text-3xl md:text-4xl flex items-center justify-center border-2 ${selectedShape === shape.id ? 'bg-indigo-200 border-indigo-500 scale-110' : 'bg-white border-white'}`} whileTap={{ scale: 0.9 }}>
                         {shape.icon}
                       </motion.button>
                     ))}
@@ -676,7 +683,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                     <p className="text-center text-xs font-black text-gray-700 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>📏 Shape Size</p>
                     <div className="flex items-center justify-center gap-2 flex-wrap">
                       {SHAPE_SIZES.map(({ size, label }) => (
-                        <motion.button key={size} onClick={() => setShapeSize(size)} className={`rounded-xl px-3 py-2 border-2 font-black text-sm ${shapeSize === size ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-white scale-110' : 'bg-white text-gray-600 border-indigo-300'}`} style={{ minWidth: '50px', minHeight: '40px', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }} whileTap={{ scale: 0.9 }}>
+                        <motion.button key={size} onClick={() => { playClick(); setShapeSize(size); }} className={`rounded-xl px-3 py-2 border-2 font-black text-sm ${shapeSize === size ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-white scale-110' : 'bg-white text-gray-600 border-indigo-300'}`} style={{ minWidth: '50px', minHeight: '40px', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }} whileTap={{ scale: 0.9 }}>
                           {label}
                         </motion.button>
                       ))}
@@ -780,7 +787,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                 <p className="text-center text-xs font-black text-gray-600 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>✏️ Brush Size</p>
                 <div className="flex items-center justify-center gap-2">
                   {BRUSH_SIZES.map(({ size, label }) => (
-                    <motion.button key={size} onClick={() => setBrushSize(size)} className={`rounded-xl flex flex-col items-center justify-center border-2 ${brushSize === size ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-white scale-110' : 'bg-gray-100 text-gray-600 border-gray-200'}`} style={{ minWidth: '45px', minHeight: '45px', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }} whileTap={{ scale: 0.95 }}>
+                    <motion.button key={size} onClick={() => { playClick(); setBrushSize(size); }} className={`rounded-xl flex flex-col items-center justify-center border-2 ${brushSize === size ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-white scale-110' : 'bg-gray-100 text-gray-600 border-gray-200'}`} style={{ minWidth: '45px', minHeight: '45px', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }} whileTap={{ scale: 0.95 }}>
                       <div className={`rounded-full ${brushSize === size ? 'bg-white' : 'bg-gray-500'}`} style={{ width: `${Math.min(size, 20)}px`, height: `${Math.min(size, 20)}px` }} />
                       <span className="text-xs">{label}</span>
                     </motion.button>
@@ -792,7 +799,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
               <p className="text-center text-xs font-black text-gray-600 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>🎨 Colors</p>
               <div className="flex items-center gap-2 overflow-x-auto pb-1 justify-center flex-wrap">
                 {COLORS.map((color) => (
-                  <motion.button key={color} onClick={() => setCurrentColor(color)} className={`rounded-full flex-shrink-0 border-4 shadow-md ${currentColor === color ? 'border-gray-800 scale-125 ring-4 ring-offset-2 ring-yellow-300' : 'border-white'}`} style={{ backgroundColor: color, width: '40px', height: '40px' }} whileTap={{ scale: 0.9 }} />
+                  <motion.button key={color} onClick={() => { playClick(); setCurrentColor(color); }} className={`rounded-full flex-shrink-0 border-4 shadow-md ${currentColor === color ? 'border-gray-800 scale-125 ring-4 ring-offset-2 ring-yellow-300' : 'border-white'}`} style={{ backgroundColor: color, width: '40px', height: '40px' }} whileTap={{ scale: 0.9 }} />
                 ))}
               </div>
             </div>

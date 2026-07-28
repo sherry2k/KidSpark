@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { GameBackground } from '../components/Background';
 import { gameModes, dailyChallenges } from '../data/gameData';
 import { PlayerProfile, GameProgress } from '../store/gameStore';
+import { playClick } from '../utils/sounds';
 
 interface HomeScreenProps {
   profile: PlayerProfile;
@@ -14,7 +15,6 @@ interface HomeScreenProps {
   onOpenAchievements: () => void;
 }
 
-// Custom gradients and difficulty for each game mode
 const GAME_MODE_STYLES: Record<string, {
   gradient: string;
   shadow: string;
@@ -33,7 +33,6 @@ const GAME_MODE_STYLES: Record<string, {
   'creative': { gradient: 'from-pink-400 to-purple-500', shadow: '#7a2ec9', difficulty: 'Fun', stars: '⭐⭐' },
 };
 
-// Streak milestone messages
 const getStreakMessage = (streak: number): { message: string; emoji: string; color: string } => {
   if (streak === 0) return { message: "Start your learning journey!", emoji: '🚀', color: 'from-blue-400 to-purple-500' };
   if (streak === 1) return { message: "Great start! Keep going!", emoji: '🌱', color: 'from-green-400 to-emerald-500' };
@@ -72,7 +71,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
           animate={{ y: 0, opacity: 1 }}
         >
           <motion.button
-            onClick={onOpenProfile}
+            onClick={() => { playClick(); onOpenProfile(); }}
             className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-2xl pl-2 pr-4 py-3 shadow-lg border-4 border-white"
             style={{ minHeight: '65px' }}
             whileHover={{ scale: 1.05 }}
@@ -97,7 +96,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
 
           <div className="flex items-center gap-2 md:gap-3">
             <motion.button
-              onClick={onOpenProgress}
+              onClick={() => { playClick(); onOpenProgress(); }}
               className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl px-4 py-3 shadow-lg border-4 border-white"
               style={{ minHeight: '65px', minWidth: '75px' }}
               whileHover={{ scale: 1.05 }}
@@ -118,7 +117,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
             </motion.button>
 
             <motion.button
-              onClick={onOpenProgress}
+              onClick={() => { playClick(); onOpenProgress(); }}
               className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl px-4 py-3 shadow-lg border-4 border-white"
               style={{ minHeight: '65px', minWidth: '75px' }}
               whileHover={{ scale: 1.05 }}
@@ -137,7 +136,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
             </motion.button>
 
             <motion.button
-              onClick={onOpenSettings}
+              onClick={() => { playClick(); onOpenSettings(); }}
               className="flex items-center justify-center bg-gradient-to-r from-blue-400 to-indigo-500 rounded-2xl p-3 shadow-lg border-4 border-white"
               style={{ minHeight: '65px', minWidth: '65px' }}
               whileHover={{ scale: 1.1 }}
@@ -154,7 +153,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
           </div>
         </motion.div>
 
-        {/* 🔥 NEW: Streak Banner */}
+        {/* Streak Banner - No sound needed (not a button) */}
         <motion.div
           className="mx-4 md:mx-6 mb-4"
           initial={{ scale: 0.9, opacity: 0 }}
@@ -164,7 +163,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
           <motion.div
             className={`bg-gradient-to-r ${streakInfo.color} rounded-3xl p-4 md:p-5 text-white shadow-xl border-4 border-white relative overflow-hidden`}
             style={{
-              boxShadow: '0 8px 0 rgba(0,0,0,0.15), 0 12px 25px rgba(0,0,0,0.2)',
+              boxShadow: '0 6px 0 rgba(0,0,0,0.15), 0 12px 25px rgba(0,0,0,0.2)',
             }}
             animate={{
               boxShadow: [
@@ -175,7 +174,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
             }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            {/* Decorative sparkles */}
             <motion.div
               className="absolute top-2 right-2 text-yellow-200 text-2xl"
               animate={{
@@ -238,60 +236,207 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
         </motion.div>
 
         {/* Welcome Banner */}
-        <motion.div
-          className="mx-4 md:mx-6 mb-4"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 rounded-3xl p-5 md:p-6 text-white shadow-xl relative overflow-hidden">
-            <div className="absolute -top-4 -right-4 text-7xl opacity-20 rotate-12">🎓</div>
-            <motion.div
-              className="absolute bottom-2 right-4 text-4xl"
-              animate={{ y: [0, -8, 0], rotate: [0, 10, 0] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            >
-              🦄
-            </motion.div>
-            <h2 className="text-xl md:text-2xl font-black mb-1" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>
-              Welcome back, {profile.name || 'Little Star'}! 🎉
-            </h2>
-            <p className="text-white/80 text-sm md:text-base">
-              Ready to learn and play today?
-            </p>
-          </div>
-        </motion.div>
+<motion.div
+  className="mx-4 md:mx-6 mb-4"
+  initial={{ y: 20, opacity: 0 }}
+  animate={{ y: 0, opacity: 1 }}
+  transition={{ delay: 0.1 }}
+>
+  <div className="bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 rounded-3xl p-5 md:p-6 text-white shadow-xl relative overflow-hidden">
+    {/* Background decorations - positioned so they don't overlap text */}
+    <div className="absolute -top-4 -right-4 text-7xl opacity-20 rotate-12 pointer-events-none">🎓</div>
+    <motion.div
+      className="absolute bottom-2 right-4 text-3xl md:text-4xl opacity-70 pointer-events-none"
+      animate={{ y: [0, -8, 0], rotate: [0, 10, 0] }}
+      transition={{ duration: 3, repeat: Infinity }}
+    >
+      🦄
+    </motion.div>
+    
+    {/* Text content with padding to avoid emoji overlap */}
+    <div className="relative z-10 pr-16 md:pr-20 text-center">
+      <h2 
+        className="text-xl md:text-2xl font-black mb-2" 
+        style={{ 
+          fontFamily: "'Fredoka', 'Arial Black', sans-serif",
+          textShadow: '2px 2px 0 rgba(0,0,0,0.2)'
+        }}
+      >
+        Welcome back, {profile.name || 'Little Star'}! 🎉
+      </h2>
+      
+      <p 
+        className="text-white/90 text-sm md:text-base font-semibold"
+        style={{
+          textShadow: '1px 1px 0 rgba(0,0,0,0.2)'
+        }}
+      > 
+        Ready to learn and play today?
+      </p>
+    </div>
+  </div>
+</motion.div>
 
-        {/* Daily Challenge */}
-        <motion.div
-          className="mx-4 md:mx-6 mb-4"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <motion.button
-            onClick={() => !challengeCompleted && onSelectMode(todayChallenge.gameMode)}
-            className={'w-full text-left bg-gradient-to-r ' + (challengeCompleted ? 'from-green-100 to-emerald-100 border-green-300' : 'from-yellow-50 to-orange-50 border-orange-200') + ' rounded-2xl p-4 border-2 shadow-md'}
-            whileHover={!challengeCompleted ? { scale: 1.01 } : {}}
-            whileTap={!challengeCompleted ? { scale: 0.99 } : {}}
+        {/* Daily Challenge - Add sound */}
+       <motion.div
+  className="mx-4 md:mx-6 mb-4"
+  initial={{ y: 20, opacity: 0 }}
+  animate={{ y: 0, opacity: 1 }}
+  transition={{ delay: 0.2 }}
+>
+  <motion.button
+    onClick={() => !challengeCompleted && onSelectMode(todayChallenge.gameMode)}
+    className="w-full text-left"
+    whileHover={!challengeCompleted ? { scale: 1.02 } : {}}
+    whileTap={!challengeCompleted ? { scale: 0.98 } : {}}
+    disabled={challengeCompleted}
+  >
+    <div
+      className={`rounded-2xl p-4 border-2 shadow-lg relative overflow-hidden ${
+        challengeCompleted
+          ? 'bg-gradient-to-r from-green-100 to-emerald-100 border-green-300'
+          : 'bg-gradient-to-r from-yellow-400 to-orange-500 border-orange-300'
+      }`}
+      style={
+        !challengeCompleted
+          ? { boxShadow: '0 6px 0 #C2410C, 0 8px 20px rgba(0,0,0,0.15)' }
+          : { boxShadow: '0 4px 0 #059669, 0 6px 15px rgba(0,0,0,0.1)' }
+      }
+    >
+      {/* Decorative sparkles - only when not completed */}
+      {!challengeCompleted && (
+        <>
+          <motion.div
+            className="absolute top-2 right-2 text-yellow-200 text-xl opacity-80"
+            animate={{ rotate: [0, 180, 360], scale: [1, 1.3, 1] }}
+            transition={{ duration: 3, repeat: Infinity }}
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">{challengeCompleted ? '✅' : '🎯'}</span>
-                <div>
-                  <p className="font-bold text-gray-800 text-sm">Daily Challenge</p>
-                  <p className="text-gray-500 text-xs">{todayChallenge.title}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 bg-white/80 rounded-full px-3 py-1">
-                <span>⭐</span>
-                <span className="font-bold text-yellow-600 text-sm">+{todayChallenge.reward}</span>
-              </div>
-            </div>
-          </motion.button>
-        </motion.div>
+            ✨
+          </motion.div>
+          <motion.div
+            className="absolute bottom-2 left-16 text-yellow-200 text-sm opacity-60"
+            animate={{ rotate: [0, -180, -360], scale: [1, 1.2, 1] }}
+            transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+          >
+            ⭐
+          </motion.div>
+        </>
+      )}
 
-        {/* Game Modes Grid */}
+      <div className="flex items-center justify-between relative z-10">
+        {/* Left: Icon + Text */}
+        <div className="flex items-center gap-3">
+          <motion.div
+            className={`text-4xl rounded-2xl p-2 ${
+              challengeCompleted ? 'bg-green-200' : 'bg-white/20'
+            }`}
+            animate={!challengeCompleted ? { y: [0, -4, 0] } : {}}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            {challengeCompleted ? '✅' : todayChallenge.emoji}
+          </motion.div>
+
+          <div>
+            {/* "Daily Challenge" label */}
+            <div className="flex items-center gap-1 mb-0.5">
+              <span
+                className={`text-xs font-black uppercase tracking-wide ${
+                  challengeCompleted ? 'text-green-600' : 'text-white/80'
+                }`}
+                style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}
+              >
+                🎯 Daily Challenge
+              </span>
+              {/* Day indicator */}
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                  challengeCompleted
+                    ? 'bg-green-200 text-green-700'
+                    : 'bg-white/20 text-white'
+                }`}
+              >
+                {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date().getDay()]}
+              </span>
+            </div>
+
+            {/* Challenge title */}
+            <p
+              className={`font-black text-sm md:text-base leading-tight ${
+                challengeCompleted ? 'text-green-800' : 'text-white'
+              }`}
+              style={{
+                fontFamily: "'Fredoka', 'Arial Black', sans-serif",
+                textShadow: challengeCompleted ? 'none' : '1px 1px 0 rgba(0,0,0,0.2)',
+              }}
+            >
+              {todayChallenge.title}
+            </p>
+
+            {/* Description */}
+            {todayChallenge.description && (
+              <p
+                className={`text-xs mt-0.5 ${
+                  challengeCompleted ? 'text-green-600' : 'text-white/80'
+                }`}
+              >
+                {challengeCompleted ? '🎉 Completed today!' : todayChallenge.description}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Reward Badge */}
+        <div className="flex flex-col items-center gap-1 ml-2">
+          <motion.div
+            className={`flex items-center gap-1 rounded-2xl px-3 py-2 border-2 ${
+              challengeCompleted
+                ? 'bg-green-200 border-green-300'
+                : 'bg-white border-white/50'
+            }`}
+            animate={!challengeCompleted ? { scale: [1, 1.08, 1] } : {}}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            <span className="text-lg">⭐</span>
+            <span
+              className={`font-black text-base ${
+                challengeCompleted ? 'text-green-700' : 'text-yellow-600'
+              }`}
+              style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}
+            >
+              +{todayChallenge.reward}
+            </span>
+          </motion.div>
+
+          {/* Tap to play label */}
+          {!challengeCompleted && (
+            <span className="text-white/70 text-xs font-semibold">
+              Tap to play!
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Progress bar hint at bottom when not completed */}
+      {!challengeCompleted && (
+        <motion.div
+          className="mt-3 bg-white/20 rounded-full h-1.5 overflow-hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <motion.div
+            className="bg-white rounded-full h-full"
+            initial={{ width: '0%' }}
+            animate={{ width: '15%' }}
+            transition={{ duration: 1, delay: 0.8 }}
+          />
+        </motion.div>
+      )}
+    </div>
+  </motion.button>
+</motion.div>
+
+        {/* Game Modes Grid - ADD SOUND TO EACH GAME BUTTON */}
         <div className="px-4 md:px-6 mb-4">
           <h3
             className="text-xl md:text-2xl font-black text-center text-gray-800 mb-4 flex items-center justify-center gap-2"
@@ -312,7 +457,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
               return (
                 <motion.button
                   key={mode.id}
-                  onClick={() => onSelectMode(mode.id)}
+                  onClick={() => { playClick(); onSelectMode(mode.id); }}
                   className={`bg-gradient-to-br ${style.gradient} rounded-3xl p-4 md:p-5 text-white shadow-xl border-4 border-white relative overflow-hidden`}
                   style={{
                     boxShadow: `0 8px 0 ${style.shadow}, 0 12px 25px rgba(0,0,0,0.2)`,
@@ -380,7 +525,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
           </div>
         </div>
 
-        {/* Quick Actions */}
+        {/* Quick Actions - Add sound to all 3 */}
         <div className="px-4 md:px-6 mb-4">
           <h3
             className="text-lg md:text-xl font-black text-gray-700 mb-3"
@@ -390,7 +535,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
           </h3>
           <div className="grid grid-cols-3 gap-3">
             <motion.button
-              onClick={onOpenProgress}
+              onClick={() => { playClick(); onOpenProgress(); }}
               className="bg-gradient-to-br from-teal-400 to-cyan-500 rounded-2xl p-4 text-center shadow-lg border-4 border-white text-white"
               style={{
                 boxShadow: '0 6px 0 #0F766E, 0 8px 20px rgba(0,0,0,0.15)',
@@ -405,7 +550,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
             </motion.button>
             
             <motion.button
-              onClick={onOpenAchievements}
+              onClick={() => { playClick(); onOpenAchievements(); }}
               className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-4 text-center shadow-lg border-4 border-white text-white relative"
               style={{
                 boxShadow: '0 6px 0 #C2410C, 0 8px 20px rgba(0,0,0,0.15)',
@@ -425,7 +570,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
             </motion.button>
             
             <motion.button
-              onClick={onOpenProfile}
+              onClick={() => { playClick(); onOpenProfile(); }}
               className="bg-gradient-to-br from-pink-400 to-rose-500 rounded-2xl p-4 text-center shadow-lg border-4 border-white text-white"
               style={{
                 boxShadow: '0 6px 0 #BE185D, 0 8px 20px rgba(0,0,0,0.15)',
@@ -441,7 +586,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
           </div>
         </div>
 
-        {/* Stats Summary */}
+        {/* Stats Summary - No sound (display only) */}
         <motion.div
           className="mx-4 md:mx-6 mb-4"
           initial={{ y: 20, opacity: 0 }}
@@ -478,7 +623,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
           </div>
         </motion.div>
 
-        {/* 🌟 NEW: "Come Back Tomorrow" Hint */}
+        {/* Come Back Tomorrow Hint - No sound (display only) */}
         <motion.div
           className="mx-4 md:mx-6 mb-20"
           initial={{ y: 20, opacity: 0 }}

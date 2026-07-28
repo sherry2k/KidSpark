@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { GameBackground } from '../components/Background';
 import Navigation from '../components/Navigation';
 import { GameSettings, GameProgress } from '../store/gameStore';
 import { useContent } from '../context/ContentContext';
+import { playClick, setSoundEnabled } from '../utils/sounds';
 
 interface SettingsScreenProps {
   settings: GameSettings;
@@ -22,8 +23,21 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
 }) => {
   const { isAirtable, lastUpdated, refreshContent, isLoading } = useContent();
 
+  // 🎵 Sync sound setting with sound system on load
+  useEffect(() => {
+    setSoundEnabled(settings.soundEnabled);
+  }, [settings.soundEnabled]);
+
   const toggleSetting = (key: keyof GameSettings) => {
-    onUpdateSettings({ ...settings, [key]: !settings[key] });
+    playClick();
+    
+    const newValue = !settings[key];
+    
+    if (key === 'soundEnabled') {
+      setSoundEnabled(newValue);
+    }
+    
+    onUpdateSettings({ ...settings, [key]: newValue });
   };
 
   const AboutSection = () => (
@@ -41,7 +55,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
       <p className="text-xs text-gray-300 mt-1">Made with ❤️ for little learners</p>
       <p className="text-xs text-gray-400 mt-1 font-bold">Version 1.0.0</p>
       
-      {/* Content source indicator */}
       <div className="mt-3 pt-3 border-t border-gray-200">
         <div className="flex items-center justify-center gap-2 text-xs">
           <span className={`w-2 h-2 rounded-full ${isAirtable ? 'bg-green-400' : 'bg-gray-300'}`} />
@@ -56,7 +69,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
         )}
         {isAirtable && (
           <motion.button
-            onClick={refreshContent}
+            onClick={() => { playClick(); refreshContent(); }}
             disabled={isLoading}
             className="mt-2 text-xs text-blue-400 hover:text-blue-600 disabled:opacity-50"
             whileTap={{ scale: 0.95 }}
@@ -102,38 +115,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
     </motion.div>
   );
 
-  // 🎵 Coming Soon Component (for Music)
-  const ComingSoonToggle: React.FC<{
-    label: string;
-    emoji: string;
-    description: string;
-  }> = ({ label, emoji, description }) => (
-    <motion.div
-      className="flex items-center justify-between bg-white/80 rounded-2xl p-4 shadow-md opacity-70"
-      whileHover={{ scale: 1.01 }}
-    >
-      <div className="flex items-center gap-3">
-        <span className="text-2xl">{emoji}</span>
-        <div>
-          <p className="font-bold text-gray-800 text-sm flex items-center gap-2">
-            {label}
-            <span className="text-xs bg-yellow-300 text-yellow-800 px-2 py-0.5 rounded-full font-bold">
-              🚀 Coming in v2.0
-            </span>
-          </p>
-          <p className="text-xs text-gray-400">{description}</p>
-        </div>
-      </div>
-      <div className="w-14 h-8 rounded-full p-1 bg-gray-300">
-        <div className="w-6 h-6 bg-white rounded-full shadow-md" />
-      </div>
-    </motion.div>
-  );
-
   return (
     <GameBackground variant="learn">
       <div className="h-full flex flex-col">
-        <Navigation title="⚙️ Settings" onBack={onBack} />
+        <Navigation title="⚙️ Settings" onBack={() => { playClick(); onBack(); }} />
 
         <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-8">
           <div className="max-w-lg mx-auto space-y-3">
@@ -155,11 +140,13 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
               onToggle={() => toggleSetting('soundEnabled')}
             />
 
-            {/* 🎵 Music - Coming Soon in v2.0 */}
-            <ComingSoonToggle
+            {/* 🎵 Background Music - NOW WORKING! */}
+            <SettingToggle
               label="Background Music"
               emoji="🎵"
               description="Relaxing background music"
+              value={settings.musicEnabled ?? true}
+              onToggle={() => toggleSetting('musicEnabled')}
             />
 
             {/* Accessibility */}
@@ -211,6 +198,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
               </p>
               <motion.button
                 onClick={() => {
+                  playClick();
                   if (confirm('Are you sure? This will reset ALL your progress! ⚠️')) {
                     onResetProgress();
                   }

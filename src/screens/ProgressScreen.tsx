@@ -4,6 +4,7 @@ import { GameBackground } from '../components/Background';
 import Navigation from '../components/Navigation';
 import { GameProgress, PlayerProfile } from '../store/gameStore';
 import { useLearnCategories } from '../context/ContentContext';
+import { playClick } from '../utils/sounds';
 
 interface ProgressScreenProps {
   profile: PlayerProfile;
@@ -31,7 +32,7 @@ const ProgressScreen: React.FC<ProgressScreenProps> = ({ profile, progress, onBa
   return (
     <GameBackground variant="learn">
       <div className="h-full flex flex-col">
-        <Navigation title="📊 Progress" onBack={onBack} stars={progress.stars} coins={progress.coins} />
+        <Navigation title="📊 Progress" onBack={() => { playClick(); onBack(); }} stars={progress.stars} coins={progress.coins} />
 
         <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-8">
           {/* Player card */}

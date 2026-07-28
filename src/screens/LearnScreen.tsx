@@ -4,6 +4,7 @@ import { GameBackground } from '../components/Background';
 import Navigation from '../components/Navigation';
 import { useLearnCategories } from '../context/ContentContext';
 import { GameProgress } from '../store/gameStore';
+import { playClick, playComplete } from '../utils/sounds';
 
 interface LearnScreenProps {
   progress: GameProgress;
@@ -11,7 +12,6 @@ interface LearnScreenProps {
   onCompleteLesson: (lessonId: string) => void;
 }
 
-// Custom gradients and shadows for each category
 const CATEGORY_STYLES: Record<string, { gradient: string; shadow: string }> = {
   'alphabet': { gradient: 'from-blue-500 to-cyan-500', shadow: '#0369A1' },
   'numbers': { gradient: 'from-orange-500 to-red-500', shadow: '#C2410C' },
@@ -36,10 +36,13 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
   const style = category ? (CATEGORY_STYLES[category.id] || { gradient: 'from-purple-500 to-pink-500', shadow: '#7B2CBF' }) : { gradient: 'from-purple-500 to-pink-500', shadow: '#7B2CBF' };
 
   const handleNext = () => {
+    playClick();
     if (category && currentIndex < category.items.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setShowFunFact(false);
     } else if (category) {
+      // 🎵 Lesson completed!
+      playComplete();
       onCompleteLesson(category.id);
       setSelectedCategory(null);
       setCurrentIndex(0);
@@ -47,6 +50,7 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
   };
 
   const handlePrev = () => {
+    playClick();
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
       setShowFunFact(false);
@@ -58,7 +62,7 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
     return (
       <GameBackground variant="learn">
         <div className="h-full flex flex-col">
-          <Navigation title="📚 Learn" onBack={onBack} stars={progress.stars} coins={progress.coins} />
+          <Navigation title="📚 Learn" onBack={() => { playClick(); onBack(); }} stars={progress.stars} coins={progress.coins} />
           <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-8">
             <motion.div
               className="text-center mb-4"
@@ -83,6 +87,7 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
                   <motion.button
                     key={cat.id}
                     onClick={() => {
+                      playClick();
                       setSelectedCategory(cat.id);
                       setCurrentIndex(0);
                       setShowFunFact(false);
@@ -102,7 +107,6 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
                       boxShadow: `0 4px 0 ${catStyle.shadow}, 0 6px 15px rgba(0,0,0,0.2)`
                     }}
                   >
-                    {/* Completed Badge */}
                     {isCompleted && (
                       <motion.div
                         className="absolute top-2 right-2 bg-white text-green-500 rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg shadow-lg border-2 border-green-400"
@@ -113,7 +117,6 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
                       </motion.div>
                     )}
 
-                    {/* Sparkle */}
                     <motion.div
                       className="absolute top-2 left-2 text-yellow-200 text-lg opacity-70"
                       animate={{
@@ -126,7 +129,6 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
                       ✨
                     </motion.div>
 
-                    {/* Big Emoji */}
                     <motion.div
                       className="text-5xl md:text-6xl mb-2 text-center"
                       animate={{ 
@@ -141,7 +143,6 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
                       {cat.emoji}
                     </motion.div>
 
-                    {/* Category Name */}
                     <h4 
                       className="text-lg md:text-xl font-bold mb-1 text-center"
                       style={{ 
@@ -152,7 +153,6 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
                       {cat.name}
                     </h4>
 
-                    {/* Items Count */}
                     <div className="flex items-center justify-center gap-1 mt-2">
                       <span className="text-xs md:text-sm text-white/90 font-semibold bg-white/20 rounded-full px-3 py-1">
                         {cat.items.length} items
@@ -175,6 +175,7 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
         <Navigation
           title={`${category?.emoji} ${category?.name}`}
           onBack={() => {
+            playClick();
             setSelectedCategory(null);
             setCurrentIndex(0);
           }}
@@ -185,7 +186,6 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
 
         <div className="flex-1 overflow-y-auto px-3 pb-4">
           <div className="max-w-2xl mx-auto">
-            {/* Progress Bar */}
             <motion.div
               className={`bg-gradient-to-r ${style.gradient} rounded-2xl p-3 mb-3 text-white shadow-lg border-4 border-white flex items-center justify-between`}
               initial={{ y: -10, opacity: 0 }}
@@ -223,7 +223,6 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
                   exit={{ x: -100, opacity: 0, scale: 0.9 }}
                   transition={{ type: 'spring', stiffness: 200, damping: 20 }}
                 >
-                  {/* HUGE Emoji */}
                   <motion.div
                     className="text-9xl md:text-[10rem] mb-4 cursor-pointer"
                     animate={{ 
@@ -232,12 +231,11 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
                     }}
                     transition={{ duration: 2, repeat: Infinity }}
                     whileTap={{ scale: 1.3, rotate: [0, -15, 15, 0] }}
-                    onClick={() => setShowFunFact(!showFunFact)}
+                    onClick={() => { playClick(); setShowFunFact(!showFunFact); }}
                   >
                     {currentItem.emoji}
                   </motion.div>
 
-                  {/* Name in Colorful Box */}
                   <motion.div
                     className={`bg-gradient-to-r ${style.gradient} rounded-2xl p-4 md:p-5 mb-4 shadow-lg border-4 border-white`}
                     style={{
@@ -258,7 +256,6 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
                     </h2>
                   </motion.div>
 
-                  {/* Color Swatch for Colors */}
                   {currentItem.color && selectedCategory === 'colors' && (
                     <motion.div
                       className="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-4 shadow-2xl border-8 border-white"
@@ -272,7 +269,6 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
                     />
                   )}
 
-                  {/* Fun Fact */}
                   <AnimatePresence>
                     {showFunFact && currentItem.funFact && (
                       <motion.div
@@ -303,7 +299,6 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
                     )}
                   </AnimatePresence>
 
-                  {/* Tap hint */}
                   <motion.p 
                     className="text-gray-500 text-sm mt-4 font-semibold flex items-center justify-center gap-2"
                     animate={{ opacity: [0.5, 1, 0.5] }}
@@ -315,9 +310,8 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
               )}
             </AnimatePresence>
 
-            {/* Navigation Buttons - BIGGER */}
+            {/* Navigation Buttons */}
             <div className="flex items-center justify-center gap-3 md:gap-4 mt-6">
-              {/* Previous Button */}
               <motion.button
                 onClick={handlePrev}
                 disabled={currentIndex === 0}
@@ -343,7 +337,6 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
                 <span className="text-3xl">⬅️</span>
               </motion.button>
 
-              {/* Next/Complete Button */}
               <motion.button
                 onClick={handleNext}
                 className={`rounded-2xl px-6 md:px-10 py-4 text-white font-bold shadow-lg border-4 border-white flex items-center gap-2 ${
@@ -376,7 +369,6 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
                 )}
               </motion.button>
 
-              {/* Next Arrow (only shown when not last) */}
               {category && currentIndex < category.items.length - 1 && (
                 <motion.button
                   onClick={handleNext}

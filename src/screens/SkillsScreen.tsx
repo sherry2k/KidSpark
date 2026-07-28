@@ -5,6 +5,7 @@ import Navigation from '../components/Navigation';
 import Celebration from '../components/Celebration';
 import { careerCategories, SkillCategory, SkillItem } from '../data/gameData';
 import { GameProgress } from '../store/gameStore';
+import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds';
 
 interface SkillsScreenProps {
   progress: GameProgress;
@@ -923,11 +924,13 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
   }, [selectedSkill]);
 
   const handleCategorySelect = (cat: SkillCategory) => {
+    playClick();
     setSelectedCategory(cat);
     setView('skill-list');
   };
 
   const handleSkillSelect = (skill: SkillItem) => {
+    playClick();
     setSelectedSkill(skill);
     setView('skill-detail');
   };
@@ -936,20 +939,21 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
     if (!selectedSkill) return;
     const activity = getActivityForSkill(selectedSkill.id);
     
-    // Check if this is the next correct item
     const nextExpectedItem = activity.correctItems[collectedItems.length];
     
     if (item === nextExpectedItem) {
-      // Correct!
+      // 🎵 Correct item!
+      playCorrect();
       const newCollected = [...collectedItems, item];
       setCollectedItems(newCollected);
       
-      // Check if all correct items collected
       if (newCollected.length === activity.correctItems.length) {
         if (!completedSkills.includes(selectedSkill.id)) {
           setCompletedSkills((prev) => [...prev, selectedSkill.id]);
         }
         setTimeout(() => {
+          // 🎵 Skill complete!
+          playComplete();
           setShowCelebration(true);
           onComplete(3);
           setTimeout(() => {
@@ -960,7 +964,8 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
         }, 500);
       }
     } else {
-      // Wrong item - show red briefly
+      // 🎵 Wrong item!
+      playWrong();
       setWrongTaps([...wrongTaps, index]);
       setTimeout(() => {
         setWrongTaps(prev => prev.filter(i => i !== index));
@@ -969,6 +974,7 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
   };
 
   const handleReset = () => {
+    playClick();
     if (selectedSkill) {
       const activity = getActivityForSkill(selectedSkill.id);
       const combined = [...new Set([...activity.correctItems, ...activity.allItems])];
@@ -979,7 +985,8 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
     }
   };
 
-  const goBackOne = () => {
+ const goBackOne = () => {
+    playClick();
     switch (view) {
       case 'skill-list':
         setView('career-select');
@@ -1001,7 +1008,7 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
     return (
       <GameBackground variant="game">
         <div className="h-full flex flex-col">
-          <Navigation title="🌟 Skills" onBack={onBack} stars={progress.stars} />
+          <Navigation title="🌟 Skills" onBack={() => { playClick(); onBack(); }} stars={progress.stars} />
 
           <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-8">
             <motion.div

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { GameBackground } from '../components/Background';
 import Navigation from '../components/Navigation';
 import { GameProgress } from '../store/gameStore';
+import { playClick, playComplete } from '../utils/sounds';
 
 interface ColoringBookProps {
   progress: GameProgress;
@@ -49,7 +50,7 @@ const TEMPLATES = [
 
 const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplete }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const outlineCanvasRef = useRef<HTMLCanvasElement>(null); // Separate outline layer
+  const outlineCanvasRef = useRef<HTMLCanvasElement>(null);
   const [selectedColor, setSelectedColor] = useState(COLORS[0].color);
   const [brushSize, setBrushSize] = useState(BRUSH_SIZES[1].size);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -57,7 +58,6 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
   const [isEraser, setIsEraser] = useState(false);
   const lastPos = useRef<{ x: number; y: number } | null>(null);
 
-  // Draw the black outline on separate canvas layer
   const drawOutline = useCallback(() => {
     const canvas = outlineCanvasRef.current;
     if (!canvas || !selectedTemplate) return;
@@ -76,45 +76,37 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
     const template = TEMPLATES.find(t => t.id === selectedTemplate);
     if (!template) return;
 
-    // Draw emoji as BLACK OUTLINE
     const size = Math.min(canvas.width, canvas.height) * 0.75;
     ctx.font = `${size}px serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
-    // Create black silhouette
     ctx.fillStyle = '#000000';
     ctx.fillText(template.emoji, canvas.width / 2, canvas.height / 2);
 
-    // Extract only the outline using image data manipulation
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
     const width = canvas.width;
     const height = canvas.height;
     
-    // Create a copy for outline detection
     const outlineData = new Uint8ClampedArray(data.length);
     
-    // Simple edge detection - find edges of the black shape
     for (let y = 1; y < height - 1; y++) {
       for (let x = 1; x < width - 1; x++) {
         const idx = (y * width + x) * 4;
         const alpha = data[idx + 3];
         
-        // Check surrounding pixels
         const topAlpha = data[((y - 1) * width + x) * 4 + 3];
         const bottomAlpha = data[((y + 1) * width + x) * 4 + 3];
         const leftAlpha = data[(y * width + x - 1) * 4 + 3];
         const rightAlpha = data[(y * width + x + 1) * 4 + 3];
         
-        // If this pixel is opaque and any neighbor is transparent = edge
         const isEdge = alpha > 128 && (
           topAlpha < 128 || bottomAlpha < 128 || 
           leftAlpha < 128 || rightAlpha < 128
         );
         
         if (isEdge) {
-          // Make edge black and thick
           for (let dy = -2; dy <= 2; dy++) {
             for (let dx = -2; dx <= 2; dx++) {
               const eIdx = ((y + dy) * width + (x + dx)) * 4;
@@ -130,13 +122,11 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
       }
     }
     
-    // Clear canvas and draw only the outline
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const outlineImageData = new ImageData(outlineData, width, height);
     ctx.putImageData(outlineImageData, 0, 0);
   }, [selectedTemplate]);
 
-  // Initialize coloring canvas (white background)
   const initCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -227,6 +217,7 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
   };
 
   const clearCanvas = () => {
+    playClick();
     if (confirm('Clear the drawing? 🎨')) {
       initCanvas();
     }
@@ -236,7 +227,7 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
     return (
       <GameBackground variant="game">
         <div className="h-full flex flex-col">
-          <Navigation title="🎨 Coloring Book" onBack={onBack} stars={progress.stars} />
+          <Navigation title="🎨 Coloring Book" onBack={() => { playClick(); onBack(); }} stars={progress.stars} />
           <div className="flex-1 flex flex-col items-center justify-center px-4 overflow-y-auto py-4">
             <motion.h2
               className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 text-center"
@@ -250,7 +241,7 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
               {TEMPLATES.map((t, i) => (
                 <motion.button
                   key={t.id}
-                  onClick={() => setSelectedTemplate(t.id)}
+                  onClick={() => { playClick(); setSelectedTemplate(t.id); }}
                   className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 text-center shadow-lg border-4 border-white"
                   style={{
                     boxShadow: '0 6px 0 rgba(139, 92, 246, 0.4), 0 8px 20px rgba(0,0,0,0.1)',
@@ -288,13 +279,17 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
       <div className="h-full flex flex-col">
         <Navigation
           title={`🎨 ${template?.name}`}
-          onBack={() => { setSelectedTemplate(null); onComplete(3); }}
+          onBack={() => { 
+            playClick(); 
+            playComplete(); 
+            setSelectedTemplate(null); 
+            onComplete(3); 
+          }}
           stars={progress.stars}
         />
 
         {/* Canvas area with TWO layers */}
         <div className="flex-1 mx-3 mb-3 bg-white rounded-3xl shadow-xl overflow-hidden relative border-4 border-white">
-          {/* Coloring layer (bottom) */}
           <canvas
             ref={canvasRef}
             className="w-full h-full cursor-crosshair touch-none block absolute inset-0"
@@ -307,7 +302,6 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
             onTouchMove={draw}
             onTouchEnd={stopDraw}
           />
-          {/* Outline layer (top, non-interactive) */}
           <canvas
             ref={outlineCanvasRef}
             className="w-full h-full absolute inset-0 pointer-events-none"
@@ -331,7 +325,11 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
                 {COLORS.map((colorObj) => (
                   <motion.button
                     key={colorObj.color}
-                    onClick={() => { setSelectedColor(colorObj.color); setIsEraser(false); }}
+                    onClick={() => { 
+                      playClick(); 
+                      setSelectedColor(colorObj.color); 
+                      setIsEraser(false); 
+                    }}
                     className={`rounded-full flex-shrink-0 border-4 transition-all shadow-md ${
                       selectedColor === colorObj.color && !isEraser 
                         ? 'border-gray-800 scale-125 ring-4 ring-offset-2 ring-yellow-300' 
@@ -362,7 +360,7 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
                 {BRUSH_SIZES.map(({ size, label }) => (
                   <motion.button
                     key={size}
-                    onClick={() => setBrushSize(size)}
+                    onClick={() => { playClick(); setBrushSize(size); }}
                     className={`rounded-2xl flex items-center justify-center transition-all font-bold border-4 ${
                       brushSize === size 
                         ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-white shadow-lg scale-110' 
@@ -394,7 +392,7 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
             {/* Action Buttons */}
             <div className="grid grid-cols-2 gap-3">
               <motion.button
-                onClick={() => setIsEraser(!isEraser)}
+                onClick={() => { playClick(); setIsEraser(!isEraser); }}
                 className={`rounded-2xl border-4 border-white shadow-lg flex items-center justify-center gap-2 py-4 ${
                   isEraser 
                     ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white' 

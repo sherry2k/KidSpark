@@ -4,6 +4,7 @@ import { GameBackground } from '../components/Background';
 import Navigation from '../components/Navigation';
 import { achievements } from '../data/gameData';
 import { GameProgress } from '../store/gameStore';
+import { playClick } from '../utils/sounds';
 
 interface AchievementsScreenProps {
   progress: GameProgress;
@@ -36,7 +37,7 @@ const AchievementsScreen: React.FC<AchievementsScreenProps> = ({ progress, onBac
   return (
     <GameBackground variant="game">
       <div className="h-full flex flex-col">
-        <Navigation title="🏆 Achievements" onBack={onBack} stars={progress.stars} coins={progress.coins} />
+        <Navigation title="🏆 Achievements" onBack={() => { playClick(); onBack(); }} stars={progress.stars} coins={progress.coins} />
 
         <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-8">
           <motion.p
