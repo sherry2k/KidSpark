@@ -767,7 +767,74 @@ export interface DailyChallenge {
   emoji: string;
   gameMode: string;
   reward: number;
+  description?: string;
 }
+
+export const dailyChallenges: DailyChallenge[] = [
+  // Sunday (index 0) - getDay() = 0
+  {
+    id: 'sunday-quiz',
+    title: 'Sunday Quiz Blast! 🎉',
+    emoji: '❓',
+    gameMode: 'quiz',
+    reward: 50,
+    description: 'Answer 5 quiz questions correctly!'
+  },
+  // Monday (index 1) - getDay() = 1
+  {
+    id: 'monday-memory',
+    title: 'Monday Memory Match! 🧠',
+    emoji: '🧠',
+    gameMode: 'memory',
+    reward: 40,
+    description: 'Complete a full memory game!'
+  },
+  // Tuesday (index 2) - getDay() = 2
+  {
+    id: 'tuesday-math',
+    title: 'Tuesday Math Magic! 🧮',
+    emoji: '🧮',
+    gameMode: 'math',
+    reward: 50,
+    description: 'Solve 5 math problems!'
+  },
+  // Wednesday (index 3) - getDay() = 3
+  {
+    id: 'wednesday-words',
+    title: 'Wednesday Word Builder! 📝',
+    emoji: '📝',
+    gameMode: 'wordbuilder',
+    reward: 45,
+    description: 'Build 3 words correctly!'
+  },
+  // Thursday (index 4) - getDay() = 4
+  {
+    id: 'thursday-learn',
+    title: 'Thursday Learning Time! 📚',
+    emoji: '📚',
+    gameMode: 'learn',
+    reward: 35,
+    description: 'Explore 5 new things!'
+  },
+  // Friday (index 5) - getDay() = 5
+  {
+    id: 'friday-match',
+    title: 'Friday Match Frenzy! 🎯',
+    emoji: '🎯',
+    gameMode: 'match',
+    reward: 45,
+    description: 'Match all items correctly!'
+  },
+  // Saturday (index 6) - getDay() = 6
+  {
+    id: 'saturday-puzzle',
+    title: 'Saturday Puzzle Party! 🧩',
+    emoji: '🧩',
+    gameMode: 'puzzle',
+    reward: 60,
+    description: 'Complete a fun puzzle!'
+  },
+];
 
 export const dailyChallenges: DailyChallenge[] = [
   { id: 'dc1', title: 'Answer 5 quiz questions', emoji: '❓', gameMode: 'quiz', reward: 5 },
