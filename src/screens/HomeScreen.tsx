@@ -279,34 +279,164 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   </div>
 </motion.div>
 
-        {/* Daily Challenge */}
-        <motion.div
-          className="mx-4 md:mx-6 mb-4"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <motion.button
-            onClick={() => !challengeCompleted && onSelectMode(todayChallenge.gameMode)}
-            className={'w-full text-left bg-gradient-to-r ' + (challengeCompleted ? 'from-green-100 to-emerald-100 border-green-300' : 'from-yellow-50 to-orange-50 border-orange-200') + ' rounded-2xl p-4 border-2 shadow-md'}
-            whileHover={!challengeCompleted ? { scale: 1.01 } : {}}
-            whileTap={!challengeCompleted ? { scale: 0.99 } : {}}
+       {/* Daily Challenge */}
+<motion.div
+  className="mx-4 md:mx-6 mb-4"
+  initial={{ y: 20, opacity: 0 }}
+  animate={{ y: 0, opacity: 1 }}
+  transition={{ delay: 0.2 }}
+>
+  <motion.button
+    onClick={() => !challengeCompleted && onSelectMode(todayChallenge.gameMode)}
+    className="w-full text-left"
+    whileHover={!challengeCompleted ? { scale: 1.02 } : {}}
+    whileTap={!challengeCompleted ? { scale: 0.98 } : {}}
+    disabled={challengeCompleted}
+  >
+    <div
+      className={`rounded-2xl p-4 border-2 shadow-lg relative overflow-hidden ${
+        challengeCompleted
+          ? 'bg-gradient-to-r from-green-100 to-emerald-100 border-green-300'
+          : 'bg-gradient-to-r from-yellow-400 to-orange-500 border-orange-300'
+      }`}
+      style={
+        !challengeCompleted
+          ? { boxShadow: '0 6px 0 #C2410C, 0 8px 20px rgba(0,0,0,0.15)' }
+          : { boxShadow: '0 4px 0 #059669, 0 6px 15px rgba(0,0,0,0.1)' }
+      }
+    >
+      {/* Decorative sparkles - only when not completed */}
+      {!challengeCompleted && (
+        <>
+          <motion.div
+            className="absolute top-2 right-2 text-yellow-200 text-xl opacity-80"
+            animate={{ rotate: [0, 180, 360], scale: [1, 1.3, 1] }}
+            transition={{ duration: 3, repeat: Infinity }}
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">{challengeCompleted ? '✅' : '🎯'}</span>
-                <div>
-                  <p className="font-bold text-gray-800 text-sm">Daily Challenge</p>
-                  <p className="text-gray-500 text-xs">{todayChallenge.title}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 bg-white/80 rounded-full px-3 py-1">
-                <span>⭐</span>
-                <span className="font-bold text-yellow-600 text-sm">+{todayChallenge.reward}</span>
-              </div>
+            ✨
+          </motion.div>
+          <motion.div
+            className="absolute bottom-2 left-16 text-yellow-200 text-sm opacity-60"
+            animate={{ rotate: [0, -180, -360], scale: [1, 1.2, 1] }}
+            transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+          >
+            ⭐
+          </motion.div>
+        </>
+      )}
+
+      <div className="flex items-center justify-between relative z-10">
+        {/* Left: Icon + Text */}
+        <div className="flex items-center gap-3">
+          <motion.div
+            className={`text-4xl rounded-2xl p-2 ${
+              challengeCompleted ? 'bg-green-200' : 'bg-white/20'
+            }`}
+            animate={!challengeCompleted ? { y: [0, -4, 0] } : {}}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            {challengeCompleted ? '✅' : todayChallenge.emoji}
+          </motion.div>
+
+          <div>
+            {/* "Daily Challenge" label */}
+            <div className="flex items-center gap-1 mb-0.5">
+              <span
+                className={`text-xs font-black uppercase tracking-wide ${
+                  challengeCompleted ? 'text-green-600' : 'text-white/80'
+                }`}
+                style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}
+              >
+                🎯 Daily Challenge
+              </span>
+              {/* Day indicator */}
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                  challengeCompleted
+                    ? 'bg-green-200 text-green-700'
+                    : 'bg-white/20 text-white'
+                }`}
+              >
+                {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date().getDay()]}
+              </span>
             </div>
-          </motion.button>
+
+            {/* Challenge title */}
+            <p
+              className={`font-black text-sm md:text-base leading-tight ${
+                challengeCompleted ? 'text-green-800' : 'text-white'
+              }`}
+              style={{
+                fontFamily: "'Fredoka', 'Arial Black', sans-serif",
+                textShadow: challengeCompleted ? 'none' : '1px 1px 0 rgba(0,0,0,0.2)',
+              }}
+            >
+              {todayChallenge.title}
+            </p>
+
+            {/* Description */}
+            {todayChallenge.description && (
+              <p
+                className={`text-xs mt-0.5 ${
+                  challengeCompleted ? 'text-green-600' : 'text-white/80'
+                }`}
+              >
+                {challengeCompleted ? '🎉 Completed today!' : todayChallenge.description}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Reward Badge */}
+        <div className="flex flex-col items-center gap-1 ml-2">
+          <motion.div
+            className={`flex items-center gap-1 rounded-2xl px-3 py-2 border-2 ${
+              challengeCompleted
+                ? 'bg-green-200 border-green-300'
+                : 'bg-white border-white/50'
+            }`}
+            animate={!challengeCompleted ? { scale: [1, 1.08, 1] } : {}}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            <span className="text-lg">⭐</span>
+            <span
+              className={`font-black text-base ${
+                challengeCompleted ? 'text-green-700' : 'text-yellow-600'
+              }`}
+              style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}
+            >
+              +{todayChallenge.reward}
+            </span>
+          </motion.div>
+
+          {/* Tap to play label */}
+          {!challengeCompleted && (
+            <span className="text-white/70 text-xs font-semibold">
+              Tap to play!
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Progress bar hint at bottom when not completed */}
+      {!challengeCompleted && (
+        <motion.div
+          className="mt-3 bg-white/20 rounded-full h-1.5 overflow-hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <motion.div
+            className="bg-white rounded-full h-full"
+            initial={{ width: '0%' }}
+            animate={{ width: '15%' }}
+            transition={{ duration: 1, delay: 0.8 }}
+          />
         </motion.div>
+      )}
+    </div>
+  </motion.button>
+</motion.div>
 
         {/* Game Modes Grid */}
         <div className="px-4 md:px-6 mb-4">
