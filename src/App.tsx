@@ -85,8 +85,32 @@ const KidSparkApp: React.FC = () => {
   useEffect(() => {
     saveSettings(settings);
   }, [settings]);
-
-  const checkAchievements = useCallback((prog: GameProgress) => {
+  
+// ✅ Call this when any game is completed
+const completeDailyChallenge = () => {
+  const todayIndex = new Date().getDay() % dailyChallenges.length;
+  const todayChallenge = dailyChallenges[todayIndex];
+  
+  // Build the unique key for today
+  const completionKey = new Date().toDateString() + '_' + todayChallenge.id;
+  // Example: "Mon Jan 20 2025_monday-memory"
+  
+  // Check if already completed today
+  const alreadyDone = progress.dailyChallengesCompleted.includes(completionKey);
+  
+  if (!alreadyDone) {
+    setProgress(prev => ({
+      ...prev,
+      dailyChallengesCompleted: [
+        ...prev.dailyChallengesCompleted,
+        completionKey
+      ],
+      stars: prev.stars + todayChallenge.reward,
+      coins: prev.coins + Math.floor(todayChallenge.reward / 2),
+    }));
+  }
+};
+    const checkAchievements = useCallback((prog: GameProgress) => {
     const newBadges = [...prog.earnedBadges];
     let changed = false;
 
