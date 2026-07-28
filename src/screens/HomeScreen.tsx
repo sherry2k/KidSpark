@@ -238,29 +238,22 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
         </motion.div>
 
         {/* Welcome Banner */}
-        <motion.div
-          className="mx-4 md:mx-6 mb-4"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 rounded-3xl p-5 md:p-6 text-white shadow-xl relative overflow-hidden">
-            <div className="absolute -top-4 -right-4 text-7xl opacity-20 rotate-12">🎓</div>
-            <motion.div
-              className="absolute bottom-2 right-4 text-4xl"
-              animate={{ y: [0, -8, 0], rotate: [0, 10, 0] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            >
-              🦄
-            </motion.div>
-            <h2 className="text-xl md:text-2xl font-black mb-1" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>
-              Welcome back, {profile.name || 'Little Star'}! 🎉
-            </h2>
-            <p className="text-white/80 text-sm md:text-base">
-              Ready to learn and play today?
-            </p>
-          </div>
-        </motion.div>
+<motion.div
+  className="mx-4 md:mx-6 mb-4"
+  initial={{ y: 20, opacity: 0 }}
+  animate={{ y: 0, opacity: 1 }}
+  transition={{ delay: 0.1 }}
+>
+  <div className="bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 rounded-3xl p-5 md:p-6 text-white shadow-xl relative overflow-hidden">
+    {/* Background decorations - positioned so they don't overlap text */}
+    <div className="absolute -top-4 -right-4 text-7xl opacity-20 rotate-12 pointer-events-none">🎓</div>
+    <motion.div
+      className="absolute bottom-2 right-4 text-3xl md:text-4xl opacity-70 pointer-events-none"
+      animate={{ y: [0, -8, 0], rotate: [0, 10, 0] }}
+      transition={{ duration: 3, repeat: Infinity }}
+    >
+      🦄
+    </motion.div>
 
         {/* Daily Challenge */}
         <motion.div
