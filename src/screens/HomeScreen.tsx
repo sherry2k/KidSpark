@@ -254,6 +254,30 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
     >
       🦄
     </motion.div>
+    
+    {/* Text content with padding to avoid emoji overlap */}
+    <div className="relative z-10 pr-16 md:pr-20 text-center">
+      <h2 
+        className="text-xl md:text-2xl font-black mb-2" 
+        style={{ 
+          fontFamily: "'Fredoka', 'Arial Black', sans-serif",
+          textShadow: '2px 2px 0 rgba(0,0,0,0.2)'
+        }}
+      >
+        Welcome back, {profile.name || 'Little Star'}! 🎉
+      </h2>
+      
+      <p 
+        className="text-white/90 text-sm md:text-base font-semibold"
+        style={{
+          textShadow: '1px 1px 0 rgba(0,0,0,0.2)'
+        }}
+      > 
+        Ready to learn and play today?
+      </p>
+    </div>
+  </div>
+</motion.div>
 
         {/* Daily Challenge */}
         <motion.div
