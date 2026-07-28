@@ -836,16 +836,6 @@ export const dailyChallenges: DailyChallenge[] = [
   },
 ];
 
-export const dailyChallenges: DailyChallenge[] = [
-  { id: 'dc1', title: 'Answer 5 quiz questions', emoji: '❓', gameMode: 'quiz', reward: 5 },
-  { id: 'dc2', title: 'Complete a memory game', emoji: '🧠', gameMode: 'memory', reward: 3 },
-  { id: 'dc3', title: 'Build 3 words', emoji: '📝', gameMode: 'wordbuilder', reward: 4 },
-  { id: 'dc4', title: 'Solve 5 math problems', emoji: '🧮', gameMode: 'math', reward: 5 },
-  { id: 'dc5', title: 'Learn about 5 animals', emoji: '🦁', gameMode: 'learn', reward: 3 },
-  { id: 'dc6', title: 'Match 6 items', emoji: '🎯', gameMode: 'match', reward: 4 },
-  { id: 'dc7', title: 'Color a picture', emoji: '🎨', gameMode: 'coloring', reward: 3 },
-];
-
 // ENCOURAGEMENT MESSAGES
 export const encouragementMessages = {
   correct: [
