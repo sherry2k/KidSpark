@@ -38,8 +38,8 @@ import {
   resetProgress,
 } from './store/gameStore';
 
-// Achievement checking
-import { achievements } from './data/gameData';
+// Data - ✅ ADDED dailyChallenges TO IMPORTS
+import { achievements, dailyChallenges } from './data/gameData';
 
 // 🎵 Background Music Hook
 import { useBackgroundMusic } from './hooks/useBackgroundMusic';
@@ -69,10 +69,8 @@ const KidSparkApp: React.FC = () => {
   const [progress, setProgress] = useState<GameProgress>(loadProgress);
   const [settings, setSettings] = useState<GameSettings>(loadSettings);
   
-  // 🎵 Track if user has interacted (required by browsers for autoplay)
   const [hasStarted, setHasStarted] = useState(false);
 
-  // 🎵 Initialize background music
   const { fadeIn } = useBackgroundMusic({
     enabled: hasStarted && (settings.musicEnabled ?? true),
     volume: 0.3,
@@ -85,32 +83,26 @@ const KidSparkApp: React.FC = () => {
   useEffect(() => {
     saveSettings(settings);
   }, [settings]);
-  
-// ✅ Call this when any game is completed
-const completeDailyChallenge = () => {
-  const todayIndex = new Date().getDay() % dailyChallenges.length;
-  const todayChallenge = dailyChallenges[todayIndex];
-  
-  // Build the unique key for today
-  const completionKey = new Date().toDateString() + '_' + todayChallenge.id;
-  // Example: "Mon Jan 20 2025_monday-memory"
-  
-  // Check if already completed today
-  const alreadyDone = progress.dailyChallengesCompleted.includes(completionKey);
-  
-  if (!alreadyDone) {
-    setProgress(prev => ({
-      ...prev,
-      dailyChallengesCompleted: [
-        ...prev.dailyChallengesCompleted,
-        completionKey
-      ],
-      stars: prev.stars + todayChallenge.reward,
-      coins: prev.coins + Math.floor(todayChallenge.reward / 2),
-    }));
-  }
-};
-    const checkAchievements = useCallback((prog: GameProgress) => {
+
+  // ✅ INTERNAL LOGIC: Checks if the current game matches the daily challenge
+  const checkDailyChallenge = useCallback((mode: string, currentProg: GameProgress): GameProgress => {
+    const todayIndex = new Date().getDay() % dailyChallenges.length;
+    const todayChallenge = dailyChallenges[todayIndex];
+    const completionKey = new Date().toDateString() + '_' + todayChallenge.id;
+
+    // If we played the right mode AND haven't completed it today yet
+    if (mode === todayChallenge.gameMode && !currentProg.dailyChallengesCompleted.includes(completionKey)) {
+      return {
+        ...currentProg,
+        dailyChallengesCompleted: [...currentProg.dailyChallengesCompleted, completionKey],
+        stars: currentProg.stars + todayChallenge.reward,
+        coins: currentProg.coins + Math.floor(todayChallenge.reward / 2),
+      };
+    }
+    return currentProg;
+  }, []);
+
+  const checkAchievements = useCallback((prog: GameProgress) => {
     const newBadges = [...prog.earnedBadges];
     let changed = false;
 
@@ -132,29 +124,26 @@ const completeDailyChallenge = () => {
       }
     });
 
-    if (changed) {
-      return { ...prog, earnedBadges: newBadges };
-    }
-    return prog;
+    return changed ? { ...prog, earnedBadges: newBadges } : prog;
   }, []);
 
-  const updateProgress = useCallback((updater: (p: GameProgress) => GameProgress) => {
+  const updateProgress = useCallback((updater: (p: GameProgress) => GameProgress, modeUsed?: string) => {
     setProgress((prev) => {
-      const updated = updater(prev);
-      const withBadges = checkAchievements(updated);
-      return withBadges;
+      let updated = updater(prev);
+      
+      // ✅ If a game mode was provided, check if it finishes a daily challenge
+      if (modeUsed) {
+        updated = checkDailyChallenge(modeUsed, updated);
+      }
+      
+      return checkAchievements(updated);
     });
-  }, [checkAchievements]);
+  }, [checkAchievements, checkDailyChallenge]);
 
   const handleSplashComplete = useCallback(() => {
-    // 🎵 Mark that user has interacted - now music can play
     setHasStarted(true);
-    
-    // 🎵 Start music with fade-in effect
     setTimeout(() => {
-      if (settings.musicEnabled ?? true) {
-        fadeIn(2000);
-      }
+      if (settings.musicEnabled ?? true) fadeIn(2000);
     }, 500);
 
     if (!profile.name) {
@@ -171,36 +160,26 @@ const completeDailyChallenge = () => {
   }, []);
 
   const handleSelectMode = useCallback((mode: string) => {
-    switch (mode) {
-      case 'learn': setCurrentScreen('learn'); break;
-      case 'quiz': setCurrentScreen('quiz'); break;
-      case 'memory': setCurrentScreen('memory'); break;
-      case 'match': setCurrentScreen('match'); break;
-      case 'math': setCurrentScreen('math'); break;
-      case 'wordbuilder': setCurrentScreen('wordbuilder'); break;
-      case 'coloring': setCurrentScreen('coloring'); break;
-      case 'puzzle': setCurrentScreen('puzzle'); break;
-      case 'skills': setCurrentScreen('skills'); break;
-      case 'creative': setCurrentScreen('creative'); break;
-      default: setCurrentScreen('home');
-    }
+    setCurrentScreen(mode as Screen);
   }, []);
 
+  // ✅ Updated Handlers to include Daily Challenge checking
   const handleQuizAnswer = useCallback((correct: boolean) => {
     updateProgress((p) => recordQuiz(p, correct));
   }, [updateProgress]);
 
-  const handleQuizComplete = useCallback((_stars: number) => {
-    updateProgress((p) => completeQuiz(p));
+  const handleQuizComplete = useCallback(() => {
+    updateProgress((p) => completeQuiz(p), 'quiz');
   }, [updateProgress]);
 
   const handleCompleteLesson = useCallback((lessonId: string) => {
-    updateProgress((p) => completeLesson(p, lessonId));
+    updateProgress((p) => completeLesson(p, lessonId), 'learn');
   }, [updateProgress]);
 
   const handleGameComplete = useCallback((stars: number) => {
-    updateProgress((p) => completeGame(p, stars));
-  }, [updateProgress]);
+    // We use currentScreen as the mode identifier
+    updateProgress((p) => completeGame(p, stars), currentScreen);
+  }, [updateProgress, currentScreen]);
 
   const handleUpdateSettings = useCallback((newSettings: GameSettings) => {
     setSettings(newSettings);
@@ -221,10 +200,8 @@ const completeDailyChallenge = () => {
 
   const renderScreen = () => {
     switch (currentScreen) {
-      case 'splash':
-        return <SplashScreen onComplete={handleSplashComplete} />;
-      case 'profile-setup':
-        return <ProfileSetup onComplete={handleProfileSetup} />;
+      case 'splash': return <SplashScreen onComplete={handleSplashComplete} />;
+      case 'profile-setup': return <ProfileSetup onComplete={handleProfileSetup} />;
       case 'home':
         return (
           <HomeScreen
@@ -237,36 +214,21 @@ const completeDailyChallenge = () => {
             onOpenAchievements={() => setCurrentScreen('achievements')}
           />
         );
-      case 'learn':
-        return <LearnScreen progress={progress} onBack={goHome} onCompleteLesson={handleCompleteLesson} />;
-      case 'quiz':
-        return <QuizScreen progress={progress} onBack={goHome} onAnswer={handleQuizAnswer} onComplete={handleQuizComplete} />;
-      case 'memory':
-        return <MemoryGame progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
-      case 'match':
-        return <MatchGame progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
-      case 'math':
-        return <MathGame profile={profile} progress={progress} onBack={goHome} onAnswer={handleQuizAnswer} onComplete={handleGameComplete} />;
-      case 'wordbuilder':
-        return <WordBuilder progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
-      case 'coloring':
-        return <ColoringBook progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
-      case 'puzzle':
-        return <PuzzleGame progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
-      case 'progress':
-        return <ProgressScreen profile={profile} progress={progress} onBack={goHome} />;
-      case 'achievements':
-        return <AchievementsScreen progress={progress} onBack={goHome} />;
-      case 'settings':
-        return <SettingsScreen settings={settings} progress={progress} onBack={goHome} onUpdateSettings={handleUpdateSettings} onResetProgress={handleResetProgress} />;
-      case 'profile':
-        return <ProfileScreen profile={profile} progress={progress} onBack={goHome} onUpdateProfile={handleUpdateProfile} />;
-      case 'skills':
-        return <SkillsScreen progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
-        case 'creative':
-        return <CreativeStudio progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
-      default:
-        return null;
+      case 'learn': return <LearnScreen progress={progress} onBack={goHome} onCompleteLesson={handleCompleteLesson} />;
+      case 'quiz': return <QuizScreen progress={progress} onBack={goHome} onAnswer={handleQuizAnswer} onComplete={handleQuizComplete} />;
+      case 'memory': return <MemoryGame progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
+      case 'match': return <MatchGame progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
+      case 'math': return <MathGame profile={profile} progress={progress} onBack={goHome} onAnswer={handleQuizAnswer} onComplete={handleGameComplete} />;
+      case 'wordbuilder': return <WordBuilder progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
+      case 'coloring': return <ColoringBook progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
+      case 'puzzle': return <PuzzleGame progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
+      case 'progress': return <ProgressScreen profile={profile} progress={progress} onBack={goHome} />;
+      case 'achievements': return <AchievementsScreen progress={progress} onBack={goHome} />;
+      case 'settings': return <SettingsScreen settings={settings} progress={progress} onBack={goHome} onUpdateSettings={handleUpdateSettings} onResetProgress={handleResetProgress} />;
+      case 'profile': return <ProfileScreen profile={profile} progress={progress} onBack={goHome} onUpdateProfile={handleUpdateProfile} />;
+      case 'skills': return <SkillsScreen progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
+      case 'creative': return <CreativeStudio progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
+      default: return null;
     }
   };
 
@@ -295,7 +257,6 @@ const completeDailyChallenge = () => {
   );
 };
 
-// Main App - No routing needed anymore
 export default function App() {
   return <KidSparkApp />;
 }
