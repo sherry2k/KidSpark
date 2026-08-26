@@ -29,7 +29,7 @@ export interface Layer {
   size: number;
 }
 
-export type KeepsakeKind = 'decorated' | 'drawing' | 'dress' | 'garden' | 'coloring';
+export type KeepsakeKind = 'decorated' | 'drawing' | 'dress' | 'garden' | 'coloring' | 'image';
 
 export interface Keepsake {
   id: string;
@@ -47,6 +47,8 @@ export interface Keepsake {
   /** colouring pages only: which page, and which region got which colour */
   pageId?: string;
   fills?: Record<string, string>;
+  /** free-canvas pictures: a downscaled JPEG data URL */
+  dataUrl?: string;
   madeAt: number;
 }
 
@@ -73,11 +75,25 @@ function readAll(): Keepsake[] {
   }
 }
 
+/**
+ * Free-canvas pictures are stored as image data, which is far bigger than a
+ * region map. localStorage is only about 5MB, so a few saved paintings will
+ * fill it — the old Creative Studio pushed full-size PNGs in and threw an
+ * uncaught QuotaExceededError on roughly the third save. This drops the
+ * oldest picture and retries instead of crashing.
+ */
 function writeAll(list: Keepsake[]) {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(list.slice(0, MAX)));
-  } catch {
-    /* storage full or blocked */
+  let attempt = list.slice(0, MAX);
+
+  for (let i = 0; i < 12; i++) {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(attempt));
+      return;
+    } catch {
+      const oldestImage = [...attempt].reverse().find((k) => k.dataUrl);
+      if (!oldestImage) return; // nothing heavy left to drop — give up quietly
+      attempt = attempt.filter((k) => k.id !== oldestImage.id);
+    }
   }
 }
 
