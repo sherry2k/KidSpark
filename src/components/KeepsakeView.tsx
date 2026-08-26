@@ -22,6 +22,7 @@ export interface KeepsakeShape {
   layers?: Layer[];
   pageId?: string;
   fills?: Record<string, string>;
+  dataUrl?: string;
 }
 
 const Strokes: React.FC<{ strokes: Stroke[]; size: number }> = ({ strokes, size }) => (
@@ -43,6 +44,22 @@ const Strokes: React.FC<{ strokes: Stroke[]; size: number }> = ({ strokes, size 
 
 const KeepsakeView: React.FC<{ item: KeepsakeShape; size?: number }> = ({ item, size = 220 }) => {
   const kind = item.kind || 'decorated';
+
+  /* ---- a free-canvas picture ---- */
+  if (kind === 'image' && item.dataUrl) {
+    return (
+      <div
+        className="rounded-3xl overflow-hidden flex items-center justify-center"
+        style={{ width: size, height: size, background: '#FFFFFF' }}
+      >
+        <img
+          src={item.dataUrl}
+          alt="your picture"
+          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+        />
+      </div>
+    );
+  }
 
   /* ---- a coloured-in page ---- */
   if (kind === 'coloring') {
