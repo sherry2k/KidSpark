@@ -29,7 +29,7 @@ export interface Layer {
   size: number;
 }
 
-export type KeepsakeKind = 'decorated' | 'drawing' | 'dress' | 'garden';
+export type KeepsakeKind = 'decorated' | 'drawing' | 'dress' | 'garden' | 'coloring';
 
 export interface Keepsake {
   id: string;
@@ -44,6 +44,9 @@ export interface Keepsake {
   stickers: Sticker[];
   strokes?: Stroke[];
   layers?: Layer[];
+  /** colouring pages only: which page, and which region got which colour */
+  pageId?: string;
+  fills?: Record<string, string>;
   madeAt: number;
 }
 
