@@ -1,0 +1,120 @@
+/**
+ * kidspark-motion.css — decoration, moved off the main thread.
+ *
+ * THE PROBLEM
+ *
+ * The home screen ran ~35 framer-motion `animate={{ ... repeat: Infinity }}`
+ * loops at once: five in the top bar, four in the streak banner, four in the
+ * daily challenge, and twenty in the game grid alone (ten cards, each with a
+ * spinning sparkle AND a bobbing emoji). None of them ever stop, including the
+ * ones scrolled far below the fold.
+ *
+ * Every one of those is JavaScript writing inline styles on every frame. On a
+ * mid-range Android that's enough main-thread work to delay first paint — which
+ * is exactly what "the cards appear slowly" looks like.
+ *
+ * One of them was much worse than the rest:
+ *
+ *     animate={{ boxShadow: [ ... ] }}     // the streak banner
+ *
+ * `box-shadow` cannot be composited. Animating it repaints that element and
+ * everything layered with it, every frame, forever.
+ *
+ * THE FIX
+ *
+ * Purely decorative motion becomes CSS keyframes on `transform` and `opacity`
+ * only — the two properties a browser can animate on the compositor thread
+ * without touching layout, paint, or JavaScript. Thirty-five JS loops become
+ * zero.
+ *
+ * Import once in main.tsx:  import './styles/kidspark-motion.css';
+ */
+
+/* ------------------------------------------------------------------ */
+/* Ambient loops — transform/opacity only                              */
+/* ------------------------------------------------------------------ */
+
+@keyframes ks-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
+}
+
+@keyframes ks-bob-tilt {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25%      { transform: translateY(-4px) rotate(-3deg); }
+  75%      { transform: translateY(-4px) rotate(3deg); }
+}
+
+@keyframes ks-twinkle {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: .5; }
+  50%      { transform: scale(1.28) rotate(180deg); opacity: 1; }
+}
+
+@keyframes ks-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ks-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
+}
+
+@keyframes ks-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25%      { transform: rotate(12deg); }
+  75%      { transform: rotate(-12deg); }
+}
+
+.ks-bob       { animation: ks-bob 2.4s ease-in-out infinite; }
+.ks-bob-tilt  { animation: ks-bob-tilt 2.8s ease-in-out infinite; }
+.ks-twinkle   { animation: ks-twinkle 2.6s ease-in-out infinite; }
+.ks-spin      { animation: ks-spin 5s linear infinite; }
+.ks-spin-slow { animation: ks-spin 8s linear infinite; }
+.ks-pulse     { animation: ks-pulse 2s ease-in-out infinite; }
+.ks-wiggle    { animation: ks-wiggle 2.4s ease-in-out infinite; }
+
+/* Spread the loops out so they don't all tick on the same frame. */
+.ks-d1 { animation-delay: .18s; }
+.ks-d2 { animation-delay: .36s; }
+.ks-d3 { animation-delay: .54s; }
+.ks-d4 { animation-delay: .72s; }
+.ks-d5 { animation-delay: .90s; }
+
+/**
+ * Stop decorative motion once it scrolls out of view.
+ *
+ * `content-visibility: auto` lets the browser skip rendering work — including
+ * running these animations — for sections that are off-screen. That's most of
+ * the home page on a phone.
+ */
+.ks-lazy-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Entrance                                                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The grid used `delay: 0.1 + index * 0.05` with a spring. With ten cards the
+ * last one starts at 0.55s and its spring settles around 1.2s — the cascade
+ * you can see on a phone. This caps the whole thing at about a quarter second.
+ */
+@keyframes ks-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.ks-rise { animation: ks-rise .26s cubic-bezier(.2, .7, .3, 1) both; }
+
+/* ------------------------------------------------------------------ */
+/* Respect the setting                                                 */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .ks-bob, .ks-bob-tilt, .ks-twinkle, .ks-spin, .ks-spin-slow,
+  .ks-pulse, .ks-wiggle, .ks-rise {
+    animation: none !important;
+  }
+}
