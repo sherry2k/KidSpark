@@ -987,6 +987,13 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
     }
   };
 
+  const handleActivityComplete = (earned: number) => {
+    if (selectedSkill && !completedSkills.includes(selectedSkill.id)) {
+      setCompletedSkills((prev) => [...prev, selectedSkill.id]);
+    }
+    onComplete(earned);
+  };
+
  const goBackOne = () => {
     playClick();
     switch (view) {
@@ -1287,6 +1294,32 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
   // =============================================
   if (view === 'skill-detail' && selectedSkill && selectedCategory) {
     const activity = getActivityForSkill(selectedSkill.id);
+        // ---------- Cooking Studio: new engine ----------
+    const cookingRecipe = getRecipe(selectedSkill.id);
+    if (cookingRecipe && selectedCategory.id === 'cooking') {
+      return (
+        <GameBackground variant="game">
+          <div className="h-full flex flex-col overflow-x-hidden">
+            <Navigation
+              title={`${selectedSkill.emoji} ${selectedSkill.name}`}
+              onBack={goBackOne}
+              stars={progress.stars}
+            />
+            <CookingActivity
+              recipe={cookingRecipe}
+              categoryId={selectedCategory.id}
+              gradient={selectedCategory.gradient}
+              shadow="#C2410C"
+              stars={progress.stars}
+              onBack={goBackOne}
+              onComplete={handleActivityComplete}
+              ageBand="mid"
+            />
+          </div>
+        </GameBackground>
+      );
+    }
+    // ---------- everything below is your existing code ----------
     const totalNeeded = activity.correctItems.length;
     const progress_percent = (collectedItems.length / totalNeeded) * 100;
 
