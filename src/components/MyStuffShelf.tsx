@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DecoratedItem } from './mechanics/DecorateStage';
+import KeepsakeView from './KeepsakeView';
 import { Keepsake, getKeepsakes } from '../utils/keepsakes';
 import { playClick } from '../utils/sounds';
 import { buzz, speak, POP } from '../utils/kidJuice';
@@ -71,7 +71,7 @@ const MyStuffShelf: React.FC<Props> = ({ onBack, categoryId }) => {
               transition={{ delay: i * 0.04, ...POP }}
               whileTap={{ scale: 0.94, y: 3 }}
             >
-              <DecoratedItem base={k.base} color={k.color} stickers={k.stickers} size={110} />
+              <KeepsakeView item={k} size={110} />
               <span className="text-xs font-bold text-gray-600 mt-1 leading-tight text-center">{k.title}</span>
             </motion.button>
           ))}
@@ -96,10 +96,8 @@ const MyStuffShelf: React.FC<Props> = ({ onBack, categoryId }) => {
             onClick={() => setBig(null)}
           >
             <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }} transition={POP}>
-              <DecoratedItem
-                base={big.base}
-                color={big.color}
-                stickers={big.stickers}
+              <KeepsakeView
+                item={big}
                 size={Math.min(340, typeof window !== 'undefined' ? window.innerWidth - 60 : 300)}
               />
             </motion.div>
