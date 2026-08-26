@@ -1,9 +1,40 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GameBackground } from '../components/Background';
 import Navigation from '../components/Navigation';
+import ItemIcon from '../components/mechanics/ItemIcon';
 import { GameProgress } from '../store/gameStore';
-import { playClick, playCorrect } from '../utils/sounds';
+import { PALETTE } from '../data/coloringPages';
+import { floodFill } from '../utils/floodFill';
+import { saveKeepsake } from '../utils/keepsakes';
+import { buzz, speak, stopSpeaking, POP } from '../utils/kidJuice';
+import { playClick, playCorrect, playComplete } from '../utils/sounds';
+
+/**
+ * CreativeStudio — rebuilt.
+ *
+ * The five real bugs this fixes:
+ *
+ * 1. THE FILL TOOL DESTROYED THE PICTURE. `fillArea(x, y)` ignored x and y and
+ *    ran fillRect over the whole canvas, so one tap on the bucket painted over
+ *    everything. It now flood-fills only the area you tapped.
+ * 2. THERE WAS NO UNDO FOR DRAWING. handleUndo only popped stickers and
+ *    shapes, so strokes, fills and erases could never be taken back — and the
+ *    bucket bug had no way out. Undo now covers every action.
+ * 3. SAVING CRASHED AFTER A FEW PICTURES. Full-size PNG data URLs were pushed
+ *    into localStorage, which holds about 5MB. Roughly the third save threw an
+ *    uncaught QuotaExceededError. Pictures are now downscaled, and storage
+ *    drops the oldest instead of throwing.
+ * 4. RESIZING WIPED THE CANVAS. Setting canvas.width resets the bitmap, and the
+ *    resize handler did exactly that — rotating the phone or opening the
+ *    keyboard erased the drawing. The image is now carried across.
+ * 5. TWO IDENTICAL 🗑️ BUTTONS sat side by side; one deleted a sticker, the
+ *    other wiped the whole picture. Now one contextual delete, and a small
+ *    "start again" with a proper in-app confirm rather than browser confirm().
+ *
+ * Positions are stored as percentages of the canvas, which is what makes
+ * resize safe and removes all the display↔canvas coordinate maths.
+ */
 
 interface CreativeStudioProps {
   progress: GameProgress;
@@ -11,803 +42,807 @@ interface CreativeStudioProps {
   onComplete: (stars: number) => void;
 }
 
-type Tool = 'brush' | 'pencil' | 'eraser' | 'fill' | 'shape' | 'sticker' | 'move';
-type Shape = 'circle' | 'rectangle' | 'triangle' | 'line' | 'arrow' | 'star';
+type Tool = 'draw' | 'fill' | 'sticker' | 'shape' | 'eraser' | 'move';
+type Shape = 'circle' | 'square' | 'triangle' | 'line' | 'arrow' | 'star';
 
 interface PlacedItem {
   id: string;
   type: 'sticker' | 'shape';
+  /** percentages of the canvas — resize-safe */
   x: number;
   y: number;
+  /** size as a percentage of canvas width */
   size: number;
   emoji?: string;
   shape?: Shape;
   color?: string;
-  brushSize?: number;
+  stroke?: number;
 }
 
-const COLORS = [
-  '#000000', '#FFFFFF', '#EF4444', '#F97316', '#EAB308', 
-  '#22C55E', '#14B8A6', '#3B82F6', '#8B5CF6', '#EC4899',
-  '#92400E', '#64748B', '#F59E0B', '#10B981', '#6366F1'
+interface Snapshot {
+  img: ImageData | null;
+  items: PlacedItem[];
+}
+
+const TOOLS: { id: Tool; icon: string; label: string; color: string }[] = [
+  { id: 'draw', icon: '🖌️', label: 'Draw', color: '#7B2CBF' },
+  { id: 'fill', icon: '🪣', label: 'Fill', color: '#2CB5AF' },
+  { id: 'sticker', icon: '⭐', label: 'Stickers', color: '#F0A017' },
+  { id: 'shape', icon: '🔷', label: 'Shapes', color: '#2C7BE5' },
+  { id: 'eraser', icon: '🧽', label: 'Rub out', color: '#F0522B' },
+  { id: 'move', icon: '👆', label: 'Move', color: '#57CC5B' },
 ];
 
-const BRUSH_SIZES = [
-  { size: 4, label: 'XS' },
-  { size: 8, label: 'S' },
-  { size: 16, label: 'M' },
-  { size: 24, label: 'L' },
-  { size: 40, label: 'XL' },
-];
-
-const STICKER_SIZES = [
-  { size: 40, label: 'S' },
-  { size: 60, label: 'M' },
-  { size: 80, label: 'L' },
-  { size: 120, label: 'XL' },
-  ];
-
-const SHAPE_SIZES = [
-  { size: 40, label: 'S' },
-  { size: 80, label: 'M' },
-  { size: 120, label: 'L' },
-  { size: 160, label: 'XL' },
+const SHAPES: { id: Shape; icon: string; label: string }[] = [
+  { id: 'circle', icon: '⭕', label: 'circle' },
+  { id: 'square', icon: '⬜', label: 'square' },
+  { id: 'triangle', icon: '🔺', label: 'triangle' },
+  { id: 'star', icon: '⭐', label: 'star' },
+  { id: 'line', icon: '➖', label: 'line' },
+  { id: 'arrow', icon: '➡️', label: 'arrow' },
 ];
 
 const STICKERS = [
-  '⭐', '❤️', '😊', '😀', '🎈', '🎨', '🎭', '🎪',
-  '🐶', '🐱', '🐰', '🦊', '🦁', '🐼', '🐨', '🦄',
-  '🌸', '🌺', '🌻', '🌷', '🌹', '🌼', '🌵', '🌳',
-  '🚗', '✈️', '🚀', '🎯', '⚽', '🏆', '👑', '💎',
-  '☀️', '🌙', '⛅', '🌈', '🌟', '🔥', '💫', '✨',
+  '⭐', '❤️', '😊', '🎈', '🌈', '✨', '🌟', '💫',
+  '🐶', '🐱', '🐰', '🦊', '🦁', '🐼', '🦄', '🐝',
+  '🌸', '🌻', '🌷', '🌳', '🍀', '🍄', '☀️', '🌙',
+  '🚗', '✈️', '🚀', '⚽', '🏆', '👑', '💎', '🎁',
 ];
 
-const TOOLS: Array<{ id: Tool; icon: string; label: string; gradient: string; shadow: string }> = [
-  { id: 'move', icon: '👆', label: 'Move', gradient: 'from-teal-500 to-cyan-600', shadow: '#0F766E' },
-  { id: 'pencil', icon: '✏️', label: 'Pencil', gradient: 'from-gray-500 to-gray-700', shadow: '#374151' },
-  { id: 'brush', icon: '🖌️', label: 'Brush', gradient: 'from-purple-500 to-pink-500', shadow: '#6B21A8' },
-  { id: 'shape', icon: '🔷', label: 'Shape', gradient: 'from-indigo-500 to-purple-500', shadow: '#4338CA' },
-  { id: 'sticker', icon: '⭐', label: 'Sticker', gradient: 'from-yellow-400 to-orange-500', shadow: '#D97706' },
-  { id: 'fill', icon: '🪣', label: 'Fill', gradient: 'from-green-500 to-emerald-500', shadow: '#047857' },
-  { id: 'eraser', icon: '🧽', label: 'Eraser', gradient: 'from-orange-400 to-red-500', shadow: '#C2410C' },
-];
+const BRUSHES = [4, 10, 20, 34];
+const STICKER_SIZES = [10, 16, 24, 34];
+const SHAPE_SIZES = [14, 24, 36, 50];
+const MAX_HISTORY = 8;
+const MAX_CANVAS = 900;
 
-const SHAPES: Array<{ id: Shape; icon: string; label: string }> = [
-  { id: 'circle', icon: '⭕', label: 'Circle' },
-  { id: 'rectangle', icon: '⬜', label: 'Square' },
-  { id: 'triangle', icon: '△', label: 'Triangle' },
-  { id: 'line', icon: '➖', label: 'Line' },
-  { id: 'arrow', icon: '➡️', label: 'Arrow' },
-  { id: 'star', icon: '⭐', label: 'Star' },
-];
+/* ------------------------------------------------------------------ */
+/* Shape drawing — one definition, used by both the overlay and save   */
+/* ------------------------------------------------------------------ */
+
+const starPoints = (r: number): [number, number][] =>
+  Array.from({ length: 10 }, (_, i) => {
+    const rad = i % 2 === 0 ? r : r * 0.42;
+    const a = (-90 + i * 36) * (Math.PI / 180);
+    return [rad * Math.cos(a), rad * Math.sin(a)];
+  });
+
+const ShapeSvg: React.FC<{ shape: Shape; px: number; color: string; stroke: number; ghost?: boolean }> = ({
+  shape,
+  px,
+  color,
+  stroke,
+  ghost,
+}) => {
+  const h = px / 2;
+  const common = { fill: 'none', stroke: color, strokeWidth: stroke, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  return (
+    <svg width={px + stroke * 2} height={px + stroke * 2} style={{ opacity: ghost ? 0.55 : 1, display: 'block', pointerEvents: 'none' }}>
+      <g transform={`translate(${(px + stroke * 2) / 2}, ${(px + stroke * 2) / 2})`}>
+        {shape === 'circle' && <circle cx={0} cy={0} r={h} {...common} />}
+        {shape === 'square' && <rect x={-h} y={-h} width={px} height={px} rx={px * 0.08} {...common} />}
+        {shape === 'triangle' && <polygon points={`0,${-h} ${-h},${h} ${h},${h}`} {...common} />}
+        {shape === 'star' && <polygon points={starPoints(h).map((p) => p.join(',')).join(' ')} {...common} />}
+        {shape === 'line' && <line x1={-h} y1={0} x2={h} y2={0} {...common} />}
+        {shape === 'arrow' && (
+          <g {...common}>
+            <line x1={-h} y1={0} x2={h} y2={0} />
+            <line x1={h} y1={0} x2={h - px * 0.22} y2={-px * 0.18} />
+            <line x1={h} y1={0} x2={h - px * 0.22} y2={px * 0.18} />
+          </g>
+        )}
+      </g>
+    </svg>
+  );
+};
+
+const drawShape = (
+  ctx: CanvasRenderingContext2D,
+  shape: Shape,
+  cx: number,
+  cy: number,
+  px: number,
+  color: string,
+  stroke: number
+) => {
+  const h = px / 2;
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = stroke;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+
+  if (shape === 'circle') ctx.arc(cx, cy, h, 0, Math.PI * 2);
+  else if (shape === 'square') ctx.rect(cx - h, cy - h, px, px);
+  else if (shape === 'triangle') {
+    ctx.moveTo(cx, cy - h);
+    ctx.lineTo(cx - h, cy + h);
+    ctx.lineTo(cx + h, cy + h);
+    ctx.closePath();
+  } else if (shape === 'star') {
+    starPoints(h).forEach(([x, y], i) => (i === 0 ? ctx.moveTo(cx + x, cy + y) : ctx.lineTo(cx + x, cy + y)));
+    ctx.closePath();
+  } else if (shape === 'line') {
+    ctx.moveTo(cx - h, cy);
+    ctx.lineTo(cx + h, cy);
+  } else if (shape === 'arrow') {
+    ctx.moveTo(cx - h, cy);
+    ctx.lineTo(cx + h, cy);
+    ctx.moveTo(cx + h, cy);
+    ctx.lineTo(cx + h - px * 0.22, cy - px * 0.18);
+    ctx.moveTo(cx + h, cy);
+    ctx.lineTo(cx + h - px * 0.22, cy + px * 0.18);
+  }
+
+  ctx.stroke();
+  ctx.restore();
+};
+
+const EMOJI_FONT =
+  '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji","Android Emoji",sans-serif';
+
+/* ------------------------------------------------------------------ */
 
 const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onComplete }) => {
+  const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [currentTool, setCurrentTool] = useState<Tool>('brush');
-  const [currentColor, setCurrentColor] = useState('#EF4444');
-  const [brushSize, setBrushSize] = useState(8);
-  const [stickerSize, setStickerSize] = useState(80);
-  const [shapeSize, setShapeSize] = useState(80);
-  const [opacity] = useState(1);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [showStickers, setShowStickers] = useState(false);
-  const [showShapes, setShowShapes] = useState(false);
-  const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
-  const [selectedShape, setSelectedShape] = useState<Shape | null>(null);
-  const [savedMessage, setSavedMessage] = useState<string | null>(null);
-  const [placedItems, setPlacedItems] = useState<PlacedItem[]>([]);
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  const [isDraggingItem, setIsDraggingItem] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [previewPos, setPreviewPos] = useState<{ x: number; y: number } | null>(null);
-  const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null);
-  const [showCursor, setShowCursor] = useState(false);
-  const lastPos = useRef<{ x: number; y: number } | null>(null);
-  const canvasPos = useRef<{ x: number; y: number } | null>(null);
+  const drawing = useRef(false);
+  const last = useRef<{ x: number; y: number } | null>(null);
+  const dragId = useRef<string | null>(null);
 
-  const initCanvas = useCallback(() => {
+  const [tool, setTool] = useState<Tool>('draw');
+  const [color, setColor] = useState(PALETTE[0].color);
+  const [brush, setBrush] = useState(BRUSHES[1]);
+  const [stickerSize, setStickerSize] = useState(STICKER_SIZES[1]);
+  const [shapeSize, setShapeSize] = useState(SHAPE_SIZES[1]);
+  const [sticker, setSticker] = useState(STICKERS[0]);
+  const [shape, setShape] = useState<Shape>('circle');
+
+  const [items, setItems] = useState<PlacedItem[]>([]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [past, setPast] = useState<Snapshot[]>([]);
+  const [wrapW, setWrapW] = useState(320);
+
+  const [toast, setToast] = useState<string | null>(null);
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [savedCount, setSavedCount] = useState(0);
+
+  useEffect(() => () => stopSpeaking(), []);
+
+  /* ---------------- canvas setup, resize-safe ---------------- */
+  const sizeCanvas = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const container = canvas.parentElement;
-    if (!container) return;
-    canvas.width = container.clientWidth;
-    canvas.height = container.clientHeight;
+    const wrap = wrapRef.current;
+    if (!canvas || !wrap) return;
+
+    const cssW = wrap.clientWidth;
+    const cssH = wrap.clientHeight;
+    if (!cssW || !cssH) return;
+    setWrapW(cssW);
+
+    const scale = Math.min(1, MAX_CANVAS / Math.max(cssW, cssH));
+    const w = Math.round(cssW * scale);
+    const h = Math.round(cssH * scale);
+    if (canvas.width === w && canvas.height === h) return;
+
+    // carry the existing picture across — setting width/height wipes the bitmap
+    const old = document.createElement('canvas');
+    const hadContent = canvas.width > 0 && canvas.height > 0;
+    if (hadContent) {
+      old.width = canvas.width;
+      old.height = canvas.height;
+      old.getContext('2d')?.drawImage(canvas, 0, 0);
+    }
+
+    canvas.width = w;
+    canvas.height = h;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, w, h);
+    if (hadContent && old.width) ctx.drawImage(old, 0, 0, w, h);
   }, []);
 
   useEffect(() => {
-    initCanvas();
-    const handleResize = () => initCanvas();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [initCanvas]);
+    sizeCanvas();
+    const onResize = () => sizeCanvas();
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+    };
+  }, [sizeCanvas]);
 
-  const getPos = (e: React.MouseEvent | React.TouchEvent) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    if ('touches' in e) {
-      return {
-        x: (e.touches[0].clientX - rect.left) * scaleX,
-        y: (e.touches[0].clientY - rect.top) * scaleY,
-      };
-    }
+  /* ---------------- history ---------------- */
+  const snapshot = (): Snapshot => {
+    const ctx = canvasRef.current?.getContext('2d');
+    const c = canvasRef.current;
     return {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY,
+      img: ctx && c && c.width ? ctx.getImageData(0, 0, c.width, c.height) : null,
+      items: items.map((i) => ({ ...i })),
     };
   };
 
-  const getDisplayPos = (e: React.MouseEvent | React.TouchEvent) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    if ('touches' in e) {
-      return {
-        x: e.touches[0].clientX - rect.left,
-        y: e.touches[0].clientY - rect.top,
-      };
-    }
+  const push = () => setPast((p) => [...p.slice(-(MAX_HISTORY - 1)), snapshot()]);
+
+  const undo = () => {
+    if (!past.length) return;
+    const prev = past[past.length - 1];
+    setPast((p) => p.slice(0, -1));
+    const ctx = canvasRef.current?.getContext('2d');
+    if (ctx && prev.img) ctx.putImageData(prev.img, 0, 0);
+    setItems(prev.items);
+    setSelected(null);
+    playClick();
+    buzz('tick');
+  };
+
+  /* ---------------- pointer helpers ---------------- */
+  const pct = (e: React.PointerEvent) => {
+    const r = wrapRef.current!.getBoundingClientRect();
     return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
+      x: ((e.clientX - r.left) / r.width) * 100,
+      y: ((e.clientY - r.top) / r.height) * 100,
     };
   };
 
-  const canvasToDisplay = (canvasX: number, canvasY: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: canvasX * (rect.width / canvas.width),
-      y: canvasY * (rect.height / canvas.height),
-    };
+  const toCanvas = (p: { x: number; y: number }) => {
+    const c = canvasRef.current!;
+    return { x: (p.x / 100) * c.width, y: (p.y / 100) * c.height };
   };
 
-  const displayToCanvas = (displayX: number, displayY: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: displayX * (canvas.width / rect.width),
-      y: displayY * (canvas.height / rect.height),
-    };
+  const flash = (msg: string) => {
+    setToast(msg);
+    speak(msg);
+    window.setTimeout(() => setToast(null), 1800);
   };
 
-  const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    const pos = getPos(e);
-    const displayPos = getDisplayPos(e);
-    
-    if (currentTool === 'move') {
-      setSelectedItemId(null);
+  /* ---------------- drawing ---------------- */
+  const down = (e: React.PointerEvent) => {
+    if (tool === 'move') {
+      setSelected(null);
       return;
     }
-    if (currentTool === 'sticker' && selectedSticker) {
-      canvasPos.current = pos;
-      setPreviewPos(displayPos);
-      return;
-    }
-    if (currentTool === 'shape' && selectedShape) {
-      canvasPos.current = pos;
-      setPreviewPos(displayPos);
-      return;
-    }
-    if (currentTool === 'fill') {
-      fillArea(pos.x, pos.y);
-      return;
-    }
-    setIsDrawing(true);
-    lastPos.current = pos;
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    const p = pct(e);
+    const cp = toCanvas(p);
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
-    ctx.globalAlpha = opacity;
+
+    if (tool === 'sticker') {
+      push();
+      setItems((s) => [
+        ...s,
+        { id: `s${Date.now()}`, type: 'sticker', x: p.x, y: p.y, size: stickerSize, emoji: sticker },
+      ]);
+      playCorrect();
+      buzz('soft');
+      return;
+    }
+
+    if (tool === 'shape') {
+      push();
+      setItems((s) => [
+        ...s,
+        { id: `h${Date.now()}`, type: 'shape', x: p.x, y: p.y, size: shapeSize, shape, color, stroke: brush * 0.6 },
+      ]);
+      playCorrect();
+      buzz('soft');
+      return;
+    }
+
+    if (tool === 'fill') {
+      push();
+      const changed = floodFill(ctx, cp.x, cp.y, color);
+      if (changed) {
+        playCorrect();
+        buzz('soft');
+      } else {
+        setPast((h) => h.slice(0, -1)); // nothing happened — don't waste an undo step
+      }
+      return;
+    }
+
+    // draw / eraser
+    push();
+    drawing.current = true;
+    last.current = cp;
+    buzz('tick');
     ctx.beginPath();
-    ctx.arc(pos.x, pos.y, brushSize / 2, 0, Math.PI * 2);
-    ctx.fillStyle = currentTool === 'eraser' ? '#FFFFFF' : currentColor;
+    ctx.arc(cp.x, cp.y, brush / 2, 0, Math.PI * 2);
+    ctx.fillStyle = tool === 'eraser' ? '#FFFFFF' : color;
     ctx.fill();
   };
 
-  const draw = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    const pos = getPos(e);
-    const displayPos = getDisplayPos(e);
-    
-    if (canvasPos.current && (currentTool === 'sticker' || currentTool === 'shape')) {
-      canvasPos.current = pos;
-      setPreviewPos(displayPos);
+  const move = (e: React.PointerEvent) => {
+    if (dragId.current) {
+      const p = pct(e);
+      setItems((s) => s.map((i) => (i.id === dragId.current ? { ...i, x: p.x, y: p.y } : i)));
       return;
     }
-    if (!isDrawing) return;
+    if (!drawing.current) return;
     const ctx = canvasRef.current?.getContext('2d');
-    if (!ctx || !lastPos.current) return;
-    ctx.globalAlpha = opacity;
+    if (!ctx || !last.current) return;
+
+    const cp = toCanvas(pct(e));
     ctx.beginPath();
-    ctx.moveTo(lastPos.current.x, lastPos.current.y);
-    ctx.lineTo(pos.x, pos.y);
-    ctx.strokeStyle = currentTool === 'eraser' ? '#FFFFFF' : currentColor;
-    if (currentTool === 'pencil') {
-      ctx.lineWidth = brushSize / 2;
-      ctx.lineCap = 'round';
-    } else if (currentTool === 'marker') {
-      ctx.lineWidth = brushSize;
-      ctx.lineCap = 'square';
-      ctx.globalAlpha = opacity * 0.7;
-    } else {
-      ctx.lineWidth = brushSize;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-    }
+    ctx.moveTo(last.current.x, last.current.y);
+    ctx.lineTo(cp.x, cp.y);
+    ctx.strokeStyle = tool === 'eraser' ? '#FFFFFF' : color;
+    ctx.lineWidth = brush;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     ctx.stroke();
-    lastPos.current = pos;
+    last.current = cp;
   };
 
-  const stopDrawing = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    if (currentTool === 'sticker' && selectedSticker && canvasPos.current) {
-      const newItem: PlacedItem = {
-        id: `sticker-${Date.now()}-${Math.random()}`,
-        type: 'sticker',
-        x: canvasPos.current.x,
-        y: canvasPos.current.y,
-        size: stickerSize,
-        emoji: selectedSticker,
-      };
-      setPlacedItems([...placedItems, newItem]);
-      setPreviewPos(null);
-      canvasPos.current = null;
-      return;
-    }
-    if (currentTool === 'shape' && selectedShape && canvasPos.current) {
-      const newItem: PlacedItem = {
-        id: `shape-${Date.now()}-${Math.random()}`,
-        type: 'shape',
-        x: canvasPos.current.x,
-        y: canvasPos.current.y,
-        size: shapeSize,
-        shape: selectedShape,
-        color: currentColor,
-        brushSize: brushSize,
-      };
-      setPlacedItems([...placedItems, newItem]);
-      setPreviewPos(null);
-      canvasPos.current = null;
-      return;
-    }
-    if (isDrawing) {
-      setIsDrawing(false);
-      lastPos.current = null;
-    }
+  const up = () => {
+    drawing.current = false;
+    last.current = null;
+    dragId.current = null;
   };
 
-  const handleItemMouseDown = (e: React.MouseEvent | React.TouchEvent, itemId: string) => {
-    if (currentTool !== 'move') return;
+  /* ---------------- items ---------------- */
+  const grabItem = (e: React.PointerEvent, id: string) => {
+    if (tool !== 'move') return;
     e.stopPropagation();
-    e.preventDefault();
-    setSelectedItemId(itemId);
-    setIsDraggingItem(true);
-    const item = placedItems.find(i => i.id === itemId);
-    if (!item) return;
-    const displayPos = getDisplayPos(e);
-    const itemDisplayPos = canvasToDisplay(item.x, item.y);
-    setDragOffset({
-      x: displayPos.x - itemDisplayPos.x,
-      y: displayPos.y - itemDisplayPos.y,
-    });
+    push();
+    setSelected(id);
+    dragId.current = id;
+    buzz('tick');
   };
 
-  const handleItemMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDraggingItem || !selectedItemId) return;
-    e.preventDefault();
-    const displayPos = getDisplayPos(e);
-    const canvasPosResult = displayToCanvas(
-      displayPos.x - dragOffset.x,
-      displayPos.y - dragOffset.y
-    );
-    setPlacedItems(items =>
-      items.map(item =>
-        item.id === selectedItemId
-          ? { ...item, x: canvasPosResult.x, y: canvasPosResult.y }
-          : item
-      )
-    );
-  };
-
-  const handleItemMouseUp = () => {
-    setIsDraggingItem(false);
-  };
-
-  const handleDeleteSelected = () => {
-    if (!selectedItemId) return;
-    setPlacedItems(items => items.filter(item => item.id !== selectedItemId));
-    setSelectedItemId(null);
-  };
-
-  const fillArea = (x: number, y: number) => {
-    const ctx = canvasRef.current?.getContext('2d');
-    if (!ctx) return;
-    ctx.fillStyle = currentColor;
-    ctx.fillRect(0, 0, canvasRef.current!.width, canvasRef.current!.height);
-  };
-
-  const renderShapeSVG = (shape: Shape, size: number, color: string, strokeWidth: number, isPreview = false) => {
-    const opacity = isPreview ? 0.7 : 1;
-    const padding = 20;
-    const totalSize = size * 2 + padding * 2;
-    return (
-      <svg width={totalSize} height={totalSize} style={{ opacity, overflow: 'visible', display: 'block', pointerEvents: 'none' }}>
-        <g transform={`translate(${totalSize / 2}, ${totalSize / 2})`}>
-          {shape === 'circle' && (
-            <>
-              <circle cx="0" cy="0" r={size / 2} stroke="white" strokeWidth={strokeWidth + 6} fill="none" />
-              <circle cx="0" cy="0" r={size / 2} stroke={color} strokeWidth={strokeWidth} fill="none" />
-            </>
-          )}
-          {shape === 'rectangle' && (
-            <>
-              <rect x={-size / 2} y={-size / 4} width={size} height={size / 2} stroke="white" strokeWidth={strokeWidth + 6} fill="none" />
-              <rect x={-size / 2} y={-size / 4} width={size} height={size / 2} stroke={color} strokeWidth={strokeWidth} fill="none" />
-            </>
-          )}
-          {shape === 'triangle' && (
-            <>
-              <polygon points={`0,${-size / 2} ${-size / 2},${size / 2} ${size / 2},${size / 2}`} stroke="white" strokeWidth={strokeWidth + 6} fill="none" strokeLinejoin="round" />
-              <polygon points={`0,${-size / 2} ${-size / 2},${size / 2} ${size / 2},${size / 2}`} stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinejoin="round" />
-            </>
-          )}
-          {shape === 'star' && (
-            <>
-              <polygon points={Array.from({length: 5}, (_, i) => {
-                const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
-                return `${(size / 2) * Math.cos(angle)},${(size / 2) * Math.sin(angle)}`;
-              }).join(' ')} stroke="white" strokeWidth={strokeWidth + 6} fill="none" strokeLinejoin="round" />
-              <polygon points={Array.from({length: 5}, (_, i) => {
-                const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
-                return `${(size / 2) * Math.cos(angle)},${(size / 2) * Math.sin(angle)}`;
-              }).join(' ')} stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinejoin="round" />
-            </>
-          )}
-          {shape === 'line' && (
-            <>
-              <line x1={-size / 2} y1="0" x2={size / 2} y2="0" stroke="white" strokeWidth={strokeWidth + 6} strokeLinecap="round" />
-              <line x1={-size / 2} y1="0" x2={size / 2} y2="0" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
-            </>
-          )}
-          {shape === 'arrow' && (
-            <>
-              <g stroke="white" strokeWidth={strokeWidth + 6} strokeLinecap="round" strokeLinejoin="round" fill="none">
-                <line x1={-size / 2} y1="0" x2={size / 2} y2="0" />
-                <line x1={size / 2} y1="0" x2={size / 2 - 15} y2="-15" />
-                <line x1={size / 2} y1="0" x2={size / 2 - 15} y2="15" />
-              </g>
-              <g stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" fill="none">
-                <line x1={-size / 2} y1="0" x2={size / 2} y2="0" />
-                <line x1={size / 2} y1="0" x2={size / 2 - 15} y2="-15" />
-                <line x1={size / 2} y1="0" x2={size / 2 - 15} y2="15" />
-              </g>
-            </>
-          )}
-        </g>
-      </svg>
-    );
-  };
-
-  const drawShapeToContext = (ctx: CanvasRenderingContext2D, shape: Shape, x: number, y: number, size: number, color: string, strokeWidth: number) => {
-    switch (shape) {
-      case 'circle':
-        ctx.beginPath();
-        ctx.arc(x, y, size / 2, 0, Math.PI * 2);
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = strokeWidth + 6;
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(x, y, size / 2, 0, Math.PI * 2);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = strokeWidth;
-        ctx.stroke();
-        break;
-      case 'rectangle':
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = strokeWidth + 6;
-        ctx.strokeRect(x - size / 2, y - size / 4, size, size / 2);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = strokeWidth;
-        ctx.strokeRect(x - size / 2, y - size / 4, size, size / 2);
-        break;
-      case 'triangle':
-        ctx.beginPath();
-        ctx.moveTo(x, y - size / 2);
-        ctx.lineTo(x - size / 2, y + size / 2);
-        ctx.lineTo(x + size / 2, y + size / 2);
-        ctx.closePath();
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = strokeWidth + 6;
-        ctx.lineJoin = 'round';
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x, y - size / 2);
-        ctx.lineTo(x - size / 2, y + size / 2);
-        ctx.lineTo(x + size / 2, y + size / 2);
-        ctx.closePath();
-        ctx.strokeStyle = color;
-        ctx.lineWidth = strokeWidth;
-        ctx.stroke();
-        break;
-      case 'line':
-        ctx.beginPath();
-        ctx.moveTo(x - size / 2, y);
-        ctx.lineTo(x + size / 2, y);
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = strokeWidth + 6;
-        ctx.lineCap = 'round';
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x - size / 2, y);
-        ctx.lineTo(x + size / 2, y);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = strokeWidth;
-        ctx.stroke();
-        break;
-      case 'arrow':
-        ctx.beginPath();
-        ctx.moveTo(x - size / 2, y);
-        ctx.lineTo(x + size / 2, y);
-        ctx.moveTo(x + size / 2, y);
-        ctx.lineTo(x + size / 2 - 15, y - 15);
-        ctx.moveTo(x + size / 2, y);
-        ctx.lineTo(x + size / 2 - 15, y + 15);
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = strokeWidth + 6;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x - size / 2, y);
-        ctx.lineTo(x + size / 2, y);
-        ctx.moveTo(x + size / 2, y);
-        ctx.lineTo(x + size / 2 - 15, y - 15);
-        ctx.moveTo(x + size / 2, y);
-        ctx.lineTo(x + size / 2 - 15, y + 15);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = strokeWidth;
-        ctx.stroke();
-        break;
-      case 'star':
-        ctx.beginPath();
-        for (let i = 0; i < 5; i++) {
-          const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
-          const px = x + (size / 2) * Math.cos(angle);
-          const py = y + (size / 2) * Math.sin(angle);
-          if (i === 0) ctx.moveTo(px, py);
-          else ctx.lineTo(px, py);
-        }
-        ctx.closePath();
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = strokeWidth + 6;
-        ctx.lineJoin = 'round';
-        ctx.stroke();
-        ctx.beginPath();
-        for (let i = 0; i < 5; i++) {
-          const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
-          const px = x + (size / 2) * Math.cos(angle);
-          const py = y + (size / 2) * Math.sin(angle);
-          if (i === 0) ctx.moveTo(px, py);
-          else ctx.lineTo(px, py);
-        }
-        ctx.closePath();
-        ctx.strokeStyle = color;
-        ctx.lineWidth = strokeWidth;
-        ctx.stroke();
-        break;
-    }
-  };
-
-  const mergeAndSave = async (): Promise<string> => {
-    const canvas = canvasRef.current;
-    if (!canvas) return '';
-    const mergedCanvas = document.createElement('canvas');
-    mergedCanvas.width = canvas.width;
-    mergedCanvas.height = canvas.height;
-    const mergedCtx = mergedCanvas.getContext('2d');
-    if (!mergedCtx) return '';
-    mergedCtx.drawImage(canvas, 0, 0);
-    for (const item of placedItems) {
-      if (item.type === 'sticker' && item.emoji) {
-        mergedCtx.font = `${item.size}px serif`;
-        mergedCtx.textAlign = 'center';
-        mergedCtx.textBaseline = 'middle';
-        mergedCtx.fillText(item.emoji, item.x, item.y);
-      } else if (item.type === 'shape' && item.shape && item.color && item.brushSize) {
-        drawShapeToContext(mergedCtx, item.shape, item.x, item.y, item.size, item.color, item.brushSize);
-      }
-    }
-    return mergedCanvas.toDataURL('image/png');
-  };
-
-  const handleUndo = () => {
-    if (placedItems.length > 0) {
-      playClick();
-      setPlacedItems(items => items.slice(0, -1));
-      setSelectedItemId(null);
-    }
-  };
-
-  const handleClear = () => {
+  const deleteSelected = () => {
+    if (!selected) return;
+    push();
+    setItems((s) => s.filter((i) => i.id !== selected));
+    setSelected(null);
     playClick();
-    if (confirm('Clear the drawing? 🎨')) {
-      initCanvas();
-      setPlacedItems([]);
-      setSelectedItemId(null);
-    }
+    buzz('soft');
   };
 
-  const handleSave = async () => {
-    playCorrect();
-    const dataUrl = await mergeAndSave();
+  const clearAll = () => {
+    push();
+    const c = canvasRef.current;
+    const ctx = c?.getContext('2d');
+    if (c && ctx) {
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, c.width, c.height);
+    }
+    setItems([]);
+    setSelected(null);
+    setConfirmClear(false);
+    playClick();
+    buzz('soft');
+    speak('All clean! Start again.');
+  };
+
+  /* ---------------- flatten for saving ---------------- */
+  const flatten = (maxWidth = 640): string => {
+    const c = canvasRef.current;
+    if (!c) return '';
+    const out = document.createElement('canvas');
+    const scale = Math.min(1, maxWidth / c.width);
+    out.width = Math.round(c.width * scale);
+    out.height = Math.round(c.height * scale);
+    const ctx = out.getContext('2d');
+    if (!ctx) return '';
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, out.width, out.height);
+    ctx.drawImage(c, 0, 0, out.width, out.height);
+
+    items.forEach((it) => {
+      const x = (it.x / 100) * out.width;
+      const y = (it.y / 100) * out.height;
+      const px = (it.size / 100) * out.width;
+      if (it.type === 'sticker' && it.emoji) {
+        ctx.font = `${px}px ${EMOJI_FONT}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(it.emoji, x, y);
+      } else if (it.type === 'shape' && it.shape) {
+        drawShape(ctx, it.shape, x, y, px, it.color || '#000', Math.max(1, (it.stroke || 4) * scale));
+      }
+    });
+
+    // JPEG at 0.72 keeps a picture around 60KB instead of a 2MB PNG
+    return out.toDataURL('image/jpeg', 0.72);
+  };
+
+  const save = () => {
+    const dataUrl = flatten();
     if (!dataUrl) return;
-    const timestamp = new Date().toISOString();
-    const drawings = JSON.parse(localStorage.getItem('kidspark_drawings') || '[]');
-    drawings.push({ id: timestamp, image: dataUrl, name: `Drawing ${drawings.length + 1}` });
-    localStorage.setItem('kidspark_drawings', JSON.stringify(drawings));
-    setSavedMessage('💾 Saved!');
-    setTimeout(() => setSavedMessage(null), 2000);
+    saveKeepsake({
+      skillId: 'creative-studio',
+      categoryId: 'creative',
+      title: `My picture ${savedCount + 1}`,
+      kind: 'image',
+      base: '🎨',
+      color: '#FFFFFF',
+      stickers: [],
+      dataUrl,
+    });
+    setSavedCount((n) => n + 1);
+    playComplete();
+    buzz('success');
+    flash('Saved to My Stuff!');
     onComplete(2);
   };
 
-  const handleExport = async () => {
-    playCorrect();
-    const dataUrl = await mergeAndSave();
+  const download = () => {
+    const dataUrl = flatten(1200);
     if (!dataUrl) return;
-    const link = document.createElement('a');
-    link.download = `kidspark-drawing-${Date.now()}.png`;
-    link.href = dataUrl;
-    link.click();
-    setSavedMessage('📥 Downloaded!');
-    setTimeout(() => setSavedMessage(null), 2000);
+    try {
+      const a = document.createElement('a');
+      a.download = `kidspark-picture.jpg`;
+      a.href = dataUrl;
+      a.click();
+      playCorrect();
+      flash('Picture downloaded!');
+    } catch {
+      flash('Could not download — it is saved in My Stuff instead');
+    }
   };
+
+  /* ---------------- render ---------------- */
+  const active = TOOLS.find((t) => t.id === tool)!;
+  const canUndo = past.length > 0;
 
   return (
     <GameBackground variant="game">
-      <div className="h-full flex flex-col">
-        <Navigation title="🎨 Creative Studio" onBack={() => { playClick(); onBack(); }} stars={progress.stars} />
+      <div className="h-full flex flex-col overflow-x-hidden">
+        <Navigation
+          title="🎨 Creative Studio"
+          onBack={() => { playClick(); stopSpeaking(); onBack(); }}
+          stars={progress.stars}
+        />
 
-        <AnimatePresence>
-          {savedMessage && (
-            <motion.div className="fixed top-24 left-1/2 -translate-x-1/2 pointer-events-none z-50" initial={{ y: -100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -100, opacity: 0 }} transition={{ type: 'spring', stiffness: 300 }}>
-              <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-full px-6 py-3 shadow-2xl border-4 border-white text-white font-black text-xl" style={{ boxShadow: '0 6px 0 #047857, 0 8px 20px rgba(0,0,0,0.3)', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>
-                {savedMessage}
-              </div>
-            
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* action bar */}
+        <div className="px-3 shrink-0">
+          <div className="bg-white/95 rounded-2xl p-2 border-4 border-white flex items-center gap-2" style={{ boxShadow: '0 4px 0 rgba(0,0,0,.10)' }}>
+            <motion.button
+              onClick={undo}
+              disabled={!canUndo}
+              className="rounded-xl px-3 py-2 font-bold text-white disabled:opacity-35 flex items-center gap-1"
+              style={{ background: 'linear-gradient(135deg,#38BDF8,#0EA5E9)', boxShadow: '0 4px 0 #0369A1', fontFamily: "'Bubblegum One', cursive" }}
+              whileTap={{ scale: 0.93, y: 2 }}
+            >
+              <span className="text-lg">↩️</span>
+              <span className="text-sm">Undo</span>
+            </motion.button>
 
-        <div className="px-3 mb-2 space-y-2">
-          <motion.div className="bg-white/95 rounded-2xl p-2 shadow-lg border-4 border-white flex items-center justify-between gap-2" initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-            <div className="flex gap-2">
-              <motion.button onClick={handleUndo} disabled={placedItems.length === 0} className={`rounded-xl p-2 md:p-3 shadow-md border-2 border-white ${placedItems.length > 0 ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white' : 'bg-gray-200 text-gray-400'}`} style={{ minWidth: '50px', minHeight: '50px', boxShadow: placedItems.length > 0 ? '0 4px 0 #0369A1' : 'none' }} whileTap={placedItems.length > 0 ? { scale: 0.9, y: 2 } : {}}>
-                <span className="text-xl md:text-2xl">↶</span>
-              </motion.button>
-              {selectedItemId && (
-                <motion.button onClick={handleDeleteSelected} className="rounded-xl p-2 md:p-3 shadow-md border-2 border-white bg-gradient-to-r from-red-500 to-pink-500 text-white" style={{ minWidth: '50px', minHeight: '50px', boxShadow: '0 4px 0 #B91C1C' }} whileTap={{ scale: 0.9, y: 2 }} initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                  <span className="text-xl md:text-2xl">🗑️</span>
+            <AnimatePresence>
+              {selected && (
+                <motion.button
+                  onClick={deleteSelected}
+                  className="rounded-xl px-3 py-2 font-bold text-white flex items-center gap-1"
+                  style={{ background: 'linear-gradient(135deg,#F87171,#DC2626)', boxShadow: '0 4px 0 #991B1B', fontFamily: "'Bubblegum One', cursive" }}
+                  initial={{ scale: 0, width: 0 }}
+                  animate={{ scale: 1, width: 'auto' }}
+                  exit={{ scale: 0, width: 0 }}
+                  whileTap={{ scale: 0.93, y: 2 }}
+                >
+                  <span className="text-lg">🗑️</span>
+                  <span className="text-sm">Remove</span>
                 </motion.button>
               )}
-              <motion.button onClick={handleClear} className="rounded-xl p-2 md:p-3 shadow-md border-2 border-white bg-gradient-to-r from-red-500 to-pink-500 text-white" style={{ minWidth: '50px', minHeight: '50px', boxShadow: '0 4px 0 #B91C1C' }} whileTap={{ scale: 0.9, y: 2 }}>
-                <span className="text-xl md:text-2xl">🗑️</span>
-              </motion.button>
-            </div>
-            <div className="flex gap-2">
-              <motion.button onClick={handleSave} className="rounded-xl px-4 py-2 md:px-5 md:py-3 shadow-md border-2 border-white bg-gradient-to-r from-green-500 to-emerald-500 text-white font-black text-sm md:text-base flex items-center gap-2" style={{ boxShadow: '0 4px 0 #047857', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }} whileTap={{ scale: 0.95, y: 2 }}>
-                <span>💾</span>
-                <span className="hidden md:inline">Save</span>
-              </motion.button>
-              <motion.button onClick={handleExport} className="rounded-xl px-4 py-2 md:px-5 md:py-3 shadow-md border-2 border-white bg-gradient-to-r from-orange-500 to-red-500 text-white font-black text-sm md:text-base flex items-center gap-2" style={{ boxShadow: '0 4px 0 #C2410C', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }} whileTap={{ scale: 0.95, y: 2 }}>
-                <span>📥</span>
-                <span className="hidden md:inline">Export</span>
-              </motion.button>
-            </div>
-          </motion.div>
-
-          <motion.div className="bg-white/95 rounded-2xl p-3 shadow-lg border-4 border-white" initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}>
-            <div className="flex gap-2 overflow-x-auto pb-1 justify-center">
-              {TOOLS.map((tool) => {
-                const isActive = currentTool === tool.id;
-                return (
-                  <motion.button key={tool.id} onClick={() => {
-    playClick();
-    setCurrentTool(tool.id);
-    setShowStickers(tool.id === 'sticker');
-    setShowShapes(tool.id === 'shape');
-    if (tool.id !== 'sticker') setSelectedSticker(null);
-    if (tool.id !== 'shape') setSelectedShape(null);
-    setPreviewPos(null);
-    if (tool.id !== 'move') setSelectedItemId(null);
-  }} className={`rounded-2xl p-2 md:p-3 shadow-md border-4 border-white flex flex-col items-center flex-shrink-0 ${isActive ? `bg-gradient-to-br ${tool.gradient} text-white scale-110` : 'bg-gray-100 text-gray-600'}`} style={{ minWidth: '55px', minHeight: '55px', boxShadow: isActive ? `0 4px 0 ${tool.shadow}` : '0 3px 0 rgba(0,0,0,0.1)' }} whileTap={{ scale: 0.95 }}>
-                    <span className="text-xl md:text-2xl">{tool.icon}</span>
-                    <span className="text-xs font-black mt-0.5" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>{tool.label}</span>
-                  </motion.button>
-                );
-              })}
-            </div>
-
-            {currentTool === 'move' && (
-              <motion.div className="mt-3 bg-teal-50 rounded-2xl p-3 border-4 border-teal-200 text-center" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}>
-                <p className="text-sm font-black text-teal-800" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>👆 Touch any sticker or shape to move it!</p>
-                <p className="text-xs text-teal-600 mt-1">{placedItems.length === 0 ? '⚠️ No items placed yet' : `${placedItems.length} item(s) placed - tap to select and drag`}</p>
-              </motion.div>
-            )}
-
-            <AnimatePresence>
-              {showStickers && (
-                <motion.div className="mt-3 bg-yellow-50 rounded-2xl p-3 border-4 border-yellow-200" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
-                  <p className="text-center text-sm font-black text-gray-700 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>⭐ Choose a Sticker</p>
-                  <div className="grid grid-cols-8 gap-2 max-h-32 overflow-y-auto mb-3">
-                    {STICKERS.map((sticker, i) => (
-                      <motion.button key={i} onClick={() => { playClick(); setSelectedSticker(sticker); }} className={`aspect-square rounded-xl text-2xl md:text-3xl flex items-center justify-center border-2 ${selectedSticker === sticker ? 'bg-yellow-200 border-yellow-500 scale-110' : 'bg-white border-white'}`} whileTap={{ scale: 0.9 }}>
-                        {sticker}
-                      </motion.button>
-                    ))}
-                  </div>
-                  <div className="border-t-2 border-yellow-300 pt-2">
-                    <p className="text-center text-xs font-black text-gray-700 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>📏 Sticker Size</p>
-                    <div className="flex items-center justify-center gap-2 flex-wrap">
-                      {STICKER_SIZES.map(({ size, label }) => (
-                        <motion.button key={size} onClick={() => { playClick(); setStickerSize(size); }} className={`rounded-xl px-3 py-2 border-2 font-black text-sm ${stickerSize === size ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-white scale-110' : 'bg-white text-gray-600 border-yellow-300'}`} style={{ minWidth: '50px', minHeight: '40px', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }} whileTap={{ scale: 0.9 }}>
-                          {label}
-                        </motion.button>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
             </AnimatePresence>
 
-            <AnimatePresence>
-              {showShapes && (
-                <motion.div className="mt-3 bg-indigo-50 rounded-2xl p-3 border-4 border-indigo-200" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
-                  <p className="text-center text-sm font-black text-gray-700 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>🔷 Choose a Shape</p>
-                  <div className="grid grid-cols-6 gap-2 mb-3">
-                    {SHAPES.map((shape) => (
-                      <motion.button key={shape.id} onClick={() => { playClick(); setSelectedShape(shape.id); }} className={`aspect-square rounded-xl text-3xl md:text-4xl flex items-center justify-center border-2 ${selectedShape === shape.id ? 'bg-indigo-200 border-indigo-500 scale-110' : 'bg-white border-white'}`} whileTap={{ scale: 0.9 }}>
-                        {shape.icon}
-                      </motion.button>
-                    ))}
-                  </div>
-                  <div className="border-t-2 border-indigo-300 pt-2">
-                    <p className="text-center text-xs font-black text-gray-700 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>📏 Shape Size</p>
-                    <div className="flex items-center justify-center gap-2 flex-wrap">
-                      {SHAPE_SIZES.map(({ size, label }) => (
-                        <motion.button key={size} onClick={() => { playClick(); setShapeSize(size); }} className={`rounded-xl px-3 py-2 border-2 font-black text-sm ${shapeSize === size ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-white scale-110' : 'bg-white text-gray-600 border-indigo-300'}`} style={{ minWidth: '50px', minHeight: '40px', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }} whileTap={{ scale: 0.9 }}>
-                          {label}
-                        </motion.button>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
+            <div className="flex-1" />
+
+            <motion.button
+              onClick={save}
+              className="rounded-xl px-3 py-2 font-bold text-white flex items-center gap-1"
+              style={{ background: 'linear-gradient(135deg,#22C55E,#0E9F6E)', boxShadow: '0 4px 0 #047857', fontFamily: "'Bubblegum One', cursive" }}
+              whileTap={{ scale: 0.93, y: 2 }}
+            >
+              <span className="text-lg">💾</span>
+              <span className="text-sm">Save</span>
+            </motion.button>
+
+            <motion.button
+              onClick={download}
+              className="rounded-xl px-3 py-2 font-bold text-white flex items-center gap-1"
+              style={{ background: 'linear-gradient(135deg,#FB923C,#EA580C)', boxShadow: '0 4px 0 #C2410C', fontFamily: "'Bubblegum One', cursive" }}
+              whileTap={{ scale: 0.93, y: 2 }}
+            >
+              <span className="text-lg">📥</span>
+            </motion.button>
+          </div>
         </div>
 
-        <div 
-          className="flex-1 mx-3 mb-2 bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-white relative"
-          onMouseMove={(e) => {
-            handleItemMove(e);
-            if (['eraser', 'brush', 'pencil', 'marker'].includes(currentTool)) {
-              const rect = e.currentTarget.getBoundingClientRect();
-              setCursorPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-            }
-          }}
-          onTouchMove={(e) => {
-            handleItemMove(e);
-            if (['eraser', 'brush', 'pencil', 'marker'].includes(currentTool)) {
-              const rect = e.currentTarget.getBoundingClientRect();
-              setCursorPos({ x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top });
-            }
-          }}
-          onMouseEnter={() => setShowCursor(true)}
-          onMouseLeave={() => { setShowCursor(false); handleItemMouseUp(); }}
-          onMouseUp={handleItemMouseUp}
-          onTouchEnd={handleItemMouseUp}
-        >
-          <canvas ref={canvasRef} className={`w-full h-full touch-none block ${currentTool === 'eraser' || currentTool === 'brush' || currentTool === 'pencil' || currentTool === 'marker' ? 'cursor-none' : 'cursor-crosshair'}`} onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={stopDrawing} onMouseLeave={stopDrawing} onTouchStart={startDrawing} onTouchMove={draw} onTouchEnd={stopDrawing} />
-          
-          {/* Custom cursor indicators */}
-          {showCursor && cursorPos && currentTool === 'eraser' && (
-            <div className="absolute pointer-events-none z-30" style={{ left: `${cursorPos.x}px`, top: `${cursorPos.y}px`, transform: 'translate(-50%, -50%)' }}>
-              <div className="rounded-full bg-white/30 border-4 border-red-500" style={{ width: `${brushSize * 2}px`, height: `${brushSize * 2}px`, boxShadow: '0 0 10px rgba(239, 68, 68, 0.5)' }} />
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-3xl" style={{ filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.3))' }}>🧽</div>
-            </div>
-          )}
-          
-          {showCursor && cursorPos && currentTool === 'brush' && (
-            <div className="absolute pointer-events-none z-30" style={{ left: `${cursorPos.x}px`, top: `${cursorPos.y}px`, transform: 'translate(-50%, -50%)' }}>
-              <div className="rounded-full border-2 border-white" style={{ width: `${brushSize * 1.5}px`, height: `${brushSize * 1.5}px`, backgroundColor: currentColor + '80', boxShadow: '0 0 8px rgba(0,0,0,0.3)' }} />
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-2xl" style={{ filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.3))' }}>🖌️</div>
-            </div>
-          )}
-          
-          {showCursor && cursorPos && currentTool === 'pencil' && (
-            <div className="absolute pointer-events-none z-30" style={{ left: `${cursorPos.x}px`, top: `${cursorPos.y}px`, transform: 'translate(-50%, -50%)' }}>
-              <div className="rounded-full border-2 border-gray-600" style={{ width: `${brushSize}px`, height: `${brushSize}px`, backgroundColor: currentColor }} />
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-2xl" style={{ filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.3))' }}>✏️</div>
-            </div>
-          )}
-          
-          {showCursor && cursorPos && currentTool === 'marker' && (
-            <div className="absolute pointer-events-none z-30" style={{ left: `${cursorPos.x}px`, top: `${cursorPos.y}px`, transform: 'translate(-50%, -50%)' }}>
-              <div className="border-2 border-white opacity-70" style={{ width: `${brushSize * 1.5}px`, height: `${brushSize * 1.5}px`, backgroundColor: currentColor, borderRadius: '4px', boxShadow: '0 0 8px rgba(0,0,0,0.3)' }} />
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2 text-2xl" style={{ filter: 'drop-shadow(2px 2px 2px rgba(0,0,0,0.3))' }}>🖊️</div>
-            </div>
-          )}
+        {/* tools */}
+        <div className="px-3 mt-2 shrink-0">
+          <div className="grid grid-cols-6 gap-1.5">
+            {TOOLS.map((t) => {
+              const on = tool === t.id;
+              return (
+                <motion.button
+                  key={t.id}
+                  onClick={() => {
+                    playClick();
+                    buzz('tick');
+                    setTool(t.id);
+                    if (t.id !== 'move') setSelected(null);
+                    speak(t.label);
+                  }}
+                  className="rounded-2xl py-1.5 flex flex-col items-center border-4 border-white"
+                  style={{
+                    background: on ? t.color : 'rgba(255,255,255,.95)',
+                    color: on ? '#fff' : '#5B6079',
+                    boxShadow: on ? `0 4px 0 rgba(0,0,0,.25)` : '0 3px 0 rgba(0,0,0,.10)',
+                  }}
+                  whileTap={{ scale: 0.92, y: 2 }}
+                >
+                  <ItemIcon icon={t.icon} size={20} label={t.label} />
+                  <span className="text-[9px] font-bold mt-0.5 leading-none" style={{ fontFamily: "'Bubblegum One', cursive" }}>
+                    {t.label}
+                  </span>
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
 
-          {placedItems.map((item) => {
-            const displayPos = canvasToDisplay(item.x, item.y);
-            const displaySize = item.size * (canvasRef.current ? canvasRef.current.getBoundingClientRect().width / canvasRef.current.width : 1);
-            const isSelected = selectedItemId === item.id;
-            const isMoveMode = currentTool === 'move';
+        {/* canvas */}
+        <div
+          ref={wrapRef}
+          className="flex-1 mx-3 my-2 bg-white rounded-3xl border-4 border-white relative overflow-hidden"
+          style={{ boxShadow: '0 6px 0 rgba(0,0,0,.10)', minHeight: 200 }}
+          onPointerDown={down}
+          onPointerMove={move}
+          onPointerUp={up}
+          onPointerCancel={up}
+          onPointerLeave={up}
+        >
+          <canvas
+            ref={canvasRef}
+            className="w-full h-full block absolute inset-0"
+            style={{ touchAction: 'none' }}
+          />
+
+          {items.map((it) => {
+            const px = (it.size / 100) * wrapW;
+            const isSel = selected === it.id;
             return (
-              <div key={item.id} className="absolute" style={{ left: `${displayPos.x}px`, top: `${displayPos.y}px`, transform: 'translate(-50%, -50%)', cursor: isMoveMode ? 'move' : 'default', zIndex: isSelected ? 20 : 10, pointerEvents: isMoveMode ? 'auto' : 'none' }} onMouseDown={(e) => handleItemMouseDown(e, item.id)} onTouchStart={(e) => handleItemMouseDown(e, item.id)}>
-                {item.type === 'sticker' && (
-                  <div style={{ fontSize: `${displaySize}px`, userSelect: 'none', filter: isSelected ? 'drop-shadow(0 0 8px #14B8A6)' : 'none' }}>
-                    {item.emoji}
-                  </div>
-                )}
-                {item.type === 'shape' && item.shape && item.color && item.brushSize && (
-                  <div style={{ filter: isSelected ? 'drop-shadow(0 0 8px #14B8A6)' : 'none' }}>
-                    {renderShapeSVG(item.shape, displaySize, item.color, item.brushSize * (canvasRef.current ? canvasRef.current.getBoundingClientRect().width / canvasRef.current.width : 1))}
-                  </div>
+              <div
+                key={it.id}
+                className="absolute"
+                style={{
+                  left: `${it.x}%`,
+                  top: `${it.y}%`,
+                  transform: 'translate(-50%,-50%)',
+                  zIndex: isSel ? 20 : 10,
+                  pointerEvents: tool === 'move' ? 'auto' : 'none',
+                  cursor: tool === 'move' ? 'move' : 'default',
+                  filter: isSel ? 'drop-shadow(0 0 6px #22C55E)' : 'none',
+                  touchAction: 'none',
+                }}
+                onPointerDown={(e) => grabItem(e, it.id)}
+              >
+                {it.type === 'sticker' && it.emoji && <ItemIcon icon={it.emoji} size={px} />}
+                {it.type === 'shape' && it.shape && (
+                  <ShapeSvg shape={it.shape} px={px} color={it.color || '#000'} stroke={it.stroke || 4} />
                 )}
               </div>
             );
           })}
 
-          {previewPos && currentTool === 'sticker' && selectedSticker && (
-            <div className="absolute pointer-events-none opacity-60" style={{ left: `${previewPos.x}px`, top: `${previewPos.y}px`, fontSize: `${stickerSize / 1.5}px`, transform: 'translate(-50%, -50%)', zIndex: 15 }}>
-              {selectedSticker}
-            </div>
-          )}
-          {previewPos && currentTool === 'shape' && selectedShape && (
-            <div className="absolute pointer-events-none opacity-70" style={{ left: `${previewPos.x}px`, top: `${previewPos.y}px`, transform: 'translate(-50%, -50%)', zIndex: 15 }}>
-              {renderShapeSVG(selectedShape, shapeSize / 2, currentColor, brushSize, true)}
-            </div>
+          {tool === 'move' && items.length === 0 && (
+            <p className="absolute bottom-3 left-0 right-0 text-center text-gray-400 text-xs font-bold">
+              Put a sticker or shape down first, then move it
+            </p>
           )}
         </div>
 
-        <div className="px-3 pb-3">
-          <div className="bg-white/95 rounded-3xl p-3 shadow-2xl border-4 border-white">
-            {currentTool !== 'sticker' && currentTool !== 'move' && (
-              <div className="mb-3">
-                <p className="text-center text-xs font-black text-gray-600 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>✏️ Brush Size</p>
-                <div className="flex items-center justify-center gap-2">
-                  {BRUSH_SIZES.map(({ size, label }) => (
-                    <motion.button key={size} onClick={() => { playClick(); setBrushSize(size); }} className={`rounded-xl flex flex-col items-center justify-center border-2 ${brushSize === size ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white border-white scale-110' : 'bg-gray-100 text-gray-600 border-gray-200'}`} style={{ minWidth: '45px', minHeight: '45px', fontFamily: "'Fredoka', 'Arial Black', sans-serif" }} whileTap={{ scale: 0.95 }}>
-                      <div className={`rounded-full ${brushSize === size ? 'bg-white' : 'bg-gray-500'}`} style={{ width: `${Math.min(size, 20)}px`, height: `${Math.min(size, 20)}px` }} />
-                      <span className="text-xs">{label}</span>
+        {/* bottom panel */}
+        <div className="px-3 pb-3 shrink-0">
+          <div className="bg-white/95 rounded-3xl p-3 border-4 border-white" style={{ boxShadow: '0 6px 0 rgba(0,0,0,.10)' }}>
+            {/* sticker picker */}
+            {tool === 'sticker' && (
+              <div className="mb-2">
+                <div className="grid grid-cols-8 gap-1.5 max-h-28 overflow-y-auto mb-2">
+                  {STICKERS.map((s) => (
+                    <motion.button
+                      key={s}
+                      onClick={() => { setSticker(s); playClick(); buzz('tick'); }}
+                      className={`aspect-square rounded-xl flex items-center justify-center border-4 ${
+                        sticker === s ? 'border-orange-400 bg-orange-50' : 'border-white bg-gray-50'
+                      }`}
+                      whileTap={{ scale: 0.88 }}
+                    >
+                      <ItemIcon icon={s} size={22} />
                     </motion.button>
                   ))}
                 </div>
+                <SizeRow values={STICKER_SIZES} value={stickerSize} onChange={setStickerSize} preview={sticker} />
               </div>
             )}
-            <div>
-              <p className="text-center text-xs font-black text-gray-600 mb-2" style={{ fontFamily: "'Fredoka', 'Arial Black', sans-serif" }}>🎨 Colors</p>
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 justify-center flex-wrap">
-                {COLORS.map((color) => (
-                  <motion.button key={color} onClick={() => { playClick(); setCurrentColor(color); }} className={`rounded-full flex-shrink-0 border-4 shadow-md ${currentColor === color ? 'border-gray-800 scale-125 ring-4 ring-offset-2 ring-yellow-300' : 'border-white'}`} style={{ backgroundColor: color, width: '40px', height: '40px' }} whileTap={{ scale: 0.9 }} />
+
+            {/* shape picker */}
+            {tool === 'shape' && (
+              <div className="mb-2">
+                <div className="grid grid-cols-6 gap-1.5 mb-2">
+                  {SHAPES.map((s) => (
+                    <motion.button
+                      key={s.id}
+                      onClick={() => { setShape(s.id); playClick(); buzz('tick'); speak(s.label); }}
+                      className={`aspect-square rounded-xl flex items-center justify-center border-4 ${
+                        shape === s.id ? 'border-blue-400 bg-blue-50' : 'border-white bg-gray-50'
+                      }`}
+                      whileTap={{ scale: 0.88 }}
+                      aria-label={s.label}
+                    >
+                      <ItemIcon icon={s.icon} size={24} label={s.label} />
+                    </motion.button>
+                  ))}
+                </div>
+                <SizeRow values={SHAPE_SIZES} value={shapeSize} onChange={setShapeSize} />
+              </div>
+            )}
+
+            {/* brush sizes — dots at true size, no letters */}
+            {(tool === 'draw' || tool === 'eraser') && (
+              <div className="flex items-center justify-center gap-2 mb-2">
+                {BRUSHES.map((w) => (
+                  <motion.button
+                    key={w}
+                    onClick={() => { setBrush(w); playClick(); buzz('tick'); }}
+                    className={`rounded-2xl flex items-center justify-center border-4 ${
+                      brush === w ? 'bg-purple-100 border-purple-400' : 'bg-gray-50 border-white'
+                    }`}
+                    style={{ width: 54, height: 44, boxShadow: '0 4px 0 rgba(0,0,0,.10)' }}
+                    whileTap={{ scale: 0.92 }}
+                    aria-label={`brush size ${w}`}
+                  >
+                    <span
+                      className="rounded-full block"
+                      style={{
+                        width: Math.min(w, 26),
+                        height: Math.min(w, 26),
+                        background: tool === 'eraser' ? '#C7CCDA' : color,
+                        border: '1px solid rgba(0,0,0,.18)',
+                      }}
+                    />
+                  </motion.button>
                 ))}
               </div>
-            </div>
+            )}
+
+            {/* colours */}
+            {tool !== 'sticker' && tool !== 'move' && (
+              <div className="grid grid-cols-9 gap-1.5">
+                {PALETTE.map((s) => (
+                  <motion.button
+                    key={s.color}
+                    onClick={() => { setColor(s.color); playClick(); buzz('tick'); speak(s.name); }}
+                    className="rounded-full aspect-square"
+                    style={{
+                      background: s.color,
+                      border: color === s.color ? '4px solid #1B1B1F' : '3px solid #D8DCE8',
+                      boxShadow: '0 3px 0 rgba(0,0,0,.12)',
+                    }}
+                    whileTap={{ scale: 0.85 }}
+                    aria-label={s.name}
+                  />
+                ))}
+              </div>
+            )}
+
+            <button
+              onClick={() => { playClick(); setConfirmClear(true); }}
+              className="w-full rounded-2xl py-1.5 mt-2 text-xs font-bold text-red-500 bg-red-50 border-2 border-red-200"
+              style={{ fontFamily: "'Bubblegum One', cursive" }}
+            >
+              🗑️ Start again
+            </button>
           </div>
+
+          <p className="text-center text-[11px] text-gray-500 font-semibold mt-1.5">
+            {tool === 'fill' && '👆 Tap an area to fill just that bit'}
+            {tool === 'draw' && '👆 Drag to draw'}
+            {tool === 'eraser' && '👆 Drag to rub out'}
+            {tool === 'sticker' && '👆 Tap the picture to stick it on'}
+            {tool === 'shape' && '👆 Tap the picture to add the shape'}
+            {tool === 'move' && '👆 Drag a sticker or shape to move it'}
+          </p>
         </div>
+
+        {/* toast */}
+        <AnimatePresence>
+          {toast && (
+            <motion.div
+              className="fixed left-1/2 -translate-x-1/2 bottom-28 z-50 px-5 py-3 rounded-2xl bg-gray-900/92 text-white font-bold text-sm text-center max-w-xs"
+              initial={{ y: 16, opacity: 0, scale: 0.9 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 16, opacity: 0 }}
+              transition={POP}
+              style={{ fontFamily: "'Bubblegum One', cursive" }}
+            >
+              {toast}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* in-app confirm — browser confirm() is blocked in some webviews */}
+        <AnimatePresence>
+          {confirmClear && (
+            <motion.div
+              className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setConfirmClear(false)}
+            >
+              <motion.div
+                className="bg-white rounded-3xl p-6 text-center border-4 border-white max-w-xs w-full"
+                initial={{ scale: 0.6 }}
+                animate={{ scale: 1 }}
+                transition={POP}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <p className="text-5xl mb-2">🗑️</p>
+                <p className="font-bold text-gray-800 text-lg" style={{ fontFamily: "'Bubblegum One', cursive" }}>
+                  Start this picture again?
+                </p>
+                <p className="text-sm text-gray-500 mt-1">Everything on the page will go.</p>
+                <div className="flex gap-2 mt-5">
+                  <button
+                    onClick={() => { playClick(); setConfirmClear(false); }}
+                    className="flex-1 rounded-2xl py-3 bg-gray-100 text-gray-700 font-bold border-4 border-white"
+                    style={{ boxShadow: '0 4px 0 rgba(0,0,0,.12)', fontFamily: "'Bubblegum One', cursive" }}
+                  >
+                    Keep it
+                  </button>
+                  <button
+                    onClick={clearAll}
+                    className="flex-1 rounded-2xl py-3 text-white font-bold border-4 border-white"
+                    style={{ background: 'linear-gradient(135deg,#F87171,#DC2626)', boxShadow: '0 4px 0 #991B1B', fontFamily: "'Bubblegum One', cursive" }}
+                  >
+                    Start again
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </GameBackground>
   );
 };
+
+/* small shared size picker */
+const SizeRow: React.FC<{
+  values: number[];
+  value: number;
+  onChange: (v: number) => void;
+  preview?: string;
+}> = ({ values, value, onChange, preview }) => (
+  <div className="flex items-center justify-center gap-2">
+    {values.map((v) => (
+      <motion.button
+        key={v}
+        onClick={() => onChange(v)}
+        className={`rounded-2xl flex items-center justify-center border-4 ${
+          value === v ? 'bg-purple-100 border-purple-400' : 'bg-gray-50 border-white'
+        }`}
+        style={{ width: 52, height: 44, boxShadow: '0 4px 0 rgba(0,0,0,.10)' }}
+        whileTap={{ scale: 0.92 }}
+        aria-label={`size ${v}`}
+      >
+        {preview ? (
+          <ItemIcon icon={preview} size={Math.min(v, 26)} />
+        ) : (
+          <span
+            className="rounded-full block bg-gray-500"
+            style={{ width: Math.min(v / 2, 24), height: Math.min(v / 2, 24) }}
+          />
+        )}
+      </motion.button>
+    ))}
+  </div>
+);
 
 export default CreativeStudio;
