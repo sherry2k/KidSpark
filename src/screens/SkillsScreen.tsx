@@ -6,6 +6,8 @@ import Celebration from '../components/Celebration';
 import { careerCategories, SkillCategory, SkillItem } from '../data/gameData';
 import { GameProgress } from '../store/gameStore';
 import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds';
+import CookingActivity from '../games/CookingActivity';
+import { getRecipe } from '../data/cookingRecipes';
 
 interface SkillsScreenProps {
   progress: GameProgress;
