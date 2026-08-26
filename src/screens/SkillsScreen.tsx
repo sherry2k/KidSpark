@@ -6,7 +6,9 @@ import Celebration from '../components/Celebration';
 import { careerCategories, SkillCategory, SkillItem } from '../data/gameData';
 import { GameProgress } from '../store/gameStore';
 import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds';
-import CookingActivity from '../games/CookingActivity';
+import SkillActivity from '../games/SkillActivity';
+import { getActivity, isRebuilt } from '../data/skillActivities';
+import { shadowFor } from '../data/categoryTiers';
 import { getRecipe } from '../data/cookingRecipes';
 
 interface SkillsScreenProps {
@@ -1288,37 +1290,55 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
     );
   }
   
+const rebuilt = getActivity(selectedSkill.id);
 
-   // =============================================
-  // SKILL DETAIL - INTERACTIVE ASSEMBLY - REDESIGNED!
-  // =============================================
-  if (view === 'skill-detail' && selectedSkill && selectedCategory) {
-    const activity = getActivityForSkill(selectedSkill.id);
-        // ---------- Cooking Studio: new engine ----------
-    const cookingRecipe = getRecipe(selectedSkill.id);
-    if (cookingRecipe && selectedCategory.id === 'cooking') {
+    if (rebuilt && isRebuilt(selectedCategory.id, selectedSkill.id)) {
+
       return (
+
         <GameBackground variant="game">
+
           <div className="h-full flex flex-col overflow-x-hidden">
+
             <Navigation
+
               title={`${selectedSkill.emoji} ${selectedSkill.name}`}
+
               onBack={goBackOne}
+
               stars={progress.stars}
+
             />
-            <CookingActivity
-              recipe={cookingRecipe}
+
+            <SkillActivity
+
+              activity={rebuilt}
+
               categoryId={selectedCategory.id}
+
               gradient={selectedCategory.gradient}
-              shadow="#C2410C"
+
+              shadow={shadowFor(selectedCategory.id)}
+
               stars={progress.stars}
+
               onBack={goBackOne}
+
               onComplete={handleActivityComplete}
+
               ageBand="mid"
+
             />
+
           </div>
+
         </GameBackground>
+
       );
+
     }
+
+  
     // ---------- everything below is your existing code ----------
     const totalNeeded = activity.correctItems.length;
     const progress_percent = (collectedItems.length / totalNeeded) * 100;
