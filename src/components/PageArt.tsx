@@ -29,6 +29,8 @@ interface Props {
   };
   svgRef?: React.Ref<SVGSVGElement>;
   className?: string;
+  /** show only part of the picture — used to slice a jigsaw without any assets */
+  crop?: { x: number; y: number; w: number; h: number };
 }
 
 const PageArt: React.FC<Props> = ({
@@ -40,6 +42,7 @@ const PageArt: React.FC<Props> = ({
   brushHandlers,
   svgRef,
   className = '',
+  crop,
 }) => {
   const uid = useId().replace(/:/g, '');
   const clipId = `clip-${page.id}-${uid}`;
@@ -47,7 +50,7 @@ const PageArt: React.FC<Props> = ({
   return (
     <svg
       ref={svgRef}
-      viewBox="0 0 100 100"
+      viewBox={crop ? `${crop.x} ${crop.y} ${crop.w} ${crop.h}` : '0 0 100 100'}
       width={size}
       height={size}
       className={className}
