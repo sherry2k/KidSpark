@@ -18,6 +18,10 @@ import { Activity, StagePayload, STEP_LABEL } from '../data/activityTypes';
 import { saveKeepsake } from '../utils/keepsakes';
 import { buzz, speak, stopSpeaking, isVoiceEnabled, setVoiceEnabled, POP } from '../utils/kidJuice';
 import { playClick, playComplete } from '../utils/sounds';
+import SkillActivity from '../games/SkillActivity';
+import { getActivity, isRebuilt } from '../data/skillActivities';
+import { shadowFor } from '../data/categoryTiers';
+
 
 /**
  * SkillActivity — runs any rebuilt activity, in any category.
