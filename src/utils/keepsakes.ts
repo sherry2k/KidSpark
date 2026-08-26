@@ -1,12 +1,8 @@
 /**
- * keepsakes.ts — "My Stuff".
+ * keepsakes.ts — "My Stuff" (v2)
  *
- * The single biggest reason a kid reopens an app is that something they made
- * is still in there. Every finished activity saves a keepsake; the shelf shows
- * them all; a "Show a grown-up" button makes one full screen.
- *
- * Stored as data (not a screenshot) so it re-renders crisply at any size and
- * costs a few hundred bytes.
+ * v2 adds drawings and dress-up looks alongside decorated food. Old v1
+ * records still load: anything without a `kind` is treated as 'decorated'.
  */
 
 export interface Sticker {
@@ -18,31 +14,57 @@ export interface Sticker {
   scale: number;
 }
 
+export interface Stroke {
+  color: string;
+  width: number;
+  /** points as percentages of the canvas, so it re-renders at any size */
+  pts: { x: number; y: number }[];
+}
+
+export interface Layer {
+  slot: string;
+  icon: string;
+  /** vertical placement as a percentage — lets a hat sit above a dress */
+  y: number;
+  size: number;
+}
+
+export type KeepsakeKind = 'decorated' | 'drawing' | 'dress' | 'garden';
+
 export interface Keepsake {
   id: string;
-  /** skill id it came from, e.g. 'baking' */
   skillId: string;
-  /** category id, e.g. 'cooking' */
   categoryId: string;
   title: string;
-  /** the base emoji/asset key, e.g. '🎂' */
+  kind: KeepsakeKind;
+  /** base emoji/asset key, e.g. '🎂' or the character for a dress-up */
   base: string;
-  /** frosting / sauce colour chosen by the child */
+  /** frosting / background colour */
   color: string;
   stickers: Sticker[];
-  /** epoch ms */
+  strokes?: Stroke[];
+  layers?: Layer[];
   madeAt: number;
 }
 
+export type KeepsakeInput = Omit<Keepsake, 'id' | 'madeAt' | 'kind'> & {
+  kind?: KeepsakeKind;
+};
+
 const KEY = 'kidspark.keepsakes.v1';
-const MAX = 60; // keep the newest 60; plenty, and bounded storage
+const MAX = 60;
 
 function readAll(): Keepsake[] {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as Keepsake[]) : [];
+    if (!Array.isArray(parsed)) return [];
+    return (parsed as Keepsake[]).map((k) => ({
+      ...k,
+      kind: k.kind || 'decorated',
+      stickers: k.stickers || [],
+    }));
   } catch {
     return [];
   }
@@ -52,13 +74,15 @@ function writeAll(list: Keepsake[]) {
   try {
     localStorage.setItem(KEY, JSON.stringify(list.slice(0, MAX)));
   } catch {
-    /* storage full or blocked — the session still works, it just won't persist */
+    /* storage full or blocked */
   }
 }
 
-export function saveKeepsake(k: Omit<Keepsake, 'id' | 'madeAt'>): Keepsake {
+export function saveKeepsake(k: KeepsakeInput): Keepsake {
   const full: Keepsake = {
     ...k,
+    kind: k.kind || 'decorated',
+    stickers: k.stickers || [],
     id: `${k.skillId}-${Date.now().toString(36)}`,
     madeAt: Date.now(),
   };
@@ -66,18 +90,11 @@ export function saveKeepsake(k: Omit<Keepsake, 'id' | 'madeAt'>): Keepsake {
   return full;
 }
 
-export function getKeepsakes(): Keepsake[] {
-  return readAll();
-}
+export const getKeepsakes = (): Keepsake[] => readAll();
 
-export function getKeepsakesFor(categoryId: string): Keepsake[] {
-  return readAll().filter((k) => k.categoryId === categoryId);
-}
+export const getKeepsakesFor = (categoryId: string): Keepsake[] =>
+  readAll().filter((k) => k.categoryId === categoryId);
 
-export function deleteKeepsake(id: string) {
-  writeAll(readAll().filter((k) => k.id !== id));
-}
+export const deleteKeepsake = (id: string) => writeAll(readAll().filter((k) => k.id !== id));
 
-export function keepsakeCount(): number {
-  return readAll().length;
-}
+export const keepsakeCount = (): number => readAll().length;
