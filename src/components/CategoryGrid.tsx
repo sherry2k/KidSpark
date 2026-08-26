@@ -35,11 +35,11 @@ export interface CatLike {
   items: { id: string }[];
 }
 
-interface Props {
-  categories: CatLike[];
+interface Props<T extends CatLike> {
+  categories: T[];
   /** ids of completed skills — pass the persisted list */
   completedSkills: string[];
-  onSelect: (cat: CatLike) => void;
+  onSelect: (cat: T) => void;
 }
 
 /* ------------------------------------------------------------------ */
@@ -200,17 +200,17 @@ const SectionHead: React.FC<{ label: string; sub?: string }> = ({ label, sub }) 
   </div>
 );
 
-const CategoryGrid: React.FC<Props> = ({ categories, completedSkills, onSelect }) => {
+function CategoryGrid<T extends CatLike>({ categories, completedSkills, onSelect }: Props<T>) {
   const count = completedSkills.length;
   const [toast, setToast] = useState<string | null>(null);
-  const [celebrate, setCelebrate] = useState<CatLike | null>(null);
+  const [celebrate, setCelebrate] = useState<T | null>(null);
 
   const ordered = useMemo(() => orderCategories(categories), [categories]);
 
   const groups = useMemo(() => {
-    const open: CatLike[] = [];
-    const goals: CatLike[] = [];
-    const soon: CatLike[] = [];
+    const open: T[] = [];
+    const goals: T[] = [];
+    const soon: T[] = [];
     ordered.forEach((c) => {
       const s = getCategoryState(c.id, count);
       if (s.playable) open.push(c);
@@ -253,7 +253,7 @@ const CategoryGrid: React.FC<Props> = ({ categories, completedSkills, onSelect }
 
   const goal = nextUnlock(count);
 
-  const cardsFor = (list: CatLike[], offset: number) =>
+  const cardsFor = (list: T[], offset: number) =>
     list.map((cat, i) => (
       <CategoryCard
         key={cat.id}
@@ -377,6 +377,6 @@ const CategoryGrid: React.FC<Props> = ({ categories, completedSkills, onSelect }
       </AnimatePresence>
     </div>
   );
-};
+}
 
 export default CategoryGrid;
