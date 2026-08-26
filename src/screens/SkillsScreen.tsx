@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { GameBackground } from '../components/Background';
 import Navigation from '../components/Navigation';
 import Celebration from '../components/Celebration';
 import { careerCategories, SkillCategory, SkillItem } from '../data/gameData';
 import { GameProgress } from '../store/gameStore';
 import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds';
+
+// ---- KidSpark rebuild ----
+import CategoryGrid from '../components/CategoryGrid';
+import MyStuffShelf from '../components/MyStuffShelf';
+import ItemIcon from '../components/mechanics/ItemIcon';
 import SkillActivity from '../games/SkillActivity';
 import { getActivity, isRebuilt } from '../data/skillActivities';
 import { shadowFor } from '../data/categoryTiers';
-import { getRecipe } from '../data/cookingRecipes';
+import { getCompletedSkills, markSkillComplete, primeSeenUnlocksOnce } from '../utils/skillProgress';
 
 interface SkillsScreenProps {
   progress: GameProgress;
@@ -17,7 +22,7 @@ interface SkillsScreenProps {
   onComplete: (stars: number) => void;
 }
 
-type View = 'career-select' | 'skill-list' | 'skill-detail';
+type View = 'career-select' | 'skill-list' | 'skill-detail' | 'my-stuff';
 
 // Activity data for each skill - defines what items to collect/assemble
 const SKILL_ACTIVITIES: Record<string, {
@@ -900,7 +905,6 @@ const SKILL_ACTIVITIES: Record<string, {
   }
 };
 
-
 const getActivityForSkill = (skillId: string) => {
   return SKILL_ACTIVITIES[skillId] || SKILL_ACTIVITIES.default;
 };
@@ -909,13 +913,19 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
   const [view, setView] = useState<View>('career-select');
   const [selectedCategory, setSelectedCategory] = useState<SkillCategory | null>(null);
   const [selectedSkill, setSelectedSkill] = useState<SkillItem | null>(null);
-  const [completedSkills, setCompletedSkills] = useState<string[]>([]);
+  const [completedSkills, setCompletedSkills] = useState<string[]>(() => getCompletedSkills());
   const [showCelebration, setShowCelebration] = useState(false);
   const [collectedItems, setCollectedItems] = useState<string[]>([]);
   const [wrongTaps, setWrongTaps] = useState<number[]>([]);
   const [shuffledItems, setShuffledItems] = useState<string[]>([]);
 
-  // Shuffle items when skill changes
+  // Mark whatever is already unlocked as "seen" the first time only, so an
+  // existing player isn't shown three unlock popups in a row.
+  useEffect(() => {
+    primeSeenUnlocksOnce();
+  }, []);
+
+  // Shuffle items when skill changes (old tap-in-order game)
   useEffect(() => {
     if (selectedSkill) {
       const activity = getActivityForSkill(selectedSkill.id);
@@ -928,7 +938,6 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
   }, [selectedSkill]);
 
   const handleCategorySelect = (cat: SkillCategory) => {
-    playClick();
     setSelectedCategory(cat);
     setView('skill-list');
   };
@@ -939,24 +948,28 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
     setView('skill-detail');
   };
 
+  // Called by the new engine when a rebuilt activity finishes
+  const handleActivityComplete = (earned: number) => {
+    if (selectedSkill) {
+      setCompletedSkills(markSkillComplete(selectedSkill.id));
+    }
+    onComplete(earned);
+  };
+
   const handleItemTap = (item: string, index: number) => {
     if (!selectedSkill) return;
     const activity = getActivityForSkill(selectedSkill.id);
-    
+
     const nextExpectedItem = activity.correctItems[collectedItems.length];
-    
+
     if (item === nextExpectedItem) {
-      // 🎵 Correct item!
       playCorrect();
       const newCollected = [...collectedItems, item];
       setCollectedItems(newCollected);
-      
+
       if (newCollected.length === activity.correctItems.length) {
-        if (!completedSkills.includes(selectedSkill.id)) {
-          setCompletedSkills((prev) => [...prev, selectedSkill.id]);
-        }
+        setCompletedSkills(markSkillComplete(selectedSkill.id));
         setTimeout(() => {
-          // 🎵 Skill complete!
           playComplete();
           setShowCelebration(true);
           onComplete(3);
@@ -968,11 +981,10 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
         }, 500);
       }
     } else {
-      // 🎵 Wrong item!
       playWrong();
       setWrongTaps([...wrongTaps, index]);
       setTimeout(() => {
-        setWrongTaps(prev => prev.filter(i => i !== index));
+        setWrongTaps((prev) => prev.filter((i) => i !== index));
       }, 800);
     }
   };
@@ -989,14 +1001,7 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
     }
   };
 
-  const handleActivityComplete = (earned: number) => {
-    if (selectedSkill && !completedSkills.includes(selectedSkill.id)) {
-      setCompletedSkills((prev) => [...prev, selectedSkill.id]);
-    }
-    onComplete(earned);
-  };
-
- const goBackOne = () => {
+  const goBackOne = () => {
     playClick();
     switch (view) {
       case 'skill-list':
@@ -1012,13 +1017,27 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
     }
   };
 
-    // =============================================
-  // CAREER SELECTION - REDESIGNED
+  // =============================================
+  // MY STUFF — everything the child has made
+  // =============================================
+  if (view === 'my-stuff') {
+    return (
+      <GameBackground variant="game">
+        <div className="h-full flex flex-col overflow-x-hidden">
+          <Navigation title="🗄️ My Stuff" onBack={() => setView('career-select')} stars={progress.stars} />
+          <MyStuffShelf onBack={() => setView('career-select')} />
+        </div>
+      </GameBackground>
+    );
+  }
+
+  // =============================================
+  // CAREER SELECTION
   // =============================================
   if (view === 'career-select') {
     return (
       <GameBackground variant="game">
-        <div className="h-full flex flex-col">
+        <div className="h-full flex flex-col overflow-x-hidden">
           <Navigation title="🌟 Skills" onBack={() => { playClick(); onBack(); }} stars={progress.stars} />
 
           <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-8">
@@ -1027,135 +1046,42 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
               initial={{ y: -20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
             >
-              <h2 className="text-xl md:text-2xl font-bold text-gray-800" style={{ fontFamily: "'Bubblegum One', cursive" }}>
-                Choose Your Adventure! 🚀
+              <h2
+                className="text-xl md:text-2xl font-bold text-gray-800"
+                style={{ fontFamily: "'Bubblegum One', cursive" }}
+              >
+                Pick your adventure! 🚀
               </h2>
-              <p className="text-gray-500 text-sm mt-1">Fun activities for boys and girls!</p>
             </motion.div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 max-w-4xl mx-auto">
-              {careerCategories.map((cat, i) => {
-                const completedInCat = cat.items.filter((s) => completedSkills.includes(s.id)).length;
-                const progressPercent = (completedInCat / cat.items.length) * 100;
-                
-                // Get shadow color from gradient
-                const shadowColors: Record<string, string> = {
-                  'cooking': '#C2410C',
-                  'beauty': '#BE185D',
-                  'builder': '#B45309',
-                  'engineer': '#1E40AF',
-                  'factory': '#374151',
-                  'garage': '#B91C1C',
-                  'garden': '#047857',
-                  'medical': '#0F766E',
-                  'art': '#7B2CBF',
-                  'coding': '#0F766E',
-                  'science': '#6D28D9',
-                };
-                const shadow = shadowColors[cat.id] || '#374151';
-                
-                return (
-                  <motion.button
-                    key={cat.id}
-                    onClick={() => handleCategorySelect(cat)}
-                    className={`bg-gradient-to-br ${cat.gradient} rounded-3xl p-4 md:p-5 text-white shadow-xl border-4 border-white relative overflow-hidden`}
-                    style={{
-                      boxShadow: `0 8px 0 ${shadow}, 0 12px 25px rgba(0,0,0,0.2)`,
-                      minHeight: '180px',
-                    }}
-                    initial={{ y: 30, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: i * 0.05, type: 'spring' }}
-                    whileHover={{ scale: 1.05, y: -3 }}
-                    whileTap={{ 
-                      scale: 0.95, 
-                      y: 4,
-                      boxShadow: `0 4px 0 ${shadow}, 0 6px 15px rgba(0,0,0,0.2)`
-                    }}
-                  >
-                    {/* Completed Badge */}
-                    {completedInCat > 0 && (
-                      <div className="absolute top-2 right-2 bg-white text-green-500 text-xs font-bold px-3 py-1 rounded-full shadow-lg border-2 border-green-400">
-                        {completedInCat}/{cat.items.length}
-                      </div>
-                    )}
+            <CategoryGrid
+              categories={careerCategories}
+              completedSkills={completedSkills}
+              onSelect={handleCategorySelect}
+            />
 
-                    {/* Sparkle */}
-                    <motion.div
-                      className="absolute top-2 left-2 text-yellow-200 text-lg opacity-70"
-                      animate={{
-                        scale: [1, 1.3, 1],
-                        opacity: [0.5, 1, 0.5],
-                        rotate: [0, 180, 360]
-                      }}
-                      transition={{ duration: 2, repeat: Infinity, delay: i * 0.2 }}
-                    >
-                      ✨
-                    </motion.div>
-
-                    {/* Big Emoji */}
-                    <motion.div
-                      className="text-5xl md:text-6xl mb-2 text-center"
-                      animate={{ 
-                        y: [0, -5, 0],
-                        rotate: [0, -3, 3, 0]
-                      }}
-                      transition={{ 
-                        duration: 2 + i * 0.3, 
-                        repeat: Infinity 
-                      }}
-                    >
-                      {cat.emoji}
-                    </motion.div>
-
-                    {/* Name */}
-                    <h4 
-                      className="text-lg md:text-xl font-bold mb-1 text-center"
-                      style={{ 
-                        fontFamily: "'Bubblegum One', cursive",
-                        textShadow: '2px 2px 0 rgba(0,0,0,0.15)'
-                      }}
-                    >
-                      {cat.name}
-                    </h4>
-
-                    {/* Description */}
-                    <p className="text-white/90 text-xs md:text-sm text-center mb-2 leading-tight">
-                      {cat.description}
-                    </p>
-
-                    {/* Progress Bar */}
-                    {completedInCat > 0 && (
-                      <div className="mt-2 h-2 bg-white/30 rounded-full overflow-hidden">
-                        <motion.div
-                          className="h-full bg-white rounded-full"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${progressPercent}%` }}
-                          transition={{ duration: 0.8, delay: 0.3 }}
-                        />
-                      </div>
-                    )}
-                  </motion.button>
-                );
-              })}
-            </div>
-
-            {/* Stats Summary */}
-            <motion.div className="mt-6 text-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
+            {/* Stats + My Stuff */}
+            <motion.div
+              className="mt-6 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
               <div className="inline-flex items-center gap-4 bg-white/95 rounded-2xl px-6 py-3 shadow-lg border-4 border-white">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-purple-600" style={{ fontFamily: "'Bubblegum One', cursive" }}>
+                  <p
+                    className="text-2xl font-bold text-purple-600"
+                    style={{ fontFamily: "'Bubblegum One', cursive" }}
+                  >
                     {completedSkills.length}
                   </p>
                   <p className="text-xs text-gray-500 font-semibold">Skills Done</p>
                 </div>
                 <div className="w-px h-10 bg-gray-200" />
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600" style={{ fontFamily: "'Bubblegum One', cursive" }}>
-                    {careerCategories.length}
-                  </p>
-                  <p className="text-xs text-gray-500 font-semibold">Categories</p>
-                </div>
+                <button onClick={() => { playClick(); setView('my-stuff'); }} className="text-center">
+                  <p className="text-2xl">🗄️</p>
+                  <p className="text-xs text-gray-500 font-semibold">My Stuff</p>
+                </button>
               </div>
             </motion.div>
           </div>
@@ -1164,55 +1090,38 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
     );
   }
 
-    // =============================================
-  // SKILL LIST - REDESIGNED
+  // =============================================
+  // SKILL LIST
   // =============================================
   if (view === 'skill-list' && selectedCategory) {
-    const shadowColors: Record<string, string> = {
-      'cooking': '#C2410C',
-      'beauty': '#BE185D',
-      'builder': '#B45309',
-      'engineer': '#1E40AF',
-      'factory': '#374151',
-      'garage': '#B91C1C',
-      'garden': '#047857',
-      'medical': '#0F766E',
-      'art': '#7B2CBF',
-      'coding': '#0F766E',
-      'science': '#6D28D9',
-    };
-    const catShadow = shadowColors[selectedCategory.id] || '#374151';
+    const catShadow = shadowFor(selectedCategory.id);
 
     return (
       <GameBackground variant="game">
-        <div className="h-full flex flex-col">
-          <Navigation title={`${selectedCategory.emoji} ${selectedCategory.name}`} onBack={goBackOne} stars={progress.stars} />
+        <div className="h-full flex flex-col overflow-x-hidden">
+          <Navigation
+            title={`${selectedCategory.emoji} ${selectedCategory.name}`}
+            onBack={goBackOne}
+            stars={progress.stars}
+          />
+
           <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-8">
-            {/* Category Header Card */}
             <motion.div
               className={`bg-gradient-to-r ${selectedCategory.gradient} rounded-3xl p-5 mb-4 text-white shadow-xl border-4 border-white`}
-              style={{
-                boxShadow: `0 8px 0 ${catShadow}, 0 12px 25px rgba(0,0,0,0.2)`,
-              }}
+              style={{ boxShadow: `0 8px 0 ${catShadow}, 0 12px 25px rgba(0,0,0,0.2)` }}
               initial={{ y: -20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
             >
               <motion.div
                 className="text-6xl md:text-7xl text-center mb-2"
-                animate={{ 
-                  scale: [1, 1.1, 1],
-                  rotate: [0, -5, 5, 0]
-                }}
+                animate={{ scale: [1, 1.1, 1], rotate: [0, -5, 5, 0] }}
                 transition={{ duration: 2, repeat: Infinity }}
               >
                 {selectedCategory.emoji}
               </motion.div>
-              <h3 
+              <h3
                 className="text-2xl md:text-3xl font-bold mt-2 text-center"
-                style={{ 
-                  fontFamily: "'Bubblegum One', cursive",
-                  textShadow: '2px 2px 0 rgba(0,0,0,0.2)'
-                }}
+                style={{ fontFamily: "'Bubblegum One', cursive", textShadow: '2px 2px 0 rgba(0,0,0,0.2)' }}
               >
                 {selectedCategory.name}
               </h3>
@@ -1221,28 +1130,26 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
               </p>
               <div className="text-center mt-3">
                 <span className="bg-white/20 rounded-full px-4 py-1 text-sm font-bold">
-                  {completedSkills.filter((id) => selectedCategory.items.some((s) => s.id === id)).length} / {selectedCategory.items.length} completed
+                  {completedSkills.filter((id) => selectedCategory.items.some((s) => s.id === id)).length} /{' '}
+                  {selectedCategory.items.length} completed
                 </span>
               </div>
             </motion.div>
 
-            {/* Skills Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-w-4xl mx-auto">
               {selectedCategory.items.map((skill, i) => {
                 const isCompleted = completedSkills.includes(skill.id);
-                
+
                 return (
                   <motion.button
                     key={skill.id}
                     onClick={() => handleSkillSelect(skill)}
                     className={`bg-white/95 rounded-3xl p-4 text-center relative overflow-hidden shadow-lg border-4 ${
-                      isCompleted 
-                        ? 'border-green-400 bg-green-50/50' 
-                        : 'border-white'
+                      isCompleted ? 'border-green-400 bg-green-50/50' : 'border-white'
                     }`}
                     style={{
-                      boxShadow: isCompleted 
-                        ? '0 6px 0 #047857, 0 8px 20px rgba(0,0,0,0.1)' 
+                      boxShadow: isCompleted
+                        ? '0 6px 0 #047857, 0 8px 20px rgba(0,0,0,0.1)'
                         : `0 6px 0 ${catShadow}80, 0 8px 20px rgba(0,0,0,0.1)`,
                       minHeight: '110px',
                     }}
@@ -1250,31 +1157,23 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: i * 0.03 }}
                     whileHover={{ scale: 1.05, y: -3 }}
-                    whileTap={{ 
-                      scale: 0.95, 
-                      y: 4,
-                      boxShadow: isCompleted 
-                        ? '0 2px 0 #047857, 0 4px 10px rgba(0,0,0,0.1)' 
-                        : `0 2px 0 ${catShadow}80, 0 4px 10px rgba(0,0,0,0.1)`,
-                    }}
+                    whileTap={{ scale: 0.95, y: 4 }}
                   >
                     {isCompleted && (
-                      <motion.div 
-                        className="absolute top-2 right-2 bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg shadow-lg border-2 border-white" 
-                        initial={{ scale: 0, rotate: -180 }} 
+                      <motion.div
+                        className="absolute top-2 right-2 bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg shadow-lg border-2 border-white"
+                        initial={{ scale: 0, rotate: -180 }}
                         animate={{ scale: 1, rotate: 0 }}
                       >
                         ✓
                       </motion.div>
                     )}
-                    <motion.span
-                      className="text-4xl md:text-5xl block mb-2"
-                      animate={isCompleted ? {} : { y: [0, -3, 0] }}
-                      transition={{ duration: 2 + i * 0.15, repeat: Infinity }}
-                    >
-                      {skill.emoji}
-                    </motion.span>
-                    <h4 
+
+                    <span className="block mb-2 flex justify-center">
+                      <ItemIcon icon={skill.emoji} size={44} label={skill.name} />
+                    </span>
+
+                    <h4
                       className="font-bold text-gray-800 text-sm md:text-base leading-tight"
                       style={{ fontFamily: "'Bubblegum One', cursive" }}
                     >
@@ -1289,91 +1188,60 @@ const SkillsScreen: React.FC<SkillsScreenProps> = ({ progress, onBack, onComplet
       </GameBackground>
     );
   }
-  
-const rebuilt = getActivity(selectedSkill.id);
+
+  // =============================================
+  // SKILL DETAIL
+  // =============================================
+  if (view === 'skill-detail' && selectedSkill && selectedCategory) {
+    // ---------- rebuilt categories run the new engine ----------
+    const rebuilt = getActivity(selectedSkill.id);
 
     if (rebuilt && isRebuilt(selectedCategory.id, selectedSkill.id)) {
-
       return (
-
         <GameBackground variant="game">
-
           <div className="h-full flex flex-col overflow-x-hidden">
-
             <Navigation
-
               title={`${selectedSkill.emoji} ${selectedSkill.name}`}
-
               onBack={goBackOne}
-
               stars={progress.stars}
-
             />
-
             <SkillActivity
-
               activity={rebuilt}
-
               categoryId={selectedCategory.id}
-
               gradient={selectedCategory.gradient}
-
               shadow={shadowFor(selectedCategory.id)}
-
               stars={progress.stars}
-
               onBack={goBackOne}
-
               onComplete={handleActivityComplete}
-
               ageBand="mid"
-
             />
-
           </div>
-
         </GameBackground>
-
       );
-
     }
 
-  
-    // ---------- everything below is your existing code ----------
+    // ---------- original tap-in-order game (categories not yet rebuilt) ----------
+    const activity = getActivityForSkill(selectedSkill.id);
     const totalNeeded = activity.correctItems.length;
-    const progress_percent = (collectedItems.length / totalNeeded) * 100;
-
-    const shadowColors: Record<string, string> = {
-      'cooking': '#C2410C',
-      'beauty': '#BE185D',
-      'builder': '#B45309',
-      'engineer': '#1E40AF',
-      'factory': '#374151',
-      'garage': '#B91C1C',
-      'garden': '#047857',
-      'medical': '#0F766E',
-      'art': '#7B2CBF',
-      'coding': '#0F766E',
-      'science': '#6D28D9',
-    };
-    const catShadow = shadowColors[selectedCategory.id] || '#374151';
+    const progressPercent = (collectedItems.length / totalNeeded) * 100;
+    const catShadow = shadowFor(selectedCategory.id);
 
     return (
       <GameBackground variant="game">
-        <div className="h-full flex flex-col">
+        <div className="h-full flex flex-col overflow-x-hidden">
           <Navigation
             title={`${selectedSkill.emoji} ${selectedSkill.name}`}
             onBack={goBackOne}
             stars={progress.stars}
             showProgress
-            progress={progress_percent}
+            progress={progressPercent}
           />
 
           <Celebration show={showCelebration} message={activity.successMessage} stars={3} />
 
           <div className="flex-1 overflow-y-auto px-3 pb-4">
             <div className="max-w-2xl mx-auto">
-              {/* Score/Progress Bar */}
+              {/* Score bar */}
               <motion.div
                 className={`bg-gradient-to-r ${selectedCategory.gradient} rounded-2xl p-3 mb-3 text-white shadow-lg border-4 border-white flex items-center justify-between`}
                 initial={{ y: -10, opacity: 0 }}
@@ -1388,104 +1256,98 @@ const rebuilt = getActivity(selectedSkill.id);
                 <div className="w-px h-10 bg-white/30" />
                 <div className="text-center flex-1">
                   <p className="text-xs opacity-90">Category</p>
-                  <p className="text-2xl font-bold" style={{ fontFamily: "'Bubblegum One', cursive" }}>
-                    {selectedCategory.emoji}
+                  <p className="text-sm font-bold" style={{ fontFamily: "'Bubblegum One', cursive" }}>
+                    {selectedCategory.name}
                   </p>
                 </div>
                 <div className="w-px h-10 bg-white/30" />
                 <div className="text-center flex-1">
                   <p className="text-xs opacity-90">Stars</p>
-                  <p className="text-xl font-bold flex items-center justify-center gap-1" style={{ fontFamily: "'Bubblegum One', cursive" }}>
+                  <p
+                    className="text-xl font-bold flex items-center justify-center gap-1"
+                    style={{ fontFamily: "'Bubblegum One', cursive" }}
+                  >
                     ⭐ {progress.stars}
                   </p>
                 </div>
               </motion.div>
 
-              {/* Instruction Card */}
+              {/* Instruction */}
               <motion.div
                 className={`bg-gradient-to-br ${selectedCategory.gradient} rounded-3xl p-5 mb-3 text-white text-center shadow-xl border-4 border-white`}
-                style={{
-                  boxShadow: `0 6px 0 ${catShadow}, 0 8px 20px rgba(0,0,0,0.15)`,
-                }}
+                style={{ boxShadow: `0 6px 0 ${catShadow}, 0 8px 20px rgba(0,0,0,0.15)` }}
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
               >
                 <motion.div
-                  className="text-6xl md:text-7xl mb-2"
+                  className="mb-2 flex justify-center"
                   animate={{ scale: [1, 1.15, 1], rotate: [0, -5, 5, 0] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
-                  {selectedSkill.emoji}
+                  <ItemIcon icon={selectedSkill.emoji} size={72} label={selectedSkill.name} />
                 </motion.div>
-                <h2 
-                  className="text-xl md:text-2xl font-bold mb-1" 
-                  style={{ 
-                    fontFamily: "'Bubblegum One', cursive",
-                    textShadow: '2px 2px 0 rgba(0,0,0,0.2)'
-                  }}
+                <h2
+                  className="text-xl md:text-2xl font-bold mb-1"
+                  style={{ fontFamily: "'Bubblegum One', cursive", textShadow: '2px 2px 0 rgba(0,0,0,0.2)' }}
                 >
                   {activity.intro}
                 </h2>
                 <p className="text-white/90 text-sm md:text-base">Tap items in the right order! 👆</p>
               </motion.div>
 
-              {/* Collection Area */}
+              {/* Collection area */}
               <motion.div
                 className="bg-white/95 rounded-3xl p-4 md:p-5 mb-3 shadow-xl border-4 border-white"
                 initial={{ y: -10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
               >
-                <p 
+                <p
                   className="text-center text-base md:text-lg font-bold text-gray-700 mb-3"
                   style={{ fontFamily: "'Bubblegum One', cursive" }}
                 >
                   🎯 Your Progress
                 </p>
+
                 <div className="flex justify-center items-center gap-2 flex-wrap min-h-[70px]">
                   {activity.correctItems.map((item, i) => (
                     <motion.div
                       key={i}
-                      className={`rounded-2xl flex items-center justify-center text-4xl md:text-5xl border-4 shadow-lg ${
-                        i < collectedItems.length 
-                          ? 'bg-gradient-to-br from-green-400 to-emerald-500 border-white' 
+                      className={`rounded-2xl flex items-center justify-center border-4 shadow-lg ${
+                        i < collectedItems.length
+                          ? 'bg-gradient-to-br from-green-400 to-emerald-500 border-white'
                           : 'bg-gray-100 border-gray-300 border-dashed'
                       }`}
                       style={{
                         width: '60px',
                         height: '65px',
-                        boxShadow: i < collectedItems.length 
-                          ? '0 4px 0 #047857' 
-                          : 'inset 0 2px 4px rgba(0,0,0,0.05)'
+                        boxShadow:
+                          i < collectedItems.length ? '0 4px 0 #047857' : 'inset 0 2px 4px rgba(0,0,0,0.05)',
                       }}
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ delay: i * 0.05 }}
                     >
                       {i < collectedItems.length ? (
-                        <motion.span
-                          initial={{ scale: 0, rotate: -180 }}
-                          animate={{ scale: 1, rotate: 0 }}
-                          transition={{ type: 'spring' }}
-                        >
-                          {collectedItems[i]}
-                        </motion.span>
+                        <ItemIcon icon={collectedItems[i]} size={34} />
                       ) : (
                         <span className="text-gray-400 text-3xl">?</span>
                       )}
                     </motion.div>
                   ))}
                 </div>
-                
+
                 {collectedItems.length === totalNeeded && (
                   <motion.div
                     className="text-center mt-4 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl p-4 border-4 border-yellow-300"
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                   >
-                    <p className="text-3xl md:text-4xl">
-                      ✨ → {activity.finalResult} → ✨
-                    </p>
-                    <p 
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-2xl">✨</span>
+                      <ItemIcon icon={activity.finalResult} size={40} />
+                      <span className="text-2xl">✨</span>
+                    </div>
+                    <p
                       className="text-yellow-700 font-bold text-lg mt-2"
                       style={{ fontFamily: "'Bubblegum One', cursive" }}
                     >
@@ -1495,9 +1357,8 @@ const rebuilt = getActivity(selectedSkill.id);
                 )}
               </motion.div>
 
-              {/* Instruction */}
               <div className="mb-3 text-center">
-                <p 
+                <p
                   className="text-base md:text-lg font-bold text-gray-700 bg-white/95 rounded-full px-6 py-3 inline-block shadow-lg border-4 border-white"
                   style={{ fontFamily: "'Bubblegum One', cursive" }}
                 >
@@ -1505,65 +1366,51 @@ const rebuilt = getActivity(selectedSkill.id);
                 </p>
               </div>
 
-              {/* Available Items Grid - BIGGER */}
+              {/* Available items */}
               <div className="grid grid-cols-4 md:grid-cols-5 gap-2 md:gap-3">
                 {shuffledItems.map((item, i) => {
-                  const isCollected = collectedItems.filter(x => x === item).length >= 
-                    activity.correctItems.filter(x => x === item).length;
+                  const isCollected =
+                    collectedItems.filter((x) => x === item).length >=
+                    activity.correctItems.filter((x) => x === item).length;
                   const isWrong = wrongTaps.includes(i);
-                  
+
                   return (
                     <motion.button
                       key={`${item}-${i}`}
                       onClick={() => !isCollected && handleItemTap(item, i)}
                       disabled={isCollected}
-                      className={`aspect-square rounded-2xl flex items-center justify-center text-4xl md:text-5xl shadow-lg border-4 transition-all ${
-                        isWrong 
-                          ? 'bg-red-200 border-red-500 scale-95' 
-                          : isCollected 
-                            ? 'bg-gray-100 border-gray-300 opacity-40' 
-                            : 'bg-white border-white hover:border-purple-300'
+                      className={`aspect-square rounded-2xl flex items-center justify-center shadow-lg border-4 transition-all ${
+                        isWrong
+                          ? 'bg-red-200 border-red-500 scale-95'
+                          : isCollected
+                          ? 'bg-gray-100 border-gray-300 opacity-40'
+                          : 'bg-white border-white hover:border-purple-300'
                       }`}
                       style={{
-                        boxShadow: isWrong 
-                          ? '0 4px 0 #B91C1C' 
-                          : isCollected 
-                            ? 'none' 
-                            : '0 6px 0 rgba(0,0,0,0.15)',
+                        boxShadow: isWrong
+                          ? '0 4px 0 #B91C1C'
+                          : isCollected
+                          ? 'none'
+                          : '0 6px 0 rgba(0,0,0,0.15)',
                         minHeight: '75px',
                       }}
                       initial={{ scale: 0, opacity: 0 }}
-                      animate={{ 
-                        scale: 1, 
-                        opacity: 1,
-                        x: isWrong ? [-5, 5, -5, 5, 0] : 0
-                      }}
-                      transition={{ 
-                        delay: i * 0.02,
-                        x: { duration: 0.3 }
-                      }}
+                      animate={{ scale: 1, opacity: 1, x: isWrong ? [-5, 5, -5, 5, 0] : 0 }}
+                      transition={{ delay: i * 0.02, x: { duration: 0.3 } }}
                       whileHover={!isCollected ? { scale: 1.1, y: -3 } : {}}
-                      whileTap={!isCollected ? { 
-                        scale: 0.9, 
-                        y: 3,
-                        boxShadow: '0 2px 0 rgba(0,0,0,0.15)'
-                      } : {}}
+                      whileTap={!isCollected ? { scale: 0.9, y: 3 } : {}}
                     >
                       {isCollected ? (
-                        <motion.span 
-                          className="text-3xl text-green-500"
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1, rotate: 360 }}
-                        >
-                          ✓
-                        </motion.span>
-                      ) : item}
+                        <span className="text-3xl text-green-500">✓</span>
+                      ) : (
+                        <ItemIcon icon={item} size={40} />
+                      )}
                     </motion.button>
                   );
                 })}
               </div>
 
-              {/* Reset Button */}
+              {/* Reset */}
               {collectedItems.length > 0 && collectedItems.length < totalNeeded && (
                 <motion.button
                   onClick={handleReset}
@@ -1572,40 +1419,28 @@ const rebuilt = getActivity(selectedSkill.id);
                     boxShadow: '0 6px 0 #C2410C, 0 8px 15px rgba(0,0,0,0.15)',
                     fontFamily: "'Bubblegum One', cursive",
                     fontSize: '1.1rem',
-                    textShadow: '2px 2px 0 rgba(0,0,0,0.2)'
+                    textShadow: '2px 2px 0 rgba(0,0,0,0.2)',
                   }}
                   initial={{ opacity: 0, scale: 0 }}
                   animate={{ opacity: 1, scale: 1 }}
                   whileHover={{ scale: 1.05 }}
-                  whileTap={{ 
-                    scale: 0.95, 
-                    y: 3,
-                    boxShadow: '0 2px 0 #C2410C, 0 4px 10px rgba(0,0,0,0.15)'
-                  }}
+                  whileTap={{ scale: 0.95, y: 3 }}
                 >
                   🔄 Try Again
                 </motion.button>
               )}
 
-              {/* Fun Fact */}
+              {/* Fun fact */}
               <motion.div
                 className="mt-4 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl p-4 border-4 border-yellow-300 shadow-lg max-w-md mx-auto"
-                style={{
-                  boxShadow: '0 4px 0 #F59E0B, 0 6px 15px rgba(0,0,0,0.1)',
-                }}
+                style={{ boxShadow: '0 4px 0 #F59E0B, 0 6px 15px rgba(0,0,0,0.1)' }}
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
                 <div className="flex items-start gap-2">
-                  <motion.span 
-                    className="text-2xl md:text-3xl"
-                    animate={{ rotate: [0, 15, -15, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    💡
-                  </motion.span>
-                  <p 
+                  <span className="text-2xl md:text-3xl">💡</span>
+                  <p
                     className="text-yellow-800 text-sm md:text-base font-bold flex-1"
                     style={{ fontFamily: "'Bubblegum One', cursive" }}
                   >
@@ -1624,3 +1459,8 @@ const rebuilt = getActivity(selectedSkill.id);
 };
 
 export default SkillsScreen;
+
+
+
+
+
