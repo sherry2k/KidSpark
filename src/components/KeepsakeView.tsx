@@ -1,6 +1,8 @@
 import React from 'react';
 import ItemIcon from './mechanics/ItemIcon';
 import { Keepsake, Sticker, Stroke, Layer } from '../utils/keepsakes';
+import PageArt from './PageArt';
+import { getPage } from '../data/coloringPages';
 
 /**
  * KeepsakeView — renders anything the child has made, at any size.
@@ -18,6 +20,8 @@ export interface KeepsakeShape {
   stickers?: Sticker[];
   strokes?: Stroke[];
   layers?: Layer[];
+  pageId?: string;
+  fills?: Record<string, string>;
 }
 
 const Strokes: React.FC<{ strokes: Stroke[]; size: number }> = ({ strokes, size }) => (
@@ -39,6 +43,21 @@ const Strokes: React.FC<{ strokes: Stroke[]; size: number }> = ({ strokes, size 
 
 const KeepsakeView: React.FC<{ item: KeepsakeShape; size?: number }> = ({ item, size = 220 }) => {
   const kind = item.kind || 'decorated';
+
+  /* ---- a coloured-in page ---- */
+  if (kind === 'coloring') {
+    const page = item.pageId ? getPage(item.pageId) : undefined;
+    if (page) {
+      return (
+        <div
+          className="rounded-3xl overflow-hidden flex items-center justify-center"
+          style={{ width: size, height: size, background: '#FFFFFF' }}
+        >
+          <PageArt page={page} fills={item.fills || {}} strokes={item.strokes} size={size * 0.92} />
+        </div>
+      );
+    }
+  }
 
   /* ---- a drawing ---- */
   if (kind === 'drawing') {
