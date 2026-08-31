@@ -1,105 +1,91 @@
-/// <reference types="vite-plugin-pwa/client" />
-
-import { registerSW } from 'virtual:pwa-register';
-
 /**
- * appUpdates.ts — makes the app actually update on testers' phones.
+ * appUpdates.ts — makes the app notice a new version while it's already open.
  *
- * WHY THEY WERE STUCK ON THE OLD VERSION
+ * WHY THIS IS NEEDED EVEN THOUGH YOU ALREADY HAVE `registerType: 'autoUpdate'`
  *
- * `vite-plugin-pwa` defaults to `registerType: 'prompt'`. In that mode a new
- * service worker downloads and installs, then sits in the WAITING state and
- * refuses to take over until every tab controlled by the old worker is closed.
+ * autoUpdate controls what happens WHEN a new service worker is found: it
+ * skips the waiting state and takes over. That part of your config was already
+ * right.
  *
- * On a phone — and especially on an installed PWA or a Play Store TWA — that
- * moment basically never comes. The app is suspended in the background rather
- * than closed, so the old worker keeps serving the old bundle for weeks. This
- * is exactly why uninstalling and reinstalling fixed it for your tester: that
- * is the only thing that reliably kills the old worker.
+ * What it does not do is go looking. The browser only checks for a new service
+ * worker on a NAVIGATION — a page load or reload — or roughly once every 24
+ * hours. An installed PWA or a Play Store TWA is resumed from the background,
+ * and resuming is not a navigation. So a tester who opens your app from the
+ * home screen every day may go a very long time without the browser ever
+ * asking whether a new version exists.
  *
- * WHAT THIS DOES
+ * This closes that gap: it checks every minute while the app is on screen, and
+ * again every time the app comes back to the foreground.
  *
- * With `registerType: 'autoUpdate'` in vite.config, the new worker calls
- * skipWaiting and clientsClaim, takes over immediately and reloads the page.
- * But a worker only gets *checked for* on navigation, or roughly once a day.
- * A TWA that stays resident for a week may not navigate at all — so this also
- * checks every minute while the app is visible, and whenever the app comes
- * back to the foreground. That's the difference between "updates eventually"
- * and "updates on the next launch".
+ * Deliberately written with no imports. It does not touch registration — your
+ * `injectRegister: 'auto'` keeps doing that — so if anything here fails, the
+ * app is exactly as it was.
  */
 
 const CHECK_EVERY_MS = 60 * 1000;
 
 export function startAppUpdates() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
 
-  registerSW({
-    immediate: true,
+  /* When the new worker takes control, reload once so the new bundle is what's
+     running. The guard matters: `controllerchange` also fires the very first
+     time a worker claims an uncontrolled page, and reloading there would mean
+     every brand-new visitor loads the app twice. */
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloading = false;
 
-    onRegisteredSW(swUrl, registration) {
-      if (!registration) return;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloading) return;
+    reloading = true;
+    window.location.reload();
+  });
 
-      const check = async () => {
-        // don't fight an install already in flight, or check while offline
-        if (registration.installing) return;
+  navigator.serviceWorker.ready
+    .then((registration) => {
+      const check = () => {
+        if (registration.installing) return; // one already on the way
         if ('onLine' in navigator && !navigator.onLine) return;
-
-        try {
-          /* Fetch the worker with cache: 'no-store'. Browsers will happily
-             serve sw.js from the HTTP cache for up to 24 hours otherwise —
-             which means the update check itself gets a stale answer, and the
-             app stays stale for another day. The vercel.json in this bundle
-             sets the matching no-cache headers server-side. */
-          const res = await fetch(swUrl, {
-            cache: 'no-store',
-            headers: { 'cache-control': 'no-cache' },
-          });
-          if (res?.status === 200) await registration.update();
-        } catch {
-          /* offline or blocked — try again on the next tick */
-        }
+        registration.update().catch(() => {
+          /* offline or a bad response — we'll try again on the next tick */
+        });
       };
 
       window.setInterval(check, CHECK_EVERY_MS);
 
-      // the important one for an installed app: it resumes rather than reloads
+      // the one that matters for an installed app: resuming isn't a navigation
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') void check();
+        if (document.visibilityState === 'visible') check();
       });
 
-      window.addEventListener('online', () => void check());
+      window.addEventListener('online', check);
 
-      void check();
-    },
-
-    onRegisterError(error) {
-      // never let a service-worker problem break the app itself
-      console.warn('[kidspark] service worker registration failed', error);
-    },
-  });
+      check();
+    })
+    .catch(() => {
+      /* no service worker on this device — nothing to keep fresh */
+    });
 }
 
-/**
- * Shows once after an update has been applied, so you can tell from a tester's
- * screenshot which build they're actually on.
- *
- * Set VITE_APP_VERSION in Vercel (or use the commit SHA) and this survives as a
- * one-line answer to "are you on the latest?".
- */
+/* ------------------------------------------------------------------ */
+/* Version stamp — so a tester's screenshot tells you which build      */
+/* ------------------------------------------------------------------ */
+
 const VERSION_KEY = 'kidspark.version';
 
+export const appVersion = (): string =>
+  String((import.meta as { env?: Record<string, string> }).env?.VITE_APP_VERSION || 'dev');
+
+/** True only when the version changed on an existing install — not on a first run. */
 export function checkVersionChanged(): boolean {
   try {
-    const current = import.meta.env.VITE_APP_VERSION || 'dev';
+    const current = appVersion();
     const seen = localStorage.getItem(VERSION_KEY);
     if (seen !== current) {
-      localStorage.setItem(VERSION_KEY, String(current));
-      return seen !== null; // false on a first-ever install, true on a real update
+      localStorage.setItem(VERSION_KEY, current);
+      return seen !== null;
     }
   } catch {
     /* storage blocked */
   }
   return false;
 }
-
-export const appVersion = (): string => String(import.meta.env.VITE_APP_VERSION || 'dev');
