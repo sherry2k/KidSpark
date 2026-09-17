@@ -410,7 +410,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
               <p className="text-sm md:text-base font-black ks-bob" style={{ fontFamily: FONT }}>
                 💡 Play &amp; Learn daily to keep your streak growing! 🔥
               </p>
-              <p className="text-xs text-white/80 mt-1">More games unlock coming soon! ✨</p>
+              <p className="text-xs text-white/80 mt-1">New games are coming soon! ✨</p>
             </div>
           </div>
                     <div className="mx-4 md:mx-6 mb-24 flex items-center justify-center gap-3">
