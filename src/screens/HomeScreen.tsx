@@ -4,6 +4,7 @@ import { GameBackground } from '../components/Background';
 import { gameModes, dailyChallenges } from '../data/gameData';
 import { PlayerProfile, GameProgress } from '../store/gameStore';
 import { playClick } from '../utils/sounds';
+import FeedbackButton, { buildId } from '../components/FeedbackButton';
 
 /**
  * HomeScreen — same screen, without the main-thread tax.
@@ -404,13 +405,17 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
             </div>
           </div>
 
-          <div className="mx-4 md:mx-6 mb-20">
+          <div className="mx-4 md:mx-6 mb-4">
             <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-4 text-white border-4 border-white text-center">
               <p className="text-sm md:text-base font-black ks-bob" style={{ fontFamily: FONT }}>
                 💡 Play &amp; Learn daily to keep your streak growing! 🔥
               </p>
               <p className="text-xs text-white/80 mt-1">More games unlock coming soon! ✨</p>
             </div>
+          </div>
+                    <div className="mx-4 md:mx-6 mb-24 flex items-center justify-center gap-3">
+            <FeedbackButton />
+            <span className="font-mono text-[10px] text-gray-400">{buildId()}</span>
           </div>
         </div>
       </div>
