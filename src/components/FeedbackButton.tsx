@@ -9,7 +9,7 @@ import ParentGate from './ParentGate';
  *  Gmail alias like kidspark.feedback@gmail.com is ideal — rather    *
  *  than your personal inbox.                                          *
  * ------------------------------------------------------------------ */
-const FEEDBACK_EMAIL = 'your-address-here@example.com';
+const FEEDBACK_EMAIL = 'support@kid-spark.app';
 
 /** Build id, stamped by the `define` block in vite.config.ts. */
 function buildId(): string {
