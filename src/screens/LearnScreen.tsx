@@ -5,6 +5,7 @@ import Navigation from '../components/Navigation';
 import { useLearnCategories } from '../context/ContentContext';
 import { GameProgress } from '../store/gameStore';
 import { playClick, playComplete } from '../utils/sounds';
+import LearnIcon from '../components/LearnIcon';
 
 interface LearnScreenProps {
   progress: GameProgress;
@@ -223,8 +224,8 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
                   exit={{ x: -100, opacity: 0, scale: 0.9 }}
                   transition={{ type: 'spring', stiffness: 200, damping: 20 }}
                 >
-                  <motion.div
-                    className="text-9xl md:text-[10rem] mb-4 cursor-pointer"
+                    <motion.div
+                    className="mb-4 cursor-pointer flex items-center justify-center text-purple-600"
                     animate={{ 
                       scale: [1, 1.05, 1],
                       rotate: [0, -3, 3, 0]
@@ -233,7 +234,7 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
                     whileTap={{ scale: 1.3, rotate: [0, -15, 15, 0] }}
                     onClick={() => { playClick(); setShowFunFact(!showFunFact); }}
                   >
-                    {currentItem.emoji}
+                    <LearnIcon item={currentItem} size={128} />
                   </motion.div>
 
                   <motion.div
@@ -256,19 +257,7 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
                     </h2>
                   </motion.div>
 
-                  {currentItem.color && selectedCategory === 'colors' && (
-                    <motion.div
-                      className="w-24 h-24 md:w-32 md:h-32 rounded-full mx-auto mb-4 shadow-2xl border-8 border-white"
-                      style={{ 
-                        backgroundColor: currentItem.color,
-                        boxShadow: `0 8px 0 rgba(0,0,0,0.15), 0 12px 25px rgba(0,0,0,0.2)`,
-                      }}
-                      initial={{ scale: 0, rotate: -180 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      transition={{ delay: 0.3, type: 'spring' }}
-                    />
-                  )}
-
+                  
                   <AnimatePresence>
                     {showFunFact && currentItem.funFact && (
                       <motion.div
