@@ -713,7 +713,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
 
             {/* colours */}
             {tool !== 'sticker' && tool !== 'move' && (
-              <div className="grid grid-cols-9 gap-1.5">
+              <div className="grid grid-cols-7 gap-1.5">
                 {PALETTE.map((s) => (
                   <motion.button
                     key={s.color}
@@ -721,8 +721,10 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                     className="rounded-full aspect-square"
                     style={{
                       background: s.color,
-                      border: color === s.color ? '4px solid #1B1B1F' : '3px solid #D8DCE8',
-                      boxShadow: '0 3px 0 rgba(0,0,0,.12)',
+                      border: color === s.color ? '3px solid #FFFFFF' : '3px solid #D8DCE8',
+                      boxShadow: color === s.color
+                        ? '0 0 0 3px #1B1B1F, 0 3px 0 rgba(0,0,0,.12)'
+                        : '0 3px 0 rgba(0,0,0,.12)',
                     }}
                     whileTap={{ scale: 0.85 }}
                     aria-label={s.name}
