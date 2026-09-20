@@ -237,13 +237,13 @@ export const memoryGameSets = {
     { id: 'heart', emoji: '❤️', name: 'Heart' },
     { id: 'diamond', emoji: '💎', name: 'Diamond' },
   ],
-  alphabet: [
-    { id: 'a', emoji: '🅰️', name: 'A' },
-    { id: 'b', emoji: '🅱️', name: 'B' },
-    { id: 'c', emoji: '©️', name: 'C' },
-    { id: 'd', emoji: '🇩', name: 'D' },
-    { id: 'e', emoji: '📧', name: 'E' },
-    { id: 'f', emoji: '🎏', name: 'F' },
+   alphabet: [
+    { id: 'a', emoji: 'A', name: 'A' },
+    { id: 'b', emoji: 'B', name: 'B' },
+    { id: 'c', emoji: 'C', name: 'C' },
+    { id: 'd', emoji: 'D', name: 'D' },
+    { id: 'e', emoji: 'E', name: 'E' },
+    { id: 'f', emoji: 'F', name: 'F' },
   ],
 };
 
@@ -485,7 +485,7 @@ export const factorySkills: SkillItem[] = [
   { id: 'carfactory', name: 'Car Factory', emoji: '🚗', description: 'Assemble cars', funFact: 'One car has about 30000 parts!', steps: ['Build the frame', 'Add the engine', 'Attach wheels!'] },
   { id: 'furniture', name: 'Furniture Workshop', emoji: '🪑', description: 'Build furniture pieces', funFact: 'IKEA sells furniture in 50 countries!', steps: ['Cut the wood', 'Assemble parts', 'Add finishing!'] },
   { id: 'recycle', name: 'Recycling Center', emoji: '♻️', description: 'Sort and recycle materials', funFact: 'Recycling saves trees and energy!', steps: ['Sort by material', 'Clean the items', 'Process for reuse!'] },
-  { id: 'assembly', name: 'Assembly Line', emoji: '�icing️', description: 'Work on assembly line', funFact: 'Henry Ford invented the assembly line!', steps: ['Wait for item', 'Add your part', 'Pass it on!'] },
+  { id: 'assembly', name: 'Assembly Line', emoji: '🏭', description: 'Work on assembly line', funFact: 'Henry Ford invented the assembly line!', steps: ['Wait for item', 'Add your part', 'Pass it on!'] },
   { id: 'packing', name: 'Package Sorting', emoji: '📦', description: 'Sort and pack boxes', funFact: 'Amazon ships 1.6 million packages per day!', steps: ['Check the label', 'Sort by destination', 'Stack neatly!'] },
   { id: 'quality', name: 'Quality Check', emoji: '✅', description: 'Inspect products for quality', funFact: 'Quality control keeps products safe!', steps: ['Look carefully', 'Check for defects', 'Approve or reject!'] },
 ];
