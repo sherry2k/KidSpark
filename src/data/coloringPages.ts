@@ -410,4 +410,3 @@ export const PALETTE: Swatch[] = [
   { color: '#8A90A0', name: 'grey' },
   { color: '#1B1B1F', name: 'black' },
 ];
-];
