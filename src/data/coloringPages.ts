@@ -406,4 +406,8 @@ export const PALETTE: Swatch[] = [
   { color: '#C68B62', name: 'tan skin' },
   { color: '#6B4430', name: 'deep skin' },
   { color: '#FFFFFF', name: 'white' },
+  { color: '#C9CFDA', name: 'light grey' },
+  { color: '#8A90A0', name: 'grey' },
+  { color: '#1B1B1F', name: 'black' },
+];
 ];
