@@ -218,39 +218,11 @@ export interface AirtableContent {
   wordBuilderWords: AirtableWordBuilderWord[];
 }
 
-export async function fetchAllContentLive(): Promise<AirtableContent | null> {
+async function fetchAllContentLive(): Promise<AirtableContent | null> {
   if (!AIRTABLE_CONFIG.API_KEY || !AIRTABLE_CONFIG.BASE_ID) {
     console.log('Airtable not configured - using local fallback data');
     return null;
   }
-
-  export async function fetchAllContent(): Promise<AirtableContent | null> {
-  if (!AIRTABLE_CONFIG.API_KEY || !AIRTABLE_CONFIG.BASE_ID) {
-    return null;
-  }
-
-  const cached = readCache();
-  const isFresh = cached && Date.now() - cached.savedAt < CACHE_TTL_MS;
-
-  if (isFresh && !forceRefreshRequested()) {
-    console.log('Using cached Airtable content — no API calls made');
-    return cached!.content;
-  }
-
-  const fresh = await fetchAllContentLive();
-
-  if (fresh) {
-    writeCache(fresh);
-    return fresh;
-  }
-
-  if (cached) {
-    console.warn('Airtable fetch failed (likely the monthly cap) — serving last cached copy');
-    return cached.content;
-  }
-
-  return null;
-}
 
   console.log('Fetching content from Airtable...');
 
@@ -304,6 +276,35 @@ export async function fetchAllContentLive(): Promise<AirtableContent | null> {
     return null;
   }
 }
+
+export async function fetchAllContent(): Promise<AirtableContent | null> {
+  if (!AIRTABLE_CONFIG.API_KEY || !AIRTABLE_CONFIG.BASE_ID) {
+    return null;
+  }
+
+  const cached = readCache();
+  const isFresh = cached && Date.now() - cached.savedAt < CACHE_TTL_MS;
+
+  if (isFresh && !forceRefreshRequested()) {
+    console.log('Using cached Airtable content — no API calls made');
+    return cached!.content;
+  }
+
+  const fresh = await fetchAllContentLive();
+
+  if (fresh) {
+    writeCache(fresh);
+    return fresh;
+  }
+
+  if (cached) {
+    console.warn('Airtable fetch failed (likely the monthly cap) — serving last cached copy');
+    return cached.content;
+  }
+
+  return null;
+}
+
 
 // ============================================================
 // CHECK IF AIRTABLE IS CONFIGURED
