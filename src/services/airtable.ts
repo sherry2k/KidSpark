@@ -23,6 +23,43 @@ const AIRTABLE_CONFIG = {
     WORD_BUILDER: 'WordBuilder',
   },
 };
+// ============================================================
+// CACHE — the free plan allows 1,000 API calls a MONTH, and one
+// fetchAllContent() run makes ~12 calls. Without this, a few
+// testers opening the app a few times a day blows the cap in days.
+// ============================================================
+const CACHE_KEY = 'kidspark_airtable_cache_v1';
+const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+interface CachedPayload {
+  savedAt: number;
+  content: AirtableContent;
+}
+
+function readCache(): CachedPayload | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    return raw ? (JSON.parse(raw) as CachedPayload) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(content: AirtableContent) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ savedAt: Date.now(), content }));
+  } catch {
+    // storage full/unavailable — just skip caching this run
+  }
+}
+
+function forceRefreshRequested(): boolean {
+  try {
+    return new URLSearchParams(window.location.search).get('refresh') === '1';
+  } catch {
+    return false;
+  }
+}
 
 const API_URL = 'https://api.airtable.com/v0';
 
@@ -181,11 +218,39 @@ export interface AirtableContent {
   wordBuilderWords: AirtableWordBuilderWord[];
 }
 
-export async function fetchAllContent(): Promise<AirtableContent | null> {
+export async function fetchAllContentLive(): Promise<AirtableContent | null> {
   if (!AIRTABLE_CONFIG.API_KEY || !AIRTABLE_CONFIG.BASE_ID) {
     console.log('Airtable not configured - using local fallback data');
     return null;
   }
+
+  export async function fetchAllContent(): Promise<AirtableContent | null> {
+  if (!AIRTABLE_CONFIG.API_KEY || !AIRTABLE_CONFIG.BASE_ID) {
+    return null;
+  }
+
+  const cached = readCache();
+  const isFresh = cached && Date.now() - cached.savedAt < CACHE_TTL_MS;
+
+  if (isFresh && !forceRefreshRequested()) {
+    console.log('Using cached Airtable content — no API calls made');
+    return cached!.content;
+  }
+
+  const fresh = await fetchAllContentLive();
+
+  if (fresh) {
+    writeCache(fresh);
+    return fresh;
+  }
+
+  if (cached) {
+    console.warn('Airtable fetch failed (likely the monthly cap) — serving last cached copy');
+    return cached.content;
+  }
+
+  return null;
+}
 
   console.log('Fetching content from Airtable...');
 
