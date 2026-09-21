@@ -14,154 +14,289 @@ export interface LearnItem {
 
 // ALPHABET DATA
 export const alphabetData: LearnItem[] = [
-  { id: 'a', name: 'A - Apple', emoji: '🍎', category: 'alphabet', funFact: 'A is the first letter!' },
-  { id: 'b', name: 'B - Ball', emoji: '⚽', category: 'alphabet', funFact: 'B makes a "buh" sound!' },
-  { id: 'c', name: 'C - Cat', emoji: '🐱', category: 'alphabet', funFact: 'C can sound like K or S!' },
-  { id: 'd', name: 'D - Dog', emoji: '🐶', category: 'alphabet', funFact: 'D makes a "duh" sound!' },
-  { id: 'e', name: 'E - Elephant', emoji: '🐘', category: 'alphabet', funFact: 'E is the most used letter!' },
-  { id: 'f', name: 'F - Fish', emoji: '🐟', category: 'alphabet', funFact: 'F makes a "fff" sound!' },
-  { id: 'g', name: 'G - Grapes', emoji: '🍇', category: 'alphabet', funFact: 'G can be hard or soft!' },
-  { id: 'h', name: 'H - Hat', emoji: '🎩', category: 'alphabet', funFact: 'H is a breathy sound!' },
-  { id: 'i', name: 'I - Ice Cream', emoji: '🍦', category: 'alphabet', funFact: 'I can say its own name!' },
-  { id: 'j', name: 'J - Jellyfish', emoji: '🪼', category: 'alphabet', funFact: 'J makes a "juh" sound!' },
-  { id: 'k', name: 'K - Kite', emoji: '🪁', category: 'alphabet', funFact: 'K and C can sound alike!' },
-  { id: 'l', name: 'L - Lion', emoji: '🦁', category: 'alphabet', funFact: 'L is a smooth sound!' },
-  { id: 'm', name: 'M - Moon', emoji: '🌙', category: 'alphabet', funFact: 'M makes a "mmm" sound!' },
-  { id: 'n', name: 'N - Nest', emoji: '🪺', category: 'alphabet', funFact: 'N makes a "nnn" sound!' },
-  { id: 'o', name: 'O - Orange', emoji: '🍊', category: 'alphabet', funFact: 'O is shaped like a circle!' },
-  { id: 'p', name: 'P - Penguin', emoji: '🐧', category: 'alphabet', funFact: 'P makes a "puh" sound!' },
-  { id: 'q', name: 'Q - Queen', emoji: '👸', category: 'alphabet', funFact: 'Q always has U after it!' },
-  { id: 'r', name: 'R - Rainbow', emoji: '🌈', category: 'alphabet', funFact: 'R makes a "rrr" sound!' },
-  { id: 's', name: 'S - Star', emoji: '⭐', category: 'alphabet', funFact: 'S makes a "sss" sound!' },
-  { id: 't', name: 'T - Tree', emoji: '🌳', category: 'alphabet', funFact: 'T makes a "tuh" sound!' },
-  { id: 'u', name: 'U - Umbrella', emoji: '☂️', category: 'alphabet', funFact: 'U can say "uh" or its name!' },
-  { id: 'v', name: 'V - Violin', emoji: '🎻', category: 'alphabet', funFact: 'V makes a buzzy sound!' },
-  { id: 'w', name: 'W - Watermelon', emoji: '🍉', category: 'alphabet', funFact: 'W is called double-U!' },
-  { id: 'x', name: 'X - Xylophone', emoji: '🎵', category: 'alphabet', funFact: 'X can sound like "ks"!' },
-  { id: 'y', name: 'Y - Yacht', emoji: '⛵', category: 'alphabet', funFact: 'Y can be a vowel too!' },
-  { id: 'z', name: 'Z - Zebra', emoji: '🦓', category: 'alphabet', funFact: 'Z is the last letter!' },
+  { id: 'a', name: 'A - Apple', emoji: '🍎', category: 'alphabet', funFact: "A is the first letter and makes the 'ah' sound!" },
+  { id: 'b', name: 'B - Ball', emoji: '⚽', category: 'alphabet', funFact: "B makes a 'buh' sound like in ball and bear!" },
+  { id: 'c', name: 'C - Cat', emoji: '🐱', category: 'alphabet', funFact: "C can sound like 'k' in cat or 's' in city!" },
+  { id: 'd', name: 'D - Dog', emoji: '🐶', category: 'alphabet', funFact: "D makes a 'duh' sound like in dog and dance!" },
+  { id: 'e', name: 'E - Elephant', emoji: '🐘', category: 'alphabet', funFact: 'E is the most common letter in English!' },
+  { id: 'f', name: 'F - Fish', emoji: '🐟', category: 'alphabet', funFact: "F makes a 'fff' sound by blowing air!" },
+  { id: 'g', name: 'G - Grapes', emoji: '🍇', category: 'alphabet', funFact: "G can be hard like in 'go' or soft like in 'giraffe'!" },
+  { id: 'h', name: 'H - Hat', emoji: '🎩', category: 'alphabet', funFact: "H makes a breathy 'huh' sound!" },
+  { id: 'i', name: 'I - Ice Cream', emoji: '🍦', category: 'alphabet', funFact: "I can say its name like in 'ice' or say 'ih' like in 'igloo'!" },
+  // Was Jellyfish 🪼 (2023 emoji, blank box on older Android). Swapped for a safe, old emoji.
+  { id: 'j', name: 'J - Jacket', emoji: '🧥', category: 'alphabet', funFact: "J makes a 'juh' sound like in jump and joy!" },
+  // Was Kite 🪁 (2019 emoji, too new for some devices). Swapped for a safe, old emoji.
+  { id: 'k', name: 'K - Key', emoji: '🔑', category: 'alphabet', funFact: 'K makes the same sound as hard C!' },
+  { id: 'l', name: 'L - Lion', emoji: '🦁', category: 'alphabet', funFact: "L makes a smooth 'lll' sound with your tongue!" },
+  { id: 'm', name: 'M - Moon', emoji: '🌙', category: 'alphabet', funFact: "M makes a humming 'mmm' sound!" },
+  // Was Nest 🪺 (2023 emoji, too new). Swapped for Nose - and the fun fact already talked about noses!
+  { id: 'n', name: 'N - Nose', emoji: '👃', category: 'alphabet', funFact: "N makes a 'nnn' sound through your nose!" },
+  { id: 'o', name: 'O - Orange', emoji: '🍊', category: 'alphabet', funFact: 'O is shaped like a circle and can say its name!' },
+  { id: 'p', name: 'P - Penguin', emoji: '🐧', category: 'alphabet', funFact: "P makes a popping 'puh' sound!" },
+  { id: 'q', name: 'Q - Queen', emoji: '👸', category: 'alphabet', funFact: 'Q almost always has U right after it!' },
+  { id: 'r', name: 'R - Rainbow', emoji: '🌈', category: 'alphabet', funFact: "R makes a 'rrr' sound at the back of your mouth!" },
+  { id: 's', name: 'S - Star', emoji: '⭐', category: 'alphabet', funFact: "S makes a hissing 'sss' sound like a snake!" },
+  { id: 't', name: 'T - Tree', emoji: '🌳', category: 'alphabet', funFact: "T makes a 'tuh' sound with the tip of your tongue!" },
+  { id: 'u', name: 'U - Umbrella', emoji: '☂️', category: 'alphabet', funFact: "U can say 'uh' like in umbrella or its name like in 'unicorn'!" },
+  { id: 'v', name: 'V - Violin', emoji: '🎻', category: 'alphabet', funFact: 'V makes a buzzing "vvv" sound!' },
+  { id: 'w', name: 'W - Watermelon', emoji: '🍉', category: 'alphabet', funFact: "W is called 'double-u' because it looks like two U's!" },
+  { id: 'x', name: 'X - Xylophone', emoji: '🎵', category: 'alphabet', funFact: "X usually makes a 'ks' sound like in 'fox'!" },
+  { id: 'y', name: 'Y - Yacht', emoji: '⛵', category: 'alphabet', funFact: 'Y can be a consonant or a vowel!' },
+  { id: 'z', name: 'Z - Zebra', emoji: '🦓', category: 'alphabet', funFact: 'Z is the last letter and makes a "zzz" sound!' },
 ];
 
-// NUMBERS DATA
-export const numbersData: LearnItem[] = Array.from({ length: 20 }, (_, i) => ({
-  id: `num-${i + 1}`,
-  name: `${i + 1}`,
-  emoji: ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟',
-          '1️⃣1️⃣','1️⃣2️⃣','1️⃣3️⃣','1️⃣4️⃣','1️⃣5️⃣','1️⃣6️⃣','1️⃣7️⃣','1️⃣8️⃣','1️⃣9️⃣','2️⃣0️⃣'][i],
-  category: 'numbers',
-  funFact: `Can you count ${i + 1} things?`,
-}));
+// NUMBERS DATA — LearnIcon draws these as text from the id (num-N), so the
+// emoji field below is only a harmless fallback and is never actually shown.
+export const numbersData: LearnItem[] = [
+  { id: 'num-0', name: '0 - Zero', emoji: '0️⃣', category: 'numbers', funFact: 'Zero means nothing but is very important!' },
+  { id: 'num-1', name: '1 - One', emoji: '1️⃣', category: 'numbers', funFact: 'One is the loneliest number - but also the first!' },
+  { id: 'num-2', name: '2 - Two', emoji: '2️⃣', category: 'numbers', funFact: 'Two eyes two ears two hands - we have pairs!' },
+  { id: 'num-3', name: '3 - Three', emoji: '3️⃣', category: 'numbers', funFact: 'Three is a magic number in many stories!' },
+  { id: 'num-4', name: '4 - Four', emoji: '4️⃣', category: 'numbers', funFact: 'Four seasons: spring summer fall and winter!' },
+  { id: 'num-5', name: '5 - Five', emoji: '5️⃣', category: 'numbers', funFact: 'You have five fingers on each hand!' },
+  { id: 'num-6', name: '6 - Six', emoji: '6️⃣', category: 'numbers', funFact: 'Insects have six legs!' },
+  { id: 'num-7', name: '7 - Seven', emoji: '7️⃣', category: 'numbers', funFact: 'Seven days make one week!' },
+  { id: 'num-8', name: '8 - Eight', emoji: '8️⃣', category: 'numbers', funFact: 'Spiders have eight legs!' },
+  { id: 'num-9', name: '9 - Nine', emoji: '9️⃣', category: 'numbers', funFact: 'Cats are said to have nine lives!' },
+  { id: 'num-10', name: '10 - Ten', emoji: '🔟', category: 'numbers', funFact: 'Ten toes on your feet!' },
+  { id: 'num-11', name: '11 - Eleven', emoji: '1️⃣1️⃣', category: 'numbers', funFact: 'Eleven is the first double-digit prime number!' },
+  { id: 'num-12', name: '12 - Twelve', emoji: '1️⃣2️⃣', category: 'numbers', funFact: 'Twelve months make one year!' },
+  { id: 'num-13', name: '13 - Thirteen', emoji: '1️⃣3️⃣', category: 'numbers', funFact: "A baker's dozen is 13!" },
+  { id: 'num-14', name: '14 - Fourteen', emoji: '1️⃣4️⃣', category: 'numbers', funFact: 'Fourteen days make two weeks!' },
+  { id: 'num-15', name: '15 - Fifteen', emoji: '1️⃣5️⃣', category: 'numbers', funFact: 'A quarter hour is 15 minutes!' },
+  { id: 'num-16', name: '16 - Sixteen', emoji: '1️⃣6️⃣', category: 'numbers', funFact: 'Sixteen ounces make one pound!' },
+  { id: 'num-17', name: '17 - Seventeen', emoji: '1️⃣7️⃣', category: 'numbers', funFact: 'Seventeen is a lucky prime number!' },
+  { id: 'num-18', name: '18 - Eighteen', emoji: '1️⃣8️⃣', category: 'numbers', funFact: 'A golf course has 18 holes!' },
+  { id: 'num-19', name: '19 - Nineteen', emoji: '1️⃣9️⃣', category: 'numbers', funFact: 'Nineteen is the last teen number!' },
+  { id: 'num-20', name: '20 - Twenty', emoji: '2️⃣0️⃣', category: 'numbers', funFact: 'You have 20 baby teeth!' },
+  { id: 'num-50', name: '50 - Fifty', emoji: '5️⃣0️⃣', category: 'numbers', funFact: 'Half of 100 is 50!' },
+  { id: 'num-100', name: '100 - Hundred', emoji: '💯', category: 'numbers', funFact: 'One hundred pennies make one dollar!' },
+];
 
 // ANIMALS DATA
 export const animalsData: LearnItem[] = [
   { id: 'lion', name: 'Lion', emoji: '🦁', category: 'animals', funFact: 'Lions are called the King of the Jungle!' },
-  { id: 'elephant', name: 'Elephant', emoji: '🐘', category: 'animals', funFact: 'Elephants never forget!' },
-  { id: 'giraffe', name: 'Giraffe', emoji: '🦒', category: 'animals', funFact: 'Giraffes are the tallest animals!' },
-  { id: 'monkey', name: 'Monkey', emoji: '🐒', category: 'animals', funFact: 'Monkeys love bananas!' },
-  { id: 'penguin', name: 'Penguin', emoji: '🐧', category: 'animals', funFact: 'Penguins can\'t fly but swim great!' },
-  { id: 'dolphin', name: 'Dolphin', emoji: '🐬', category: 'animals', funFact: 'Dolphins are very smart!' },
-  { id: 'rabbit', name: 'Rabbit', emoji: '🐰', category: 'animals', funFact: 'Rabbits love carrots!' },
-  { id: 'bear', name: 'Bear', emoji: '🐻', category: 'animals', funFact: 'Bears sleep all winter!' },
-  { id: 'tiger', name: 'Tiger', emoji: '🐯', category: 'animals', funFact: 'Every tiger has unique stripes!' },
-  { id: 'panda', name: 'Panda', emoji: '🐼', category: 'animals', funFact: 'Pandas eat bamboo all day!' },
-  { id: 'koala', name: 'Koala', emoji: '🐨', category: 'animals', funFact: 'Koalas sleep 22 hours a day!' },
-  { id: 'fox', name: 'Fox', emoji: '🦊', category: 'animals', funFact: 'Foxes are very clever!' },
-  { id: 'dog', name: 'Dog', emoji: '🐶', category: 'animals', funFact: 'Dogs are our best friends!' },
-  { id: 'cat', name: 'Cat', emoji: '🐱', category: 'animals', funFact: 'Cats can see in the dark!' },
-  { id: 'owl', name: 'Owl', emoji: '🦉', category: 'animals', funFact: 'Owls can turn their heads around!' },
+  { id: 'elephant', name: 'Elephant', emoji: '🐘', category: 'animals', funFact: 'Elephants never forget and are very smart!' },
+  { id: 'giraffe', name: 'Giraffe', emoji: '🦒', category: 'animals', funFact: 'Giraffes are the tallest animals on Earth!' },
+  { id: 'monkey', name: 'Monkey', emoji: '🐒', category: 'animals', funFact: 'Monkeys love bananas and are very playful!' },
+  { id: 'penguin', name: 'Penguin', emoji: '🐧', category: 'animals', funFact: "Penguins can't fly but are amazing swimmers!" },
+  { id: 'dolphin', name: 'Dolphin', emoji: '🐬', category: 'animals', funFact: 'Dolphins are one of the smartest animals!' },
+  { id: 'rabbit', name: 'Rabbit', emoji: '🐰', category: 'animals', funFact: 'Rabbits love carrots and can hop very fast!' },
+  { id: 'bear', name: 'Bear', emoji: '🐻', category: 'animals', funFact: 'Bears sleep all winter in a deep sleep called hibernation!' },
+  { id: 'tiger', name: 'Tiger', emoji: '🐯', category: 'animals', funFact: 'Every tiger has unique stripes like fingerprints!' },
+  { id: 'panda', name: 'Panda', emoji: '🐼', category: 'animals', funFact: 'Pandas eat bamboo for up to 12 hours a day!' },
+  { id: 'koala', name: 'Koala', emoji: '🐨', category: 'animals', funFact: 'Koalas sleep up to 22 hours a day!' },
+  { id: 'fox', name: 'Fox', emoji: '🦊', category: 'animals', funFact: 'Foxes are very clever and can hear mice underground!' },
+  { id: 'dog', name: 'Dog', emoji: '🐶', category: 'animals', funFact: "Dogs are humans' best friends for over 15000 years!" },
+  { id: 'cat', name: 'Cat', emoji: '🐱', category: 'animals', funFact: 'Cats can see in the dark and always land on their feet!' },
+  { id: 'owl', name: 'Owl', emoji: '🦉', category: 'animals', funFact: 'Owls can turn their heads almost all the way around!' },
   { id: 'butterfly', name: 'Butterfly', emoji: '🦋', category: 'animals', funFact: 'Butterflies taste with their feet!' },
+  { id: 'zebra', name: 'Zebra', emoji: '🦓', category: 'animals', funFact: 'No two zebras have the same stripe pattern!' },
+  { id: 'hippo', name: 'Hippopotamus', emoji: '🦛', category: 'animals', funFact: 'Hippos can hold their breath for 5 minutes underwater!' },
+  { id: 'kangaroo', name: 'Kangaroo', emoji: '🦘', category: 'animals', funFact: 'Baby kangaroos are called joeys and live in pouches!' },
+  { id: 'crocodile', name: 'Crocodile', emoji: '🐊', category: 'animals', funFact: 'Crocodiles have been around since dinosaur times!' },
+  { id: 'turtle', name: 'Turtle', emoji: '🐢', category: 'animals', funFact: 'Some turtles can live over 100 years!' },
+  { id: 'snake', name: 'Snake', emoji: '🐍', category: 'animals', funFact: 'Snakes smell with their tongues!' },
+  { id: 'frog', name: 'Frog', emoji: '🐸', category: 'animals', funFact: 'Frogs can jump 20 times their body length!' },
+  { id: 'shark', name: 'Shark', emoji: '🦈', category: 'animals', funFact: 'Sharks have been around for 400 million years!' },
+  { id: 'whale', name: 'Whale', emoji: '🐋', category: 'animals', funFact: 'Blue whales are the largest animals ever!' },
+  { id: 'octopus', name: 'Octopus', emoji: '🐙', category: 'animals', funFact: 'Octopuses have three hearts and blue blood!' },
+  { id: 'bee', name: 'Bee', emoji: '🐝', category: 'animals', funFact: 'Bees do a special dance to tell others where flowers are!' },
+  { id: 'ant', name: 'Ant', emoji: '🐜', category: 'animals', funFact: 'Ants can carry 50 times their own body weight!' },
+  { id: 'horse', name: 'Horse', emoji: '🐴', category: 'animals', funFact: 'Horses can sleep standing up!' },
+  { id: 'cow', name: 'Cow', emoji: '🐄', category: 'animals', funFact: 'Cows have best friends and get stressed when separated!' },
+  { id: 'pig', name: 'Pig', emoji: '🐷', category: 'animals', funFact: 'Pigs are smarter than dogs and very clean animals!' },
+  { id: 'sheep', name: 'Sheep', emoji: '🐑', category: 'animals', funFact: 'Sheep can recognize up to 50 different faces!' },
+  { id: 'goat', name: 'Goat', emoji: '🐐', category: 'animals', funFact: 'Goats have rectangular pupils in their eyes!' },
+  { id: 'chicken', name: 'Chicken', emoji: '🐔', category: 'animals', funFact: 'Chickens can remember over 100 different faces!' },
+  { id: 'duck', name: 'Duck', emoji: '🦆', category: 'animals', funFact: "Ducks' quacks don't echo and nobody knows why!" },
+  { id: 'mouse', name: 'Mouse', emoji: '🐭', category: 'animals', funFact: 'Mice can squeeze through tiny spaces the size of a pencil!' },
+  { id: 'hamster', name: 'Hamster', emoji: '🐹', category: 'animals', funFact: 'Hamsters can run up to 8 miles a night on their wheel!' },
+  { id: 'deer', name: 'Deer', emoji: '🦌', category: 'animals', funFact: 'Male deer grow new antlers every year!' },
+  { id: 'squirrel', name: 'Squirrel', emoji: '🐿️', category: 'animals', funFact: 'Squirrels plant thousands of trees by forgetting where they buried nuts!' },
+  { id: 'hedgehog', name: 'Hedgehog', emoji: '🦔', category: 'animals', funFact: 'Hedgehogs have about 5000 spines on their back!' },
 ];
 
 // FRUITS DATA
+// Dropped from the Airtable set: Pomegranate, Fig, Papaya, Passion Fruit,
+// Plum, Guava, Apricot — none of these has an accurate emoji in Unicode
+// (several were showing an olive, a heart, or duplicating another fruit's
+// picture). Everything kept below has its own correct, unique picture.
 export const fruitsData: LearnItem[] = [
-  { id: 'apple', name: 'Apple', emoji: '🍎', category: 'fruits', funFact: 'An apple a day keeps the doctor away!', color: 'red' },
-  { id: 'banana', name: 'Banana', emoji: '🍌', category: 'fruits', funFact: 'Bananas are great for energy!', color: 'yellow' },
-  { id: 'grapes', name: 'Grapes', emoji: '🍇', category: 'fruits', funFact: 'Grapes can be red, green, or purple!', color: 'purple' },
-  { id: 'orange', name: 'Orange', emoji: '🍊', category: 'fruits', funFact: 'Oranges are full of vitamin C!', color: 'orange' },
-  { id: 'strawberry', name: 'Strawberry', emoji: '🍓', category: 'fruits', funFact: 'Strawberries have seeds on the outside!', color: 'red' },
-  { id: 'watermelon', name: 'Watermelon', emoji: '🍉', category: 'fruits', funFact: 'Watermelons are 92% water!', color: 'green' },
-  { id: 'peach', name: 'Peach', emoji: '🍑', category: 'fruits', funFact: 'Peaches are fuzzy on the outside!', color: 'orange' },
-  { id: 'cherry', name: 'Cherry', emoji: '🍒', category: 'fruits', funFact: 'Cherries grow in pairs!', color: 'red' },
-  { id: 'pineapple', name: 'Pineapple', emoji: '🍍', category: 'fruits', funFact: 'Pineapples take 2 years to grow!', color: 'yellow' },
-  { id: 'mango', name: 'Mango', emoji: '🥭', category: 'fruits', funFact: 'Mango is the king of fruits!', color: 'orange' },
-  { id: 'kiwi', name: 'Kiwi', emoji: '🥝', category: 'fruits', funFact: 'Kiwis are fuzzy and green inside!', color: 'green' },
-  { id: 'lemon', name: 'Lemon', emoji: '🍋', category: 'fruits', funFact: 'Lemons are very sour!', color: 'yellow' },
+  { id: 'apple', name: 'Apple', emoji: '🍎', category: 'fruits', funFact: 'An apple a day keeps the doctor away!', color: '#ef4444' },
+  { id: 'banana', name: 'Banana', emoji: '🍌', category: 'fruits', funFact: 'Bananas are great for energy and have no fat!', color: '#eab308' },
+  { id: 'grapes', name: 'Grapes', emoji: '🍇', category: 'fruits', funFact: 'Grapes can be red green or purple!', color: '#a855f7' },
+  { id: 'orange', name: 'Orange', emoji: '🍊', category: 'fruits', funFact: 'Oranges are full of vitamin C to keep you healthy!', color: '#f97316' },
+  { id: 'strawberry', name: 'Strawberry', emoji: '🍓', category: 'fruits', funFact: 'Strawberries are the only fruit with seeds on the outside!', color: '#ef4444' },
+  { id: 'watermelon', name: 'Watermelon', emoji: '🍉', category: 'fruits', funFact: 'Watermelons are 92% water - perfect for summer!', color: '#22c55e' },
+  { id: 'peach', name: 'Peach', emoji: '🍑', category: 'fruits', funFact: 'Peaches are fuzzy on the outside and sweet inside!', color: '#fb923c' },
+  { id: 'cherry', name: 'Cherry', emoji: '🍒', category: 'fruits', funFact: 'Cherries always grow in pairs!', color: '#dc2626' },
+  { id: 'pineapple', name: 'Pineapple', emoji: '🍍', category: 'fruits', funFact: 'It takes 2-3 years to grow one pineapple!', color: '#eab308' },
+  { id: 'mango', name: 'Mango', emoji: '🥭', category: 'fruits', funFact: 'Mango is called the King of Fruits!', color: '#f97316' },
+  { id: 'kiwi', name: 'Kiwi', emoji: '🥝', category: 'fruits', funFact: 'Kiwis have more vitamin C than oranges!', color: '#22c55e' },
+  { id: 'lemon', name: 'Lemon', emoji: '🍋', category: 'fruits', funFact: 'Lemons can power a small light bulb!', color: '#fde047' },
+  { id: 'coconut', name: 'Coconut', emoji: '🥥', category: 'fruits', funFact: 'Coconuts can float in the ocean for months!', color: '#a16207' },
+  { id: 'pear', name: 'Pear', emoji: '🍐', category: 'fruits', funFact: 'Pears ripen better off the tree than on it!', color: '#84cc16' },
+  { id: 'blueberry', name: 'Blueberry', emoji: '🫐', category: 'fruits', funFact: 'Blueberries are one of the healthiest foods!', color: '#3b82f6' },
+  { id: 'melon', name: 'Melon', emoji: '🍈', category: 'fruits', funFact: 'Melons are related to cucumbers!', color: '#86efac' },
+  { id: 'avocado', name: 'Avocado', emoji: '🥑', category: 'fruits', funFact: 'Avocados are actually a fruit not a vegetable!', color: '#22c55e' },
+  { id: 'dragonfruit', name: 'Dragon Fruit', emoji: '🐉', category: 'fruits', funFact: 'Dragon fruit comes from a cactus!', color: '#ec4899' },
 ];
 
 // VEGETABLES DATA
+// Dropped: Lettuce, Spinach, Cabbage, Celery, Asparagus, Cauliflower,
+// Artichoke (Unicode only has ONE leafy-greens emoji, so these 7 were all
+// showing the exact same picture), Radish and Beetroot (both were showing
+// an olive), and Zucchini/Leek (duplicating Cucumber/Onion). Everything
+// kept below has its own correct, unique picture.
 export const vegetablesData: LearnItem[] = [
-  { id: 'carrot', name: 'Carrot', emoji: '🥕', category: 'vegetables', funFact: 'Carrots help you see better!' },
-  { id: 'broccoli', name: 'Broccoli', emoji: '🥦', category: 'vegetables', funFact: 'Broccoli looks like tiny trees!' },
-  { id: 'corn', name: 'Corn', emoji: '🌽', category: 'vegetables', funFact: 'Corn can be popped into popcorn!' },
-  { id: 'tomato', name: 'Tomato', emoji: '🍅', category: 'vegetables', funFact: 'Tomatoes are actually fruits!' },
-  { id: 'potato', name: 'Potato', emoji: '🥔', category: 'vegetables', funFact: 'Potatoes grow underground!' },
-  { id: 'pepper', name: 'Pepper', emoji: '🫑', category: 'vegetables', funFact: 'Peppers come in many colors!' },
-  { id: 'eggplant', name: 'Eggplant', emoji: '🍆', category: 'vegetables', funFact: 'Eggplants are purple!' },
-  { id: 'cucumber', name: 'Cucumber', emoji: '🥒', category: 'vegetables', funFact: 'Cucumbers are mostly water!' },
+  { id: 'carrot', name: 'Carrot', emoji: '🥕', category: 'vegetables', funFact: 'Carrots help you see better in the dark!', color: '#f97316' },
+  { id: 'broccoli', name: 'Broccoli', emoji: '🥦', category: 'vegetables', funFact: 'Broccoli looks like tiny trees you can eat!', color: '#22c55e' },
+  { id: 'corn', name: 'Corn', emoji: '🌽', category: 'vegetables', funFact: 'Corn can be popped into delicious popcorn!', color: '#eab308' },
+  { id: 'tomato', name: 'Tomato', emoji: '🍅', category: 'vegetables', funFact: 'Tomatoes are actually fruits not vegetables!', color: '#ef4444' },
+  { id: 'potato', name: 'Potato', emoji: '🥔', category: 'vegetables', funFact: 'Potatoes were the first vegetable grown in space!', color: '#a16207' },
+  { id: 'pepper', name: 'Bell Pepper', emoji: '🫑', category: 'vegetables', funFact: 'Bell peppers come in green red yellow and orange!', color: '#22c55e' },
+  { id: 'eggplant', name: 'Eggplant', emoji: '🍆', category: 'vegetables', funFact: 'Eggplants are actually berries!', color: '#7c3aed' },
+  { id: 'cucumber', name: 'Cucumber', emoji: '🥒', category: 'vegetables', funFact: 'Cucumbers are 96% water - even more than watermelon!', color: '#22c55e' },
+  { id: 'onion', name: 'Onion', emoji: '🧅', category: 'vegetables', funFact: 'Onions make you cry because of a special gas they release!', color: '#fef08a' },
+  { id: 'garlic', name: 'Garlic', emoji: '🧄', category: 'vegetables', funFact: 'Garlic has been used as medicine for thousands of years!', color: '#fef9c3' },
+  { id: 'mushroom', name: 'Mushroom', emoji: '🍄', category: 'vegetables', funFact: 'Mushrooms are not plants - they are fungi!', color: '#a16207' },
+  { id: 'peas', name: 'Peas', emoji: '🫛', category: 'vegetables', funFact: 'Peas are one of the oldest vegetables humans eat!', color: '#22c55e' },
+  { id: 'pumpkin', name: 'Pumpkin', emoji: '🎃', category: 'vegetables', funFact: 'Pumpkins are 90% water and every part is edible!', color: '#f97316' },
+  { id: 'sweetpotato', name: 'Sweet Potato', emoji: '🍠', category: 'vegetables', funFact: 'Sweet potatoes are not related to regular potatoes!', color: '#f97316' },
 ];
 
-// SHAPES DATA
+// SHAPES DATA — every id below matches LearnIcon's drawn-shape set, so the
+// app renders a real drawn SVG for all 20, not the emoji field.
 export const shapesData: LearnItem[] = [
-  { id: 'circle', name: 'Circle', emoji: '🔴', category: 'shapes', funFact: 'A circle has no corners!' },
-  { id: 'square', name: 'Square', emoji: '🟧', category: 'shapes', funFact: 'A square has 4 equal sides!' },
-  { id: 'triangle', name: 'Triangle', emoji: '🔺', category: 'shapes', funFact: 'A triangle has 3 sides!' },
-  { id: 'star', name: 'Star', emoji: '⭐', category: 'shapes', funFact: 'Stars twinkle in the sky!' },
-  { id: 'heart', name: 'Heart', emoji: '❤️', category: 'shapes', funFact: 'Hearts mean love!' },
-  { id: 'diamond', name: 'Diamond', emoji: '💎', category: 'shapes', funFact: 'Diamonds are very sparkly!' },
-  { id: 'rectangle', name: 'Rectangle', emoji: '🟩', category: 'shapes', funFact: 'A rectangle has 4 sides!' },
-  { id: 'oval', name: 'Oval', emoji: '🥚', category: 'shapes', funFact: 'An oval is like a stretched circle!' },
+  { id: 'circle', name: 'Circle', emoji: '🔴', category: 'shapes', funFact: 'A circle has no corners and no edges!' },
+  { id: 'square', name: 'Square', emoji: '🟧', category: 'shapes', funFact: 'A square has 4 equal sides and 4 corners!' },
+  { id: 'triangle', name: 'Triangle', emoji: '🔺', category: 'shapes', funFact: 'A triangle is the strongest shape in building!' },
+  { id: 'star', name: 'Star', emoji: '⭐', category: 'shapes', funFact: 'Stars twinkle in the night sky!' },
+  { id: 'heart', name: 'Heart', emoji: '❤️', category: 'shapes', funFact: 'The heart shape means love!' },
+  { id: 'diamond', name: 'Diamond', emoji: '💎', category: 'shapes', funFact: 'Diamonds are the hardest natural material!' },
+  { id: 'rectangle', name: 'Rectangle', emoji: '🟩', category: 'shapes', funFact: 'A rectangle has 2 long sides and 2 short sides!' },
+  { id: 'oval', name: 'Oval', emoji: '🥚', category: 'shapes', funFact: 'An oval is like a stretched circle - like an egg!' },
+  { id: 'pentagon', name: 'Pentagon', emoji: '⬟', category: 'shapes', funFact: 'A pentagon has 5 sides - like a house shape!' },
+  { id: 'hexagon', name: 'Hexagon', emoji: '⬡', category: 'shapes', funFact: 'Hexagons have 6 sides - bees make hexagon honeycombs!' },
+  { id: 'octagon', name: 'Octagon', emoji: '🛑', category: 'shapes', funFact: 'An octagon has 8 sides - like a stop sign!' },
+  { id: 'crescent', name: 'Crescent', emoji: '🌙', category: 'shapes', funFact: 'A crescent is shaped like the moon!' },
+  { id: 'arrow', name: 'Arrow', emoji: '➡️', category: 'shapes', funFact: 'Arrows point the way to go!' },
+  { id: 'cross', name: 'Cross', emoji: '➕', category: 'shapes', funFact: 'A cross is made of two lines crossing!' },
+  { id: 'spiral', name: 'Spiral', emoji: '🌀', category: 'shapes', funFact: 'Spirals spin round and round like a snail shell!' },
+  { id: 'cube', name: 'Cube', emoji: '🧊', category: 'shapes', funFact: 'A cube is a 3D square - like a dice!' },
+  { id: 'sphere', name: 'Sphere', emoji: '🔮', category: 'shapes', funFact: 'A sphere is a 3D circle - like a ball!' },
+  { id: 'cylinder', name: 'Cylinder', emoji: '🥫', category: 'shapes', funFact: 'A cylinder is like a can or a tube!' },
+  { id: 'cone', name: 'Cone', emoji: '🍦', category: 'shapes', funFact: 'A cone is like an ice cream cone shape!' },
+  { id: 'pyramid', name: 'Pyramid', emoji: '🔺', category: 'shapes', funFact: 'Pyramids were built in Egypt thousands of years ago!' },
 ];
 
-// COLORS DATA
+// COLORS DATA — LearnIcon draws a swatch from the hex `color` field for
+// every one of these, so the emoji field is never actually shown on screen.
 export const colorsData: LearnItem[] = [
-  { id: 'red', name: 'Red', emoji: '🔴', category: 'colors', funFact: 'Fire trucks are red!', color: '#ef4444' },
-  { id: 'blue', name: 'Blue', emoji: '🔵', category: 'colors', funFact: 'The sky is blue!', color: '#3b82f6' },
-  { id: 'yellow', name: 'Yellow', emoji: '🟡', category: 'colors', funFact: 'The sun is yellow!', color: '#eab308' },
-  { id: 'green', name: 'Green', emoji: '🟢', category: 'colors', funFact: 'Grass is green!', color: '#22c55e' },
-  { id: 'purple', name: 'Purple', emoji: '🟣', category: 'colors', funFact: 'Purple is a royal color!', color: '#a855f7' },
-  { id: 'orange', name: 'Orange', emoji: '🟠', category: 'colors', funFact: 'Oranges are orange!', color: '#f97316' },
-  { id: 'pink', name: 'Pink', emoji: '🩷', category: 'colors', funFact: 'Flamingos are pink!', color: '#ec4899' },
-  { id: 'brown', name: 'Brown', emoji: '🟤', category: 'colors', funFact: 'Chocolate is brown!', color: '#a16207' },
-  { id: 'black', name: 'Black', emoji: '⚫', category: 'colors', funFact: 'Night is black!', color: '#1f2937' },
-  { id: 'white', name: 'White', emoji: '⚪', category: 'colors', funFact: 'Snow is white!', color: '#f8fafc' },
+  { id: 'red', name: 'Red', emoji: '🔴', category: 'colors', funFact: 'Fire trucks and stop signs are red!', color: '#ef4444' },
+  { id: 'blue', name: 'Blue', emoji: '🔵', category: 'colors', funFact: 'The sky and ocean are blue!', color: '#3b82f6' },
+  { id: 'yellow', name: 'Yellow', emoji: '🟡', category: 'colors', funFact: 'The sun and bananas are yellow!', color: '#eab308' },
+  { id: 'green', name: 'Green', emoji: '🟢', category: 'colors', funFact: 'Grass and leaves are green!', color: '#22c55e' },
+  { id: 'purple', name: 'Purple', emoji: '🟣', category: 'colors', funFact: 'Purple was once only worn by kings and queens!', color: '#a855f7' },
+  { id: 'orange', name: 'Orange', emoji: '🟠', category: 'colors', funFact: 'Oranges and carrots are orange!', color: '#f97316' },
+  { id: 'pink', name: 'Pink', emoji: '🩷', category: 'colors', funFact: 'Flamingos and cotton candy are pink!', color: '#ec4899' },
+  { id: 'brown', name: 'Brown', emoji: '🟤', category: 'colors', funFact: 'Chocolate and tree trunks are brown!', color: '#a16207' },
+  { id: 'black', name: 'Black', emoji: '⚫', category: 'colors', funFact: 'Night time and space are black!', color: '#1f2937' },
+  { id: 'white', name: 'White', emoji: '⚪', category: 'colors', funFact: 'Snow and clouds are white!', color: '#f8fafc' },
+  { id: 'gray', name: 'Gray', emoji: '🩶', category: 'colors', funFact: 'Elephants and rain clouds are gray!', color: '#6b7280' },
+  // Was #eab308 - identical to Yellow's hex, so the two swatches looked the
+  // same. Gold now gets an actual metallic-gold tone.
+  { id: 'gold', name: 'Gold', emoji: '🥇', category: 'colors', funFact: 'Gold medals are for first place winners!', color: '#d4af37' },
+  { id: 'silver', name: 'Silver', emoji: '🥈', category: 'colors', funFact: 'Silver medals are for second place!', color: '#9ca3af' },
+  { id: 'cyan', name: 'Cyan', emoji: '🩵', category: 'colors', funFact: 'Cyan is a blue-green color like tropical water!', color: '#06b6d4' },
+  { id: 'magenta', name: 'Magenta', emoji: '💜', category: 'colors', funFact: 'Magenta is a mix of red and purple!', color: '#d946ef' },
+  { id: 'turquoise', name: 'Turquoise', emoji: '💎', category: 'colors', funFact: 'Turquoise is the color of beautiful gemstones!', color: '#14b8a6' },
+  { id: 'navy', name: 'Navy Blue', emoji: '🫐', category: 'colors', funFact: 'Navy blue is a very dark blue like the deep ocean!', color: '#1e3a8a' },
+  { id: 'coral', name: 'Coral', emoji: '🪸', category: 'colors', funFact: 'Coral is a pinkish-orange like sea coral!', color: '#f87171' },
+  { id: 'teal', name: 'Teal', emoji: '🦆', category: 'colors', funFact: "Teal is named after the color around a duck's eye!", color: '#0d9488' },
+  { id: 'maroon', name: 'Maroon', emoji: '🫀', category: 'colors', funFact: 'Maroon is a dark brownish-red color!', color: '#7f1d1d' },
 ];
 
 // VEHICLES DATA
+// Dropped: Submarine (was showing a generic cruise ship, not a submarine —
+// Unicode has no submarine emoji), Bulldozer and Steam Engine (duplicated
+// Tractor's and Train's pictures exactly).
 export const vehiclesData: LearnItem[] = [
-  { id: 'car', name: 'Car', emoji: '🚗', category: 'vehicles', funFact: 'Cars drive on roads!' },
-  { id: 'bus', name: 'Bus', emoji: '🚌', category: 'vehicles', funFact: 'Buses carry many people!' },
-  { id: 'train', name: 'Train', emoji: '🚂', category: 'vehicles', funFact: 'Trains run on tracks!' },
-  { id: 'airplane', name: 'Airplane', emoji: '✈️', category: 'vehicles', funFact: 'Airplanes fly in the sky!' },
-  { id: 'boat', name: 'Boat', emoji: '⛵', category: 'vehicles', funFact: 'Boats sail on water!' },
-  { id: 'bicycle', name: 'Bicycle', emoji: '🚲', category: 'vehicles', funFact: 'Bicycles have two wheels!' },
-  { id: 'helicopter', name: 'Helicopter', emoji: '🚁', category: 'vehicles', funFact: 'Helicopters can hover!' },
-  { id: 'rocket', name: 'Rocket', emoji: '🚀', category: 'vehicles', funFact: 'Rockets go to space!' },
-  { id: 'firetruck', name: 'Fire Truck', emoji: '🚒', category: 'vehicles', funFact: 'Fire trucks help put out fires!' },
-  { id: 'ambulance', name: 'Ambulance', emoji: '🚑', category: 'vehicles', funFact: 'Ambulances help sick people!' },
+  { id: 'car', name: 'Car', emoji: '🚗', category: 'vehicles', funFact: 'The first car was invented over 130 years ago!' },
+  { id: 'bus', name: 'Bus', emoji: '🚌', category: 'vehicles', funFact: 'Some buses can carry over 100 passengers!' },
+  { id: 'train', name: 'Train', emoji: '🚂', category: 'vehicles', funFact: 'The fastest trains can go over 300 miles per hour!' },
+  { id: 'airplane', name: 'Airplane', emoji: '✈️', category: 'vehicles', funFact: 'Airplanes fly at about 30000 feet high!' },
+  { id: 'boat', name: 'Boat', emoji: '⛵', category: 'vehicles', funFact: 'Sailboats use wind power to move!' },
+  { id: 'bicycle', name: 'Bicycle', emoji: '🚲', category: 'vehicles', funFact: 'Bicycles have been around for over 200 years!' },
+  { id: 'helicopter', name: 'Helicopter', emoji: '🚁', category: 'vehicles', funFact: 'Helicopters can fly backwards and sideways!' },
+  { id: 'rocket', name: 'Rocket', emoji: '🚀', category: 'vehicles', funFact: 'Rockets can travel at 25000 miles per hour!' },
+  { id: 'firetruck', name: 'Fire Truck', emoji: '🚒', category: 'vehicles', funFact: 'Fire trucks carry over 500 gallons of water!' },
+  { id: 'ambulance', name: 'Ambulance', emoji: '🚑', category: 'vehicles', funFact: 'Ambulances help sick people get to hospitals fast!' },
+  { id: 'policeCar', name: 'Police Car', emoji: '🚓', category: 'vehicles', funFact: 'Police cars help keep our streets safe!' },
+  { id: 'taxi', name: 'Taxi', emoji: '🚕', category: 'vehicles', funFact: 'Yellow taxis are famous in New York City!' },
+  { id: 'motorcycle', name: 'Motorcycle', emoji: '🏍️', category: 'vehicles', funFact: 'Motorcycles have only 2 wheels like bicycles!' },
+  { id: 'truck', name: 'Truck', emoji: '🚚', category: 'vehicles', funFact: 'Big trucks can carry tons of cargo!' },
+  { id: 'tractor', name: 'Tractor', emoji: '🚜', category: 'vehicles', funFact: 'Tractors help farmers work in fields!' },
+  { id: 'hotAirBalloon', name: 'Hot Air Balloon', emoji: '🎈', category: 'vehicles', funFact: 'Hot air balloons float because hot air rises!' },
+  { id: 'skateboard', name: 'Skateboard', emoji: '🛹', category: 'vehicles', funFact: 'Skateboards were invented by surfers!' },
+  { id: 'scooter', name: 'Scooter', emoji: '🛴', category: 'vehicles', funFact: 'Scooters are great for short trips!' },
+  { id: 'jetski', name: 'Jet Ski', emoji: '🚤', category: 'vehicles', funFact: 'Jet skis can zoom across water very fast!' },
+  { id: 'cableCar', name: 'Cable Car', emoji: '🚡', category: 'vehicles', funFact: 'Cable cars hang from cables high in the air!' },
+  { id: 'monorail', name: 'Monorail', emoji: '🚝', category: 'vehicles', funFact: 'Monorails run on a single rail track!' },
+  { id: 'spaceship', name: 'Spaceship', emoji: '🛸', category: 'vehicles', funFact: 'Spaceships travel to other planets!' },
 ];
 
 // BIRDS DATA
+// Dropped: Hummingbird, Woodpecker, Pelican, Toucan, Ostrich, Robin,
+// Sparrow, Crow, Seagull, Stork, Kingfisher, Canary, Bluebird (all 13 were
+// showing the exact same generic "bird" picture — Unicode has no specific
+// emoji for any of them), and Falcon (duplicated Eagle's picture exactly).
+// Everything kept below has its own correct, unique picture.
 export const birdsData: LearnItem[] = [
-  { id: 'eagle', name: 'Eagle', emoji: '🦅', category: 'birds', funFact: 'Eagles have amazing eyesight!' },
-  { id: 'parrot', name: 'Parrot', emoji: '🦜', category: 'birds', funFact: 'Parrots can talk!' },
-  { id: 'penguin', name: 'Penguin', emoji: '🐧', category: 'birds', funFact: 'Penguins can\'t fly!' },
-  { id: 'owl', name: 'Owl', emoji: '🦉', category: 'birds', funFact: 'Owls are night birds!' },
-  { id: 'flamingo', name: 'Flamingo', emoji: '🦩', category: 'birds', funFact: 'Flamingos stand on one leg!' },
-  { id: 'peacock', name: 'Peacock', emoji: '🦚', category: 'birds', funFact: 'Peacocks have beautiful feathers!' },
-  { id: 'duck', name: 'Duck', emoji: '🦆', category: 'birds', funFact: 'Ducks say quack!' },
-  { id: 'swan', name: 'Swan', emoji: '🦢', category: 'birds', funFact: 'Swans are very graceful!' },
+  { id: 'eagle', name: 'Eagle', emoji: '🦅', category: 'birds', funFact: 'Eagles have eyesight 4 times better than humans!' },
+  { id: 'parrot', name: 'Parrot', emoji: '🦜', category: 'birds', funFact: 'Parrots can learn to talk and repeat words!' },
+  { id: 'penguin', name: 'Penguin', emoji: '🐧', category: 'birds', funFact: 'Penguins are birds that cannot fly but swim amazingly!' },
+  { id: 'owl', name: 'Owl', emoji: '🦉', category: 'birds', funFact: 'Owls can turn their heads almost 270 degrees!' },
+  { id: 'flamingo', name: 'Flamingo', emoji: '🦩', category: 'birds', funFact: 'Flamingos are pink because of the shrimp they eat!' },
+  { id: 'peacock', name: 'Peacock', emoji: '🦚', category: 'birds', funFact: 'Male peacocks have beautiful colorful tail feathers!' },
+  { id: 'duck', name: 'Duck', emoji: '🦆', category: 'birds', funFact: 'Ducks have waterproof feathers!' },
+  { id: 'swan', name: 'Swan', emoji: '🦢', category: 'birds', funFact: 'Swans mate for life with one partner!' },
+  { id: 'turkey', name: 'Turkey', emoji: '🦃', category: 'birds', funFact: 'Turkeys can run at 25 miles per hour!' },
+  { id: 'rooster', name: 'Rooster', emoji: '🐓', category: 'birds', funFact: 'Roosters crow to announce the morning!' },
+  { id: 'dove', name: 'Dove', emoji: '🕊️', category: 'birds', funFact: 'Doves are symbols of peace around the world!' },
 ];
 
 // BODY PARTS DATA
+// Dropped: Stomach and Belly Button — these were showing pregnant-person
+// emoji (🫃 🫄), which is exactly the bug a tester reported. There's no
+// accurate "tummy" emoji in Unicode, so rather than show something else
+// wrong, these two are left out. Also dropped Lungs (2019 emoji, too new
+// for some older Android devices). Neck was showing a giraffe — swapped
+// for a scarf, which is at least actually neck-related.
 export const bodyPartsData: LearnItem[] = [
-  { id: 'eyes', name: 'Eyes', emoji: '👀', category: 'body', funFact: 'We see with our eyes!' },
-  { id: 'nose', name: 'Nose', emoji: '👃', category: 'body', funFact: 'We smell with our nose!' },
-  { id: 'mouth', name: 'Mouth', emoji: '👄', category: 'body', funFact: 'We eat and talk with our mouth!' },
-  { id: 'ear', name: 'Ear', emoji: '👂', category: 'body', funFact: 'We hear with our ears!' },
-  { id: 'hand', name: 'Hand', emoji: '✋', category: 'body', funFact: 'We have 5 fingers on each hand!' },
-  { id: 'foot', name: 'Foot', emoji: '🦶', category: 'body', funFact: 'We walk with our feet!' },
-  { id: 'brain', name: 'Brain', emoji: '🧠', category: 'body', funFact: 'Our brain helps us think!' },
-  { id: 'heart', name: 'Heart', emoji: '❤️', category: 'body', funFact: 'Our heart pumps blood!' },
+  { id: 'eyes', name: 'Eyes', emoji: '👀', category: 'body', funFact: 'Your eyes can see about 10 million different colors!' },
+  { id: 'nose', name: 'Nose', emoji: '👃', category: 'body', funFact: 'Your nose can remember 50000 different smells!' },
+  { id: 'mouth', name: 'Mouth', emoji: '👄', category: 'body', funFact: 'You use 200 muscles to take one step but only 17 to smile!' },
+  { id: 'ear', name: 'Ear', emoji: '👂', category: 'body', funFact: 'Your ears never stop working even when you sleep!' },
+  { id: 'hand', name: 'Hand', emoji: '✋', category: 'body', funFact: 'You have 27 bones in each hand!' },
+  { id: 'foot', name: 'Foot', emoji: '🦶', category: 'body', funFact: 'Your feet have 250000 sweat glands!' },
+  { id: 'brain', name: 'Brain', emoji: '🧠', category: 'body', funFact: "Your brain uses 20% of all your body's energy!" },
+  { id: 'heart', name: 'Heart', emoji: '❤️', category: 'body', funFact: 'Your heart beats about 100000 times every day!' },
+  { id: 'tongue', name: 'Tongue', emoji: '👅', category: 'body', funFact: 'Your tongue has about 10000 taste buds!' },
+  { id: 'teeth', name: 'Teeth', emoji: '🦷', category: 'body', funFact: 'Teeth are as hard as rocks!' },
+  { id: 'finger', name: 'Finger', emoji: '👆', category: 'body', funFact: 'Your fingerprints are unique - no one else has the same!' },
+  { id: 'thumb', name: 'Thumb', emoji: '👍', category: 'body', funFact: 'Your thumb has its own pulse!' },
+  { id: 'knee', name: 'Knee', emoji: '🦵', category: 'body', funFact: 'Your knee is the biggest joint in your body!' },
+  { id: 'elbow', name: 'Elbow', emoji: '💪', category: 'body', funFact: 'You cannot lick your own elbow!' },
+  { id: 'shoulder', name: 'Shoulder', emoji: '🤷', category: 'body', funFact: 'Your shoulder is the most flexible joint!' },
+  { id: 'bones', name: 'Bones', emoji: '🦴', category: 'body', funFact: 'Babies have 300 bones but adults only have 206!' },
+  { id: 'skin', name: 'Skin', emoji: '🖐️', category: 'body', funFact: 'Skin is the largest organ of your body!' },
+  { id: 'hair', name: 'Hair', emoji: '💇', category: 'body', funFact: 'Your hair grows about 6 inches every year!' },
+  { id: 'eyebrow', name: 'Eyebrow', emoji: '🤨', category: 'body', funFact: 'Eyebrows keep sweat out of your eyes!' },
+  { id: 'eyelash', name: 'Eyelash', emoji: '👁️', category: 'body', funFact: 'Eyelashes protect your eyes from dust!' },
+  { id: 'chin', name: 'Chin', emoji: '🗣️', category: 'body', funFact: 'Only humans have chins!' },
+  { id: 'neck', name: 'Neck', emoji: '🧣', category: 'body', funFact: 'Your neck has the same number of bones as a giraffe!' },
 ];
 
 // QUIZ QUESTIONS
@@ -177,31 +312,54 @@ export const quizQuestions: QuizQuestion[] = [
   // Animals
   { question: 'Which animal is this?', emoji: '🦁', options: ['Cat', 'Lion', 'Tiger', 'Dog'], correct: 1, category: 'animals' },
   { question: 'Which animal is this?', emoji: '🐘', options: ['Horse', 'Cow', 'Elephant', 'Rhino'], correct: 2, category: 'animals' },
-  { question: 'Which animal is this?', emoji: '🐧', options: ['Penguin', 'Duck', 'Eagle', 'Owl'], correct: 0, category: 'animals' },
+  { question: 'Which animal is this?', emoji: '🐧', options: ['Penguin', 'Duck', 'Chicken', 'Owl'], correct: 0, category: 'animals' },
   { question: 'Which animal is this?', emoji: '🦒', options: ['Zebra', 'Horse', 'Giraffe', 'Deer'], correct: 2, category: 'animals' },
   { question: 'Which animal is this?', emoji: '🐬', options: ['Shark', 'Whale', 'Fish', 'Dolphin'], correct: 3, category: 'animals' },
   { question: 'Which animal is this?', emoji: '🐻', options: ['Dog', 'Bear', 'Wolf', 'Tiger'], correct: 1, category: 'animals' },
+  { question: 'Which animal is this?', emoji: '🐼', options: ['Polar Bear', 'Panda', 'Koala', 'Raccoon'], correct: 1, category: 'animals' },
+  { question: 'Which animal is this?', emoji: '🦊', options: ['Dog', 'Wolf', 'Fox', 'Cat'], correct: 2, category: 'animals' },
+  { question: 'Which animal is this?', emoji: '🐨', options: ['Bear', 'Panda', 'Koala', 'Sloth'], correct: 2, category: 'animals' },
+  { question: 'Which animal is this?', emoji: '🐸', options: ['Toad', 'Lizard', 'Frog', 'Snake'], correct: 2, category: 'animals' },
   // Fruits
   { question: 'Which fruit is this?', emoji: '🍎', options: ['Cherry', 'Strawberry', 'Apple', 'Tomato'], correct: 2, category: 'fruits' },
   { question: 'Which fruit is this?', emoji: '🍌', options: ['Corn', 'Banana', 'Pineapple', 'Mango'], correct: 1, category: 'fruits' },
   { question: 'Which fruit is this?', emoji: '🍇', options: ['Blueberry', 'Plum', 'Grapes', 'Fig'], correct: 2, category: 'fruits' },
   { question: 'Which fruit is this?', emoji: '🍊', options: ['Peach', 'Orange', 'Lemon', 'Mango'], correct: 1, category: 'fruits' },
   { question: 'Which fruit is this?', emoji: '🍓', options: ['Cherry', 'Raspberry', 'Strawberry', 'Apple'], correct: 2, category: 'fruits' },
+  { question: 'Which fruit is this?', emoji: '🍉', options: ['Melon', 'Apple', 'Watermelon', 'Pumpkin'], correct: 2, category: 'fruits' },
+  { question: 'Which fruit is this?', emoji: '🍍', options: ['Lemon', 'Durian', 'Pineapple', 'Jackfruit'], correct: 2, category: 'fruits' },
+  { question: 'Which fruit is this?', emoji: '🥭', options: ['Papaya', 'Mango', 'Peach', 'Apricot'], correct: 1, category: 'fruits' },
+  // Vegetables
+  { question: 'Which vegetable is this?', emoji: '🥕', options: ['Radish', 'Carrot', 'Beet', 'Parsnip'], correct: 1, category: 'vegetables' },
+  { question: 'Which vegetable is this?', emoji: '🥦', options: ['Lettuce', 'Spinach', 'Broccoli', 'Cabbage'], correct: 2, category: 'vegetables' },
+  { question: 'Which vegetable is this?', emoji: '🌽', options: ['Wheat', 'Rice', 'Corn', 'Barley'], correct: 2, category: 'vegetables' },
+  { question: 'Which vegetable is this?', emoji: '🍅', options: ['Apple', 'Strawberry', 'Tomato', 'Cherry'], correct: 2, category: 'vegetables' },
+  { question: 'Which vegetable is this?', emoji: '🥔', options: ['Onion', 'Garlic', 'Potato', 'Turnip'], correct: 2, category: 'vegetables' },
   // Colors
   { question: 'What color is a fire truck?', emoji: '🚒', options: ['Blue', 'Green', 'Red', 'Yellow'], correct: 2, category: 'colors' },
   { question: 'What color is the sun?', emoji: '☀️', options: ['Red', 'Yellow', 'Orange', 'White'], correct: 1, category: 'colors' },
   { question: 'What color is grass?', emoji: '🌿', options: ['Blue', 'Yellow', 'Green', 'Brown'], correct: 2, category: 'colors' },
   { question: 'What color is the sky?', emoji: '🌤️', options: ['Blue', 'Green', 'Red', 'Purple'], correct: 0, category: 'colors' },
+  { question: 'What color is a banana?', emoji: '🍌', options: ['Red', 'Yellow', 'Green', 'Orange'], correct: 1, category: 'colors' },
+  { question: 'What color is an orange?', emoji: '🍊', options: ['Red', 'Yellow', 'Orange', 'Pink'], correct: 2, category: 'colors' },
+  { question: 'What color is chocolate?', emoji: '🍫', options: ['Black', 'Brown', 'Red', 'Yellow'], correct: 1, category: 'colors' },
   // Numbers
   { question: 'How many legs does a dog have?', emoji: '🐶', options: ['2', '3', '4', '6'], correct: 2, category: 'numbers' },
   { question: 'How many eyes do you have?', emoji: '👀', options: ['1', '2', '3', '4'], correct: 1, category: 'numbers' },
   { question: 'How many fingers on one hand?', emoji: '✋', options: ['3', '4', '5', '6'], correct: 2, category: 'numbers' },
+  { question: 'How many wheels does a bicycle have?', emoji: '🚲', options: ['1', '2', '3', '4'], correct: 1, category: 'numbers' },
+  { question: 'How many legs does a spider have?', emoji: '🕷️', options: ['4', '6', '8', '10'], correct: 2, category: 'numbers' },
+  { question: 'How many days in a week?', emoji: '📅', options: ['5', '6', '7', '8'], correct: 2, category: 'numbers' },
   // Shapes
   { question: 'How many sides does a triangle have?', emoji: '🔺', options: ['2', '3', '4', '5'], correct: 1, category: 'shapes' },
   { question: 'What shape is a ball?', emoji: '⚽', options: ['Square', 'Triangle', 'Circle', 'Star'], correct: 2, category: 'shapes' },
+  { question: 'What shape is a dice?', emoji: '🎲', options: ['Circle', 'Cube', 'Triangle', 'Pyramid'], correct: 1, category: 'shapes' },
+  { question: 'What shape has 4 equal sides?', emoji: '🟧', options: ['Circle', 'Rectangle', 'Square', 'Triangle'], correct: 2, category: 'shapes' },
   // Vehicles
   { question: 'Which vehicle flies?', emoji: '✈️', options: ['Car', 'Boat', 'Airplane', 'Bus'], correct: 2, category: 'vehicles' },
   { question: 'Which vehicle sails on water?', emoji: '⛵', options: ['Boat', 'Car', 'Train', 'Bus'], correct: 0, category: 'vehicles' },
+  { question: 'Which vehicle has two wheels?', emoji: '🚲', options: ['Car', 'Bicycle', 'Bus', 'Truck'], correct: 1, category: 'vehicles' },
+  { question: 'Which vehicle goes to space?', emoji: '🚀', options: ['Airplane', 'Helicopter', 'Rocket', 'Jet'], correct: 2, category: 'vehicles' },
   // Math
   { question: 'What is 1 + 1?', emoji: '🧮', options: ['1', '2', '3', '4'], correct: 1, category: 'math' },
   { question: 'What is 2 + 3?', emoji: '🧮', options: ['4', '5', '6', '7'], correct: 1, category: 'math' },
@@ -209,6 +367,19 @@ export const quizQuestions: QuizQuestion[] = [
   { question: 'What is 3 + 4?', emoji: '🧮', options: ['5', '6', '7', '8'], correct: 2, category: 'math' },
   { question: 'What is 10 - 5?', emoji: '🧮', options: ['3', '4', '5', '6'], correct: 2, category: 'math' },
   { question: 'What is 6 + 2?', emoji: '🧮', options: ['7', '8', '9', '10'], correct: 1, category: 'math' },
+  { question: 'What is 4 + 4?', emoji: '🧮', options: ['6', '7', '8', '9'], correct: 2, category: 'math' },
+  { question: 'What is 9 - 3?', emoji: '🧮', options: ['4', '5', '6', '7'], correct: 2, category: 'math' },
+  { question: 'What is 2 x 3?', emoji: '🧮', options: ['4', '5', '6', '7'], correct: 2, category: 'math' },
+  { question: 'What is 5 x 2?', emoji: '🧮', options: ['8', '9', '10', '11'], correct: 2, category: 'math' },
+  // Birds
+  { question: 'Which bird cannot fly?', emoji: '🐧', options: ['Eagle', 'Penguin', 'Sparrow', 'Crow'], correct: 1, category: 'birds' },
+  { question: 'Which bird can talk?', emoji: '🦜', options: ['Owl', 'Parrot', 'Duck', 'Eagle'], correct: 1, category: 'birds' },
+  { question: 'Which bird is pink?', emoji: '🦩', options: ['Swan', 'Dove', 'Flamingo', 'Pelican'], correct: 2, category: 'birds' },
+  // Sounds
+  { question: 'What sound does a cat make?', emoji: '🐱', options: ['Woof', 'Meow', 'Moo', 'Oink'], correct: 1, category: 'sounds' },
+  { question: 'What sound does a dog make?', emoji: '🐶', options: ['Woof', 'Meow', 'Quack', 'Roar'], correct: 0, category: 'sounds' },
+  { question: 'What sound does a cow make?', emoji: '🐄', options: ['Woof', 'Neigh', 'Moo', 'Baa'], correct: 2, category: 'sounds' },
+  { question: 'What sound does a lion make?', emoji: '🦁', options: ['Meow', 'Bark', 'Roar', 'Hiss'], correct: 2, category: 'sounds' },
 ];
 
 // MEMORY GAME SETS
@@ -254,27 +425,86 @@ export interface WordBuilderWord {
   hint: string;
 }
 
+// Dropped MUG (duplicated CUP's cup-of-coffee emoji), JAM (duplicated JAR's
+// jar emoji, and there's no accurate "jam" emoji to give it instead), and
+// one of the two FROG entries (it was listed twice with the same emoji).
 export const wordBuilderWords: WordBuilderWord[] = [
   { word: 'CAT', emoji: '🐱', hint: 'A furry pet that says meow' },
-  { word: 'DOG', emoji: '🐶', hint: 'A pet that says woof' },
-  { word: 'SUN', emoji: '☀️', hint: 'It shines in the sky' },
+  { word: 'DOG', emoji: '🐶', hint: 'A pet that says woof and loves to play' },
+  { word: 'SUN', emoji: '☀️', hint: 'It shines bright in the sky during the day' },
   { word: 'HAT', emoji: '🎩', hint: 'You wear it on your head' },
-  { word: 'BUS', emoji: '🚌', hint: 'A big vehicle for many people' },
-  { word: 'CUP', emoji: '☕', hint: 'You drink from it' },
-  { word: 'BED', emoji: '🛏️', hint: 'You sleep in it' },
-  { word: 'PIG', emoji: '🐷', hint: 'A pink farm animal' },
-  { word: 'MAP', emoji: '🗺️', hint: 'Shows you where to go' },
-  { word: 'PEN', emoji: '🖊️', hint: 'You write with it' },
-  { word: 'FAN', emoji: '🌀', hint: 'Keeps you cool' },
-  { word: 'JAM', emoji: '🫙', hint: 'Sweet spread for bread' },
+  { word: 'BUS', emoji: '🚌', hint: 'A big vehicle that carries many people' },
+  { word: 'CUP', emoji: '☕', hint: 'You drink from this' },
+  { word: 'BED', emoji: '🛏️', hint: 'You sleep in this at night' },
+  { word: 'PIG', emoji: '🐷', hint: 'A pink farm animal that says oink' },
+  { word: 'MAP', emoji: '🗺️', hint: 'Shows you where places are' },
+  { word: 'PEN', emoji: '🖊️', hint: 'You write with this' },
+  { word: 'FAN', emoji: '🌀', hint: 'Keeps you cool when it spins' },
+  { word: 'BAT', emoji: '🦇', hint: 'An animal that flies at night' },
+  { word: 'ANT', emoji: '🐜', hint: 'A tiny insect that is very strong' },
+  { word: 'BEE', emoji: '🐝', hint: 'It makes honey and buzzes' },
+  { word: 'EGG', emoji: '🥚', hint: 'Chickens lay these' },
+  { word: 'OWL', emoji: '🦉', hint: 'A bird that hoots at night' },
+  { word: 'FOX', emoji: '🦊', hint: 'A clever orange animal' },
+  { word: 'BOX', emoji: '📦', hint: 'You put things inside this' },
+  { word: 'NET', emoji: '🥅', hint: 'Used to catch fish or in sports' },
+  { word: 'WEB', emoji: '🕸️', hint: 'A spider makes this' },
+  { word: 'VAN', emoji: '🚐', hint: 'A vehicle bigger than a car' },
+  { word: 'JAR', emoji: '🫙', hint: 'A glass container for storing things' },
+  { word: 'LOG', emoji: '🪵', hint: 'A piece of wood from a tree' },
+  { word: 'MOP', emoji: '🧹', hint: 'Used to clean floors' },
+  { word: 'RUG', emoji: '🧶', hint: 'A soft cover for the floor' },
+  { word: 'BUG', emoji: '🐛', hint: 'A small crawling insect' },
+  { word: 'HUG', emoji: '🤗', hint: 'A loving squeeze between friends' },
+  { word: 'JUG', emoji: '🫗', hint: 'A container for pouring drinks' },
   { word: 'FISH', emoji: '🐟', hint: 'It swims in water' },
   { word: 'FROG', emoji: '🐸', hint: 'It hops and says ribbit' },
-  { word: 'STAR', emoji: '⭐', hint: 'It twinkles at night' },
-  { word: 'MOON', emoji: '🌙', hint: 'It glows at night' },
+  { word: 'STAR', emoji: '⭐', hint: 'It twinkles in the night sky' },
+  { word: 'MOON', emoji: '🌙', hint: 'It glows in the night sky' },
   { word: 'TREE', emoji: '🌳', hint: 'It has leaves and branches' },
-  { word: 'CAKE', emoji: '🎂', hint: 'A birthday treat' },
-  { word: 'BIRD', emoji: '🐦', hint: 'It flies in the sky' },
-  { word: 'BEAR', emoji: '🐻', hint: 'A big fluffy animal' },
+  { word: 'CAKE', emoji: '🎂', hint: 'A sweet treat for birthdays' },
+  { word: 'BIRD', emoji: '🐦', hint: 'It has wings and can fly' },
+  { word: 'BEAR', emoji: '🐻', hint: 'A big furry animal in forests' },
+  { word: 'BOAT', emoji: '⛵', hint: 'It floats on water' },
+  { word: 'BOOK', emoji: '📚', hint: 'You read stories in this' },
+  { word: 'BALL', emoji: '⚽', hint: 'Round thing you play with' },
+  { word: 'DUCK', emoji: '🦆', hint: 'A bird that says quack' },
+  { word: 'KING', emoji: '👑', hint: 'He wears a crown and rules' },
+  { word: 'LION', emoji: '🦁', hint: 'King of the jungle' },
+  { word: 'RAIN', emoji: '🌧️', hint: 'Water falling from clouds' },
+  { word: 'SNOW', emoji: '❄️', hint: 'White cold flakes in winter' },
+  { word: 'HAND', emoji: '✋', hint: 'You have five fingers on this' },
+  { word: 'FOOT', emoji: '🦶', hint: 'You walk with these' },
+  { word: 'NOSE', emoji: '👃', hint: 'You smell with this' },
+  { word: 'CLOUD', emoji: '☁️', hint: 'White fluffy thing in the sky' },
+  { word: 'HOUSE', emoji: '🏠', hint: 'A place where families live' },
+  { word: 'HORSE', emoji: '🐴', hint: 'An animal you can ride' },
+  { word: 'MOUSE', emoji: '🐭', hint: 'A small animal that squeaks' },
+  { word: 'TRAIN', emoji: '🚂', hint: 'It travels on tracks' },
+  { word: 'PLANE', emoji: '✈️', hint: 'It flies high in the sky' },
+  { word: 'SMILE', emoji: '😊', hint: 'A happy face you make' },
+  { word: 'HEART', emoji: '❤️', hint: 'The shape of love' },
+  { word: 'APPLE', emoji: '🍎', hint: 'A red fruit that is crunchy' },
+  { word: 'GRAPE', emoji: '🍇', hint: 'Small round purple fruits' },
+  { word: 'LEMON', emoji: '🍋', hint: 'A sour yellow fruit' },
+  { word: 'ZEBRA', emoji: '🦓', hint: 'Black and white striped animal' },
+  { word: 'TIGER', emoji: '🐯', hint: 'Orange cat with black stripes' },
+  { word: 'PIZZA', emoji: '🍕', hint: 'Round food with cheese on top' },
+  { word: 'WATER', emoji: '💧', hint: 'You drink this to stay healthy' },
+  { word: 'CANDY', emoji: '🍬', hint: 'Sweet treat that tastes yummy' },
+  { word: 'FLOWER', emoji: '🌸', hint: 'Pretty colorful plant' },
+  { word: 'RABBIT', emoji: '🐰', hint: 'Animal with long ears that hops' },
+  { word: 'MONKEY', emoji: '🐒', hint: 'Animal that swings in trees' },
+  { word: 'BANANA', emoji: '🍌', hint: 'Yellow curved fruit' },
+  { word: 'ORANGE', emoji: '🍊', hint: 'Round orange fruit' },
+  { word: 'ROCKET', emoji: '🚀', hint: 'It flies to space' },
+  { word: 'COOKIE', emoji: '🍪', hint: 'Sweet round baked treat' },
+  { word: 'DRAGON', emoji: '🐉', hint: 'Mythical creature that breathes fire' },
+  { word: 'PENGUIN', emoji: '🐧', hint: 'Black and white bird that swims' },
+  { word: 'RAINBOW', emoji: '🌈', hint: 'Colorful arc after rain' },
+  { word: 'DOLPHIN', emoji: '🐬', hint: 'Smart animal in the ocean' },
+  { word: 'ELEPHANT', emoji: '🐘', hint: 'Big gray animal with a trunk' },
+  { word: 'BUTTERFLY', emoji: '🦋', hint: 'Colorful insect with wings' },
 ];
 
 // MATCH GAME DATA
@@ -311,7 +541,7 @@ export interface MathProblem {
 
 export function generateMathProblem(difficulty: 'easy' | 'medium' | 'hard'): MathProblem {
   let num1: number, num2: number, operator: '+' | '-' | '×', answer: number;
-  
+
   if (difficulty === 'easy') {
     operator = Math.random() > 0.5 ? '+' : '-';
     if (operator === '+') {
@@ -391,6 +621,7 @@ export const coloringTemplates: ColoringTemplate[] = [
 
 // ============================================================
 // SKILLS & CAREERS DATA - Inclusive career-based categories
+// (Unchanged — not fed by Airtable, kept exactly as-is)
 // ============================================================
 
 export interface SkillItem {
@@ -576,104 +807,104 @@ export const scienceLabSkills: SkillItem[] = [
 
 // ALL CAREER CATEGORIES
 export const careerCategories: SkillCategory[] = [
-  { 
-    id: 'cooking', 
-    name: 'Cooking Studio', 
-    emoji: '🍳', 
-    color: '#ef4444', 
+  {
+    id: 'cooking',
+    name: 'Cooking Studio',
+    emoji: '🍳',
+    color: '#ef4444',
     gradient: 'from-red-400 to-orange-400',
     description: 'Learn to cook yummy food!',
-    items: cookingStudioSkills 
+    items: cookingStudioSkills
   },
-  { 
-    id: 'beauty', 
-    name: 'Beauty & Fashion', 
-    emoji: '💄', 
-    color: '#ec4899', 
+  {
+    id: 'beauty',
+    name: 'Beauty & Fashion',
+    emoji: '💄',
+    color: '#ec4899',
     gradient: 'from-pink-400 to-fuchsia-400',
     description: 'Explore style and creativity!',
-    items: beautyFashionSkills 
+    items: beautyFashionSkills
   },
-  { 
-    id: 'builder', 
-    name: 'Builder Workshop', 
-    emoji: '🔨', 
-    color: '#f97316', 
+  {
+    id: 'builder',
+    name: 'Builder Workshop',
+    emoji: '🔨',
+    color: '#f97316',
     gradient: 'from-orange-400 to-amber-400',
     description: 'Build and fix things!',
-    items: builderWorkshopSkills 
+    items: builderWorkshopSkills
   },
-  { 
-    id: 'engineer', 
-    name: 'Engineering Lab', 
-    emoji: '⚙️', 
-    color: '#3b82f6', 
+  {
+    id: 'engineer',
+    name: 'Engineering Lab',
+    emoji: '⚙️',
+    color: '#3b82f6',
     gradient: 'from-blue-400 to-cyan-400',
     description: 'Design and construct!',
-    items: engineeringLabSkills 
+    items: engineeringLabSkills
   },
-  { 
-    id: 'factory', 
-    name: 'Factory Simulator', 
-    emoji: '🏭', 
-    color: '#6b7280', 
+  {
+    id: 'factory',
+    name: 'Factory Simulator',
+    emoji: '🏭',
+    color: '#6b7280',
     gradient: 'from-gray-400 to-slate-400',
     description: 'Run your own factory!',
-    items: factorySkills 
+    items: factorySkills
   },
-  { 
-    id: 'garage', 
-    name: 'Vehicle Garage', 
-    emoji: '🚗', 
-    color: '#ef4444', 
+  {
+    id: 'garage',
+    name: 'Vehicle Garage',
+    emoji: '🚗',
+    color: '#ef4444',
     gradient: 'from-red-400 to-rose-400',
     description: 'Fix and build vehicles!',
-    items: vehicleGarageSkills 
+    items: vehicleGarageSkills
   },
-  { 
-    id: 'garden', 
-    name: 'Garden & Farm', 
-    emoji: '🌱', 
-    color: '#22c55e', 
+  {
+    id: 'garden',
+    name: 'Garden & Farm',
+    emoji: '🌱',
+    color: '#22c55e',
     gradient: 'from-green-400 to-emerald-400',
     description: 'Grow plants and help animals!',
-    items: gardeningFarmingSkills 
+    items: gardeningFarmingSkills
   },
-  { 
-    id: 'medical', 
-    name: 'Medical Clinic', 
-    emoji: '🏥', 
-    color: '#06b6d4', 
+  {
+    id: 'medical',
+    name: 'Medical Clinic',
+    emoji: '🏥',
+    color: '#06b6d4',
     gradient: 'from-cyan-400 to-teal-400',
     description: 'Learn about health!',
-    items: medicalClinicSkills 
+    items: medicalClinicSkills
   },
-  { 
-    id: 'art', 
-    name: 'Art & Design', 
-    emoji: '🎨', 
-    color: '#a855f7', 
+  {
+    id: 'art',
+    name: 'Art & Design',
+    emoji: '🎨',
+    color: '#a855f7',
     gradient: 'from-purple-400 to-violet-400',
     description: 'Create beautiful art!',
-    items: artDesignSkills 
+    items: artDesignSkills
   },
-  { 
-    id: 'coding', 
-    name: 'Coding & Robotics', 
-    emoji: '💻', 
-    color: '#14b8a6', 
+  {
+    id: 'coding',
+    name: 'Coding & Robotics',
+    emoji: '💻',
+    color: '#14b8a6',
     gradient: 'from-teal-400 to-cyan-400',
     description: 'Program and build robots!',
-    items: codingRoboticsSkills 
+    items: codingRoboticsSkills
   },
-  { 
-    id: 'science', 
-    name: 'Science Lab', 
-    emoji: '🔬', 
-    color: '#8b5cf6', 
+  {
+    id: 'science',
+    name: 'Science Lab',
+    emoji: '🔬',
+    color: '#8b5cf6',
     gradient: 'from-violet-400 to-purple-400',
     description: 'Discover and experiment!',
-    items: scienceLabSkills 
+    items: scienceLabSkills
   },
 ];
 
@@ -855,4 +1086,3 @@ export const encouragementMessages = {
     '🚀✨🚀 INCREDIBLE! 🚀✨🚀',
   ],
 };
-
