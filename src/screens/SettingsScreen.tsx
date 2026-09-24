@@ -53,7 +53,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
       </p>
       <p className="text-xs text-gray-400">Fun Learning Adventure for Kids</p>
       <p className="text-xs text-gray-300 mt-1">Made with ❤️ for little learners</p>
-      <p className="text-xs text-gray-400 mt-1 font-bold">Version 1.1.0</p>
+      <p className="text-xs text-gray-400 mt-1 font-bold">Version 1.2.0</p>
       
       <div className="mt-3 pt-3 border-t border-gray-200">
         <div className="flex items-center justify-center gap-2 text-xs">
