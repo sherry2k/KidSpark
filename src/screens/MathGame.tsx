@@ -301,23 +301,7 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
               Numbers up to <span style={numStyle('13px')}>{max}</span>
             </p>
 
-            <motion.button
-              onClick={() => { playClick(); buzz('tick'); setMissingOpen(true); }}
-              className="w-full max-w-lg mx-auto mb-3 rounded-3xl p-4 text-white border-4 border-white bg-gradient-to-r from-emerald-400 to-teal-500 flex items-center gap-4 text-left"
-              style={{ boxShadow: '0 8px 0 #0F766E, 0 12px 22px rgba(0,0,0,.18)' }}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={POP}
-              whileTap={{ scale: 0.96, y: 4 }}
-            >
-              <ItemIcon icon="🔢" size={44} label="Missing numbers" />
-              <div className="flex-1">
-                <h3 className="text-lg font-bold" style={{ fontFamily: NUM, textShadow: '2px 2px 0 rgba(0,0,0,.18)' }}>
-                  Missing Numbers
-                </h3>
-                <p className="text-xs opacity-90">Which number is missing? 1 to 50</p>
-              </div>
-            </motion.button>
+            
             
             <div className="grid grid-cols-2 gap-3 max-w-lg mx-auto">
               {MATH_MODES.map((m, i) => (
@@ -351,6 +335,35 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
                   </div>
                 </motion.button>
               ))}
+                            <motion.button
+                onClick={() => { playClick(); buzz('tick'); setMissingOpen(true); }}
+                className="rounded-3xl p-4 text-white border-4 border-white bg-gradient-to-br from-emerald-400 to-teal-500"
+                style={{ boxShadow: '0 8px 0 #0F766E, 0 12px 22px rgba(0,0,0,.18)', minHeight: 150 }}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: MATH_MODES.length * 0.06, ...POP }}
+                whileTap={{ scale: 0.94, y: 4 }}
+              >
+                <motion.div
+                  className="flex justify-center mb-2"
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 2.4 + MATH_MODES.length * 0.3, repeat: Infinity }}
+                >
+                  <ItemIcon icon="🔢" size={44} label="Missing numbers" />
+                </motion.div>
+                <h3 className="text-lg font-bold" style={{ fontFamily: NUM, textShadow: '2px 2px 0 rgba(0,0,0,.18)' }}>
+                  Missing Numbers
+                </h3>
+                <p className="text-xs opacity-90">Find the missing number</p>
+                <div className="flex justify-center gap-0.5 mt-1.5">
+                  {[1, 2, 3].map((d) => (
+                    <span key={d} className="text-[11px]" style={{ opacity: d <= 2 ? 1 : 0.28 }}>
+                      ⭐
+                    </span>
+                  ))}
+                </div>
+              </motion.button>
+              
             </div>
           </div>
         </div>
