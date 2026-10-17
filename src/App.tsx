@@ -19,6 +19,7 @@ import SettingsScreen from './screens/SettingsScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import SkillsScreen from './screens/SkillsScreen';
 import CreativeStudio from './screens/CreativeStudio';
+import SoundGame from './screens/SoundGame';
 
 // Store
 import {
@@ -60,8 +61,8 @@ type Screen =
   | 'achievements'
   | 'settings'
   | 'profile'
-  | 'skills'
-  | 'creative';
+  | 'creative'
+  | 'sounds';
 
 const KidSparkApp: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('splash');
