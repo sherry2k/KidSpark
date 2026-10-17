@@ -155,6 +155,7 @@ const KidSparkApp: React.FC = () => {
       case 'puzzle': setCurrentScreen('puzzle'); break;
       case 'skills': setCurrentScreen('skills'); break;
       case 'creative': setCurrentScreen('creative'); break;
+      case 'sounds': setCurrentScreen('sounds'); break;  
       default: setCurrentScreen('home');
     }
   }, []);
@@ -238,6 +239,8 @@ const KidSparkApp: React.FC = () => {
         return <SkillsScreen progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
         case 'creative':
         return <CreativeStudio progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
+        case 'sounds':
+        return <SoundGame progress={progress} onBack={goHome} onAnswer={handleQuizAnswer} onComplete={handleGameComplete} />;
       default:
         return null;
     }
