@@ -8,22 +8,21 @@ import { buzz, speak, stopSpeaking, POP } from '../utils/kidJuice';
 import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds';
 
 /**
- * MissingNumbers — "which number is missing?"
+ * MissingNumbers — a number chart with gaps.
  *
- * A row of five counting numbers with a gap, e.g. 14, 15, __, 17, 18.
- * Questions are generated in code (no data to maintain) at three levels:
- * 1–10, 1–20 and 1–50.
+ * The screen shows a chart of numbers laid out in lines of five (1 to 20 is
+ * four lines), with some numbers left blank. The child taps a blank box, then
+ * taps the number that belongs there from the tray underneath. The next blank
+ * is selected automatically after each right answer.
  *
- *   1–10  one number missing in every question
- *   1–20  one missing, then two missing in the second half of the round
- *   1–50  one missing, then two missing from the third question on
+ *   1 to 10   two lines, one or two gaps per line
+ *   1 to 20   four lines, one or two gaps per line
+ *   1 to 50   four lines of a 20-number window (1–20, 11–30, 21–40, 31–50),
+ *             two gaps per line
  *
- * With one gap the child picks from three choices. With two gaps there are
- * four choices and the child taps the numbers in order, left to right.
- *
- * The wrong choices are numbers just outside the row (and, on the 1–50 level,
- * the number ten away), so the child has to check that the number really fits
- * between its neighbours instead of picking one that merely looks close.
+ * A game is three charts. Wrong answers can be retried; after two wrong tries
+ * on the same box the right number in the tray starts to glow. Charts are
+ * generated in code, so there is no data to maintain.
  */
 
 type Band = 'easy' | 'medium' | 'hard';
@@ -36,8 +35,8 @@ interface MissingNumbersProps {
   onComplete: (stars: number) => void;
 }
 
-const TOTAL = 8;
-const ROW = 5;
+const COLS = 5;
+const CHARTS = 3;
 const NUM = "'Fredoka', ui-rounded, system-ui, sans-serif";
 
 const numStyle = (size: string): React.CSSProperties => ({
@@ -50,7 +49,7 @@ const numStyle = (size: string): React.CSSProperties => ({
 });
 
 interface Level {
-  max: number;
+  id: string;
   title: string;
   sub: string;
   icon: string;
@@ -58,20 +57,22 @@ interface Level {
   shadow: string;
   diff: 1 | 2 | 3;
   band: Band;
-  plan: number[]; // how many numbers are hidden in each of the TOTAL questions
+  rows: number; // lines of five numbers
+  starts: number[]; // possible first numbers of the chart
+  perRow: [number, number]; // min and max gaps in each line
 }
 
 const LEVELS: Level[] = [
-  { max: 10, title: '1 to 10', sub: 'One missing number', icon: '🌱', grad: 'from-lime-400 to-green-500', shadow: '#15803D', diff: 1, band: 'easy', plan: [1, 1, 1, 1, 1, 1, 1, 1] },
-  { max: 20, title: '1 to 20', sub: 'Sometimes two missing', icon: '🌳', grad: 'from-sky-400 to-blue-500', shadow: '#1D4ED8', diff: 2, band: 'medium', plan: [1, 1, 1, 1, 2, 2, 2, 2] },
-  { max: 50, title: '1 to 50', sub: 'Big numbers, two missing!', icon: '🚀', grad: 'from-fuchsia-500 to-purple-600', shadow: '#7E22CE', diff: 3, band: 'hard', plan: [1, 1, 2, 2, 2, 2, 2, 2] },
+  { id: '10', title: '1 to 10', sub: 'Two short lines', icon: '🌱', grad: 'from-lime-400 to-green-500', shadow: '#15803D', diff: 1, band: 'easy', rows: 2, starts: [1], perRow: [1, 2] },
+  { id: '20', title: '1 to 20', sub: 'Four lines of numbers', icon: '🌳', grad: 'from-sky-400 to-blue-500', shadow: '#1D4ED8', diff: 2, band: 'medium', rows: 4, starts: [1], perRow: [1, 2] },
+  { id: '50', title: '1 to 50', sub: 'Big number charts', icon: '🚀', grad: 'from-fuchsia-500 to-purple-600', shadow: '#7E22CE', diff: 3, band: 'hard', rows: 4, starts: [1, 11, 21, 31], perRow: [2, 2] },
 ];
 
-interface Question {
-  start: number; // first number in the row
-  blanks: number[]; // indexes (0–4) of the hidden numbers, left to right
-  answers: number[]; // the hidden numbers, left to right
-  options: number[];
+interface Chart {
+  start: number; // the number in the first box
+  rows: number;
+  blanks: number[]; // box positions (0 = first box), ascending
+  tray: number[]; // the missing numbers, shuffled
 }
 
 const randInt = (lo: number, hi: number) => lo + Math.floor(Math.random() * (hi - lo + 1));
@@ -85,69 +86,53 @@ const shuffle = <T,>(items: T[]): T[] => {
   return a;
 };
 
-const makeQuestions = (max: number, plan: number[]): Question[] => {
-  const seen = new Set<string>();
-  const out: Question[] = [];
+const makeCharts = (level: Level): Chart[] => {
+  const starts = level.starts.length > 1 ? shuffle(level.starts) : level.starts;
+  const out: Chart[] = [];
 
-  for (const count of plan) {
-    let q: Question | null = null;
-    let guard = 0;
+  for (let c = 0; c < CHARTS; c++) {
+    const start = starts[c % starts.length];
+    const blanks: number[] = [];
 
-    while (!q && guard < 200) {
-      guard += 1;
-      const start = randInt(1, max - (ROW - 1));
-      const blanks = shuffle([0, 1, 2, 3, 4])
+    for (let r = 0; r < level.rows; r++) {
+      // the very first box always stays visible so the child can see where the chart begins
+      const cols = Array.from({ length: COLS }, (_, i) => i).filter((i) => !(r === 0 && i === 0));
+      const count = randInt(level.perRow[0], level.perRow[1]);
+      shuffle(cols)
         .slice(0, count)
-        .sort((a, b) => a - b);
-      const key = `${start}-${blanks.join(',')}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-
-      const answers = blanks.map((b) => start + b);
-      const inRow = (n: number) => n >= start && n < start + ROW;
-
-      // wrong choices: numbers just outside the row, plus the number ten away on the big level
-      const pool = [start - 1, start - 2, start + ROW, start + ROW + 1];
-      if (max >= 50) answers.forEach((a) => pool.push(a - 10, a + 10));
-      const wrong = shuffle(
-        Array.from(new Set(pool)).filter((n) => n >= 1 && n <= max && !inRow(n))
-      ).slice(0, 2);
-
-      q = { start, blanks, answers, options: shuffle([...answers, ...wrong]) };
+        .forEach((col) => blanks.push(r * COLS + col));
     }
-    if (q) out.push(q);
+
+    blanks.sort((a, b) => a - b);
+    out.push({ start, rows: level.rows, blanks, tray: shuffle(blanks.map((b) => start + b)) });
   }
   return out;
 };
 
-const OPTION_COLORS = [
+const TRAY_COLORS = [
   { bg: '#2C7BE5', sh: '#1E40AF' },
   { bg: '#57CC5B', sh: '#047857' },
   { bg: '#F0522B', sh: '#C2410C' },
+  { bg: '#7B2CBF', sh: '#5B21B6' },
 ];
 
 /* ------------------------------------------------------------------ */
-/* One number in the row                                               */
+/* One box in the chart                                                */
 /* ------------------------------------------------------------------ */
 
-const Tile: React.FC<{ value: number | string; tone: 'normal' | 'blank' | 'active' | 'right' | 'wrong' }> = ({ value, tone }) => {
-  const amber = tone === 'blank' || tone === 'active';
-  const color = amber ? '#F59E0B' : tone === 'right' ? '#16A34A' : tone === 'wrong' ? '#DC2626' : '#2C7BE5';
-  const bg = amber ? '#FFFBEB' : tone === 'right' ? '#DCFCE7' : tone === 'wrong' ? '#FEE2E2' : '#fff';
-  return (
-    <div
-      className="rounded-2xl flex items-center justify-center"
-      style={{
-        width: 54,
-        height: 68,
-        background: bg,
-        border: `4px ${tone === 'blank' ? 'dashed' : 'solid'} ${color}`,
-        boxShadow: tone === 'active' ? `0 5px 0 ${color}, 0 0 14px #FBBF24` : `0 5px 0 ${color}`,
-      }}
-    >
-      <span style={{ ...numStyle(String(value).length > 1 ? '26px' : '32px'), color }}>{value}</span>
-    </div>
-  );
+type Tone = 'normal' | 'blank' | 'active' | 'right';
+
+const toneStyle = (tone: Tone): React.CSSProperties => {
+  switch (tone) {
+    case 'blank':
+      return { background: '#FFFBEB', border: '3px dashed #F59E0B', color: '#F59E0B', boxShadow: '0 3px 0 #FCD34D' };
+    case 'active':
+      return { background: '#FEF3C7', border: '3px solid #F59E0B', color: '#D97706', boxShadow: '0 3px 0 #F59E0B, 0 0 14px #FBBF24' };
+    case 'right':
+      return { background: '#DCFCE7', border: '3px solid #22C55E', color: '#15803D', boxShadow: '0 3px 0 #22C55E' };
+    default:
+      return { background: '#fff', border: '3px solid #BFD4F5', color: '#2C7BE5', boxShadow: '0 3px 0 #BFD4F5' };
+  }
 };
 
 /* ================================================================== */
@@ -156,142 +141,160 @@ const Tile: React.FC<{ value: number | string; tone: 'normal' | 'blank' | 'activ
 
 const MissingNumbers: React.FC<MissingNumbersProps> = ({ defaultBand, progress, onBack, onAnswer, onComplete }) => {
   const [level, setLevel] = useState<Level | null>(null);
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [qIndex, setQIndex] = useState(0);
-  const [filled, setFilled] = useState<number[]>([]); // numbers placed so far, left to right
-  const [outcome, setOutcome] = useState<'right' | 'wrong' | null>(null);
-  const [wrongPick, setWrongPick] = useState<number | null>(null);
-  const [score, setScore] = useState(0);
-  const [streak, setStreak] = useState(0);
+  const [charts, setCharts] = useState<Chart[]>([]);
+  const [ci, setCi] = useState(0); // which chart
+  const [filled, setFilled] = useState<number[]>([]); // box positions filled correctly
+  const [active, setActive] = useState<number | null>(null); // selected blank
+  const [misses, setMisses] = useState<Record<number, number>>({}); // wrong tries per box
+  const [shakeCell, setShakeCell] = useState<{ idx: number; tick: number } | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [chartDone, setChartDone] = useState(false);
   const [done, setDone] = useState(false);
+  const [tally, setTally] = useState({ right: 0, wrong: 0 });
 
+  const rights = useRef(0);
+  const wrongs = useRef(0);
   const awarded = useRef(false);
-  const scoreRef = useRef(0); // always current, so the last answer counts toward the stars
   const timer = useRef<number | null>(null);
+  const feedbackTimer = useRef<number | null>(null);
 
-  const clearTimer = () => {
+  const clearTimers = () => {
     if (timer.current !== null) window.clearTimeout(timer.current);
+    if (feedbackTimer.current !== null) window.clearTimeout(feedbackTimer.current);
     timer.current = null;
+    feedbackTimer.current = null;
   };
 
   useEffect(
     () => () => {
-      clearTimer();
+      clearTimers();
       stopSpeaking();
     },
     []
   );
 
-  const spokenRow = (q: Question) =>
-    Array.from({ length: ROW }, (_, i) => (q.blanks.includes(i) ? 'what number?' : String(q.start + i))).join(', ');
+  const flash = (msg: string, ms = 1600) => {
+    if (feedbackTimer.current !== null) window.clearTimeout(feedbackTimer.current);
+    setFeedback(msg);
+    feedbackTimer.current = window.setTimeout(() => setFeedback(null), ms);
+  };
 
-  const resetAnswer = () => {
+  const beginChart = (chart: Chart) => {
     setFilled([]);
-    setOutcome(null);
-    setWrongPick(null);
+    setMisses({});
+    setShakeCell(null);
+    setChartDone(false);
+    setActive(chart.blanks[0] ?? null);
   };
 
   const startLevel = (l: Level) => {
-    clearTimer();
+    clearTimers();
     playClick();
     buzz('tick');
-    const qs = makeQuestions(l.max, l.plan);
+    const cs = makeCharts(l);
     setLevel(l);
-    setQuestions(qs);
-    setQIndex(0);
-    scoreRef.current = 0;
-    setScore(0);
-    setStreak(0);
-    resetAnswer();
-    setFeedback(null);
+    setCharts(cs);
+    setCi(0);
     setDone(false);
+    setFeedback(null);
+    rights.current = 0;
+    wrongs.current = 0;
+    setTally({ right: 0, wrong: 0 });
     awarded.current = false;
-    speak(`${qs[0].blanks.length > 1 ? 'Which numbers are missing?' : 'Which number is missing?'} ${spokenRow(qs[0])}`);
+    beginChart(cs[0]);
+    speak('Fill in the missing numbers.');
   };
 
   const leaveToMenu = () => {
-    clearTimer();
+    clearTimers();
     stopSpeaking();
     setFeedback(null);
     setLevel(null);
   };
 
-  const nextQuestion = () => {
-    if (!level) return;
-    if (qIndex + 1 >= questions.length) {
-      setDone(true);
-      playComplete();
-      buzz('success');
-      if (!awarded.current) {
-        awarded.current = true;
-        const finalScore = scoreRef.current;
-        onComplete(finalScore >= TOTAL * 0.8 ? 3 : finalScore >= TOTAL * 0.5 ? 2 : 1);
-      }
-      return;
+  const finishGame = () => {
+    setDone(true);
+    setTally({ right: rights.current, wrong: wrongs.current });
+    playComplete();
+    buzz('success');
+    if (!awarded.current) {
+      awarded.current = true;
+      const total = rights.current + wrongs.current;
+      const accuracy = total === 0 ? 1 : rights.current / total;
+      onComplete(accuracy >= 0.8 ? 3 : accuracy >= 0.5 ? 2 : 1);
     }
-    setQIndex((i) => i + 1);
-    resetAnswer();
-    const next = questions[qIndex + 1];
-    timer.current = window.setTimeout(
-      () => speak(`${next.blanks.length > 1 ? 'Which numbers are missing?' : 'Which number is missing?'} ${spokenRow(next)}`),
-      120
-    );
   };
 
-  const resolve = (value: number) => {
-    const q = questions[qIndex];
-    if (!q || outcome !== null || filled.includes(value)) return;
+  const chart = charts[ci];
 
-    const expected = q.answers[filled.length];
+  const pickTray = (value: number) => {
+    if (!chart || chartDone) return;
+
+    if (active === null) {
+      flash('Tap an empty box first 👆', 1400);
+      speak('Tap an empty box first.');
+      return;
+    }
+
+    const expected = chart.start + active;
 
     if (value === expected) {
-      const next = [...filled, value];
-      setFilled(next);
+      rights.current += 1;
+      onAnswer(true);
+      const nextFilled = [...filled, active];
+      setFilled(nextFilled);
+      speak(String(value));
 
-      // one gap filled, more to go
-      if (next.length < q.answers.length) {
+      const remaining = chart.blanks.filter((b) => !nextFilled.includes(b));
+      if (remaining.length > 0) {
         playClick();
-        buzz('tick');
-        speak(String(value));
+        buzz('soft');
+        // move on to the next empty box, reading left to right
+        const after = remaining.find((b) => b > active);
+        setActive(after !== undefined ? after : remaining[0]);
         return;
       }
 
-      // all gaps filled
-      setOutcome('right');
-      onAnswer(true);
+      // chart complete
       playCorrect();
       buzz('soft');
-      scoreRef.current += 1;
-      setScore(scoreRef.current);
-      const st = streak + 1;
-      setStreak(st);
-      setFeedback(st >= 3 ? `${st} in a row! 🔥` : 'Yes! Well done.');
-      speak(st >= 3 ? `${st} in a row!` : 'Yes! Well done.');
+      setActive(null);
+      setChartDone(true);
+      flash('Great job! 🎉', 1300);
       timer.current = window.setTimeout(() => {
-        setFeedback(null);
-        nextQuestion();
-      }, 1100);
+        if (ci + 1 >= charts.length) {
+          finishGame();
+        } else {
+          setCi(ci + 1);
+          beginChart(charts[ci + 1]);
+          speak('Fill in the missing numbers.');
+        }
+      }, 1400);
       return;
     }
 
-    // wrong number: one try per question, then show the answer
-    setOutcome('wrong');
-    setWrongPick(value);
+    // wrong number: try again
+    wrongs.current += 1;
     onAnswer(false);
     playWrong();
     buzz('oops');
-    setStreak(0);
-    const msg =
-      q.answers.length > 1
-        ? `The missing numbers are ${q.answers.join(' and ')}.`
-        : `The missing number is ${q.answers[0]}.`;
-    setFeedback(msg);
-    speak(`${msg} ${Array.from({ length: ROW }, (_, i) => q.start + i).join(', ')}.`);
-    timer.current = window.setTimeout(() => {
-      setFeedback(null);
-      nextQuestion();
-    }, 3000);
+    setMisses((m) => ({ ...m, [active]: (m[active] || 0) + 1 }));
+    setShakeCell((s) => ({ idx: active, tick: (s?.tick ?? 0) + 1 }));
+    flash('Try again! Look at the numbers next to the box.', 1800);
+    speak('Try again.');
+  };
+
+  const tapCell = (idx: number, isBlank: boolean, isFilled: boolean) => {
+    if (!chart || chartDone) return;
+    if (isBlank && !isFilled) {
+      playClick();
+      buzz('tick');
+      setActive(idx);
+      return;
+    }
+    // a number that is already showing: say it
+    buzz('tick');
+    speak(String(chart.start + idx));
   };
 
   /* ---------------- level picker ---------------- */
@@ -305,13 +308,13 @@ const MissingNumbers: React.FC<MissingNumbersProps> = ({ defaultBand, progress, 
               Which numbers? 🔢
             </h2>
             <p className="text-center text-xs text-gray-500 font-semibold mb-3">
-              Find the number that is missing from the row.
+              Some numbers are missing from the chart. Can you find them?
             </p>
 
             <div className="grid grid-cols-1 gap-3 max-w-sm mx-auto">
               {LEVELS.map((l, i) => (
                 <motion.button
-                  key={l.max}
+                  key={l.id}
                   onClick={() => startLevel(l)}
                   className={`rounded-3xl p-4 text-white border-4 border-white bg-gradient-to-r ${l.grad} flex items-center gap-4 text-left`}
                   style={{ boxShadow: `0 8px 0 ${l.shadow}, 0 12px 22px rgba(0,0,0,.18)` }}
@@ -346,7 +349,9 @@ const MissingNumbers: React.FC<MissingNumbersProps> = ({ defaultBand, progress, 
 
   /* ---------------- result ---------------- */
   if (done) {
-    const stars = score >= TOTAL * 0.8 ? 3 : score >= TOTAL * 0.5 ? 2 : 1;
+    const total = tally.right + tally.wrong;
+    const accuracy = total === 0 ? 1 : tally.right / total;
+    const stars = accuracy >= 0.8 ? 3 : accuracy >= 0.5 ? 2 : 1;
     return (
       <GameBackground variant="game">
         <div className="h-full flex flex-col overflow-x-hidden">
@@ -359,11 +364,16 @@ const MissingNumbers: React.FC<MissingNumbersProps> = ({ defaultBand, progress, 
               </p>
 
               <div
-                className="mt-3 inline-flex items-baseline gap-1 bg-white border-4 border-white rounded-2xl px-6 py-3"
+                className="mt-3 inline-flex flex-col items-center bg-white border-4 border-white rounded-2xl px-6 py-3"
                 style={{ boxShadow: '0 5px 0 rgba(0,0,0,.12)' }}
               >
-                <span style={{ ...numStyle('44px'), color: '#2C7BE5' }}>{score}</span>
-                <span className="text-gray-400" style={numStyle('22px')}>/{TOTAL}</span>
+                <span style={{ ...numStyle('44px'), color: '#2C7BE5' }}>{tally.right}</span>
+                <span className="text-gray-500 text-xs font-bold mt-1" style={{ fontFamily: NUM }}>
+                  numbers found
+                </span>
+                <span className="text-gray-400 text-xs font-semibold mt-0.5" style={{ fontFamily: NUM }}>
+                  {tally.wrong === 0 ? 'no mistakes!' : `${tally.wrong} ${tally.wrong === 1 ? 'mistake' : 'mistakes'}`}
+                </span>
               </div>
 
               <div className="flex justify-center gap-1 mt-3">
@@ -384,8 +394,8 @@ const MissingNumbers: React.FC<MissingNumbersProps> = ({ defaultBand, progress, 
               <div className="mt-4 bg-white/90 border-4 border-white rounded-2xl p-3 text-left">
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">For grown-ups</p>
                 <p className="text-sm text-gray-600 font-semibold">
-                  Missing numbers builds number order: knowing what comes just before and just after a number. It is the
-                  step that comes before adding and subtracting. Try counting the row out loud together.
+                  A number chart helps children see the order of numbers and the pattern of "one more" along each line.
+                  Ask your child to count each line out loud, then say which number comes before and after each gap.
                 </p>
               </div>
 
@@ -414,10 +424,11 @@ const MissingNumbers: React.FC<MissingNumbersProps> = ({ defaultBand, progress, 
     );
   }
 
-  const q = questions[qIndex];
-  if (!q) return null;
-  const two = q.blanks.length > 1;
-  const question = two ? 'Which numbers are missing?' : 'Which number is missing?';
+  if (!chart) return null;
+
+  const cells = Array.from({ length: chart.rows * COLS }, (_, i) => i);
+  const trayLeft = chart.tray.filter((v) => !filled.includes(v - chart.start));
+  const glowValue = active !== null && (misses[active] || 0) >= 2 ? chart.start + active : null;
 
   /* ---------------- playing ---------------- */
   return (
@@ -428,42 +439,35 @@ const MissingNumbers: React.FC<MissingNumbersProps> = ({ defaultBand, progress, 
           onBack={() => { playClick(); leaveToMenu(); }}
           stars={progress.stars}
           showProgress
-          progress={(qIndex / TOTAL) * 100}
+          progress={((ci + (chartDone ? 1 : 0)) / charts.length) * 100}
         />
 
         <div className="flex-1 flex flex-col items-center px-3 pb-3 min-h-0 overflow-y-auto">
-          {/* progress dots + streak */}
+          {/* progress dots */}
           <div className="flex items-center justify-between w-full max-w-sm mt-1 mb-2">
-            <div className="flex gap-1">
-              {Array.from({ length: TOTAL }, (_, i) => (
+            <div className="flex gap-1.5 items-center">
+              {charts.map((_, i) => (
                 <span
                   key={i}
                   className="rounded-full"
                   style={{
-                    width: 9,
-                    height: 9,
-                    background: i < qIndex ? '#22C55E' : i === qIndex ? '#F97316' : 'rgba(0,0,0,.14)',
+                    width: 11,
+                    height: 11,
+                    background: i < ci || (i === ci && chartDone) ? '#22C55E' : i === ci ? '#F97316' : 'rgba(0,0,0,.14)',
                   }}
                 />
               ))}
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 font-bold">
-                <span style={numStyle('14px')}>{score}</span> right
+              <span className="text-xs text-gray-500 font-bold ml-1" style={{ fontFamily: NUM }}>
+                chart {ci + 1} of {charts.length}
               </span>
-              {streak >= 2 && (
-                <motion.span className="text-xs font-bold text-orange-500" initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                  🔥<span style={numStyle('12px')}>{streak}</span>
-                </motion.span>
-              )}
             </div>
           </div>
 
-          {/* prompt, tap to hear the row */}
+          {/* prompt, tap to hear */}
           <motion.button
-            key={`p-${qIndex}`}
-            onClick={() => speak(`${question} ${spokenRow(q)}`)}
-            className={`w-full max-w-sm rounded-2xl px-4 py-3 mb-4 text-white border-4 border-white bg-gradient-to-r ${level.grad}`}
+            key={`p-${ci}`}
+            onClick={() => speak('Fill in the missing numbers.')}
+            className={`w-full max-w-sm rounded-2xl px-4 py-2.5 mb-3 text-white border-4 border-white bg-gradient-to-r ${level.grad}`}
             style={{ boxShadow: `0 5px 0 ${level.shadow}`, fontFamily: NUM }}
             initial={{ y: -12, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -471,79 +475,82 @@ const MissingNumbers: React.FC<MissingNumbersProps> = ({ defaultBand, progress, 
             whileTap={{ scale: 0.97, y: 2 }}
           >
             <span className="text-lg font-bold" style={{ textShadow: '1px 2px 0 rgba(0,0,0,.18)' }}>
-              {question}
+              Fill in the missing numbers
             </span>
             <span className="opacity-80 text-xs ml-2">🔊</span>
           </motion.button>
 
-          {/* the row */}
-          <div className="bg-white/95 rounded-3xl p-4 border-4 border-white" style={{ boxShadow: '0 6px 0 rgba(0,0,0,.10)' }}>
-            <div className="flex items-center justify-center gap-2">
-              {Array.from({ length: ROW }, (_, i) => {
-                const k = q.blanks.indexOf(i);
-                if (k === -1) return <Tile key={i} value={q.start + i} tone="normal" />;
-                if (k < filled.length) return <Tile key={i} value={filled[k]} tone="right" />;
-                if (outcome === 'wrong') {
-                  // reveal the answers; the one the child missed is red
-                  return <Tile key={i} value={q.answers[k]} tone={k === filled.length ? 'wrong' : 'normal'} />;
-                }
-                return <Tile key={i} value="?" tone={k === filled.length ? 'active' : 'blank'} />;
+          {/* the chart */}
+          <div
+            className="bg-white/95 rounded-3xl p-3 border-4 border-white w-full max-w-sm"
+            style={{ boxShadow: '0 6px 0 rgba(0,0,0,.10)' }}
+            data-kind="chart"
+          >
+            <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}>
+              {cells.map((idx) => {
+                const isBlank = chart.blanks.includes(idx);
+                const isFilled = filled.includes(idx);
+                const isActive = active === idx && isBlank && !isFilled;
+                const tone: Tone = !isBlank ? 'normal' : isFilled ? 'right' : isActive ? 'active' : 'blank';
+                const shaking = shakeCell !== null && shakeCell.idx === idx;
+
+                return (
+                  <motion.button
+                    key={shaking && isActive ? `s${idx}-${shakeCell?.tick}` : `c${idx}`}
+                    type="button"
+                    data-kind="cell"
+                    data-idx={idx}
+                    data-active={isActive ? 'true' : 'false'}
+                    onClick={() => tapCell(idx, isBlank, isFilled)}
+                    className="rounded-xl flex items-center justify-center"
+                    style={{ ...toneStyle(tone), height: 56 }}
+                    initial={shaking && isActive ? { x: 0 } : false}
+                    animate={shaking && isActive ? { x: [0, -7, 7, -5, 5, 0] } : { x: 0 }}
+                    transition={{ duration: 0.35 }}
+                    whileTap={{ scale: 0.94 }}
+                  >
+                    <span style={numStyle('26px')}>{isBlank && !isFilled ? '?' : chart.start + idx}</span>
+                  </motion.button>
+                );
               })}
             </div>
           </div>
 
-          {two && outcome === null && (
-            <p className="text-xs text-gray-500 font-semibold mt-2" style={{ fontFamily: NUM }}>
-              👆 Tap the numbers in order, left to right
-            </p>
-          )}
+          {/* the tray */}
+          <p className="text-xs text-gray-500 font-semibold mt-3 mb-2 text-center" style={{ fontFamily: NUM }}>
+            {chartDone ? '🎉 All done!' : '👆 Tap a box, then tap the number that fits'}
+          </p>
 
-          {/* answer buttons */}
-          <div className={`grid gap-3 w-full max-w-sm mt-5 ${q.options.length > 3 ? 'grid-cols-4' : 'grid-cols-3'}`}>
-            {q.options.map((opt, i) => {
-              const used = filled.includes(opt);
-              const isAnswer = q.answers.includes(opt);
-              const isWrongPick = wrongPick === opt;
-              const c = OPTION_COLORS[i % OPTION_COLORS.length];
-
-              let bg = c.bg;
-              let sh = c.sh;
-              if (used) {
-                bg = '#22C55E';
-                sh = '#047857';
-              } else if (outcome === 'wrong') {
-                if (isWrongPick) {
-                  bg = '#DC2626';
-                  sh = '#991B1B';
-                } else if (isAnswer) {
-                  bg = '#22C55E';
-                  sh = '#047857';
-                } else {
-                  bg = '#D8DCE8';
-                  sh = '#9AA0A6';
-                }
-              }
-
+          <div className="flex flex-wrap gap-2.5 justify-center w-full max-w-sm min-h-[64px]">
+            {trayLeft.map((value, i) => {
+              const c = TRAY_COLORS[i % TRAY_COLORS.length];
+              const glow = glowValue === value;
               return (
                 <motion.button
-                  key={`${qIndex}-${opt}`}
-                  onClick={() => resolve(opt)}
-                  disabled={outcome !== null || used}
-                  className="rounded-2xl border-4 border-white flex items-center justify-center"
-                  style={{ background: bg, boxShadow: `0 6px 0 ${sh}`, minHeight: 74, color: '#fff', opacity: used && outcome === null ? 0.55 : 1 }}
-                  initial={{ scale: 0, y: 16 }}
-                  animate={{ scale: 1, y: 0 }}
-                  transition={{ delay: 0.1 + i * 0.05, ...POP }}
-                  whileTap={outcome === null && !used ? { scale: 0.95, y: 3 } : {}}
+                  key={`${ci}-${value}`}
+                  type="button"
+                  data-kind="tray"
+                  onClick={() => pickTray(value)}
+                  className="rounded-2xl border-4 border-white flex items-center justify-center text-white"
+                  style={{
+                    background: c.bg,
+                    width: 58,
+                    height: 58,
+                    boxShadow: glow ? `0 5px 0 ${c.sh}, 0 0 0 4px #FBBF24, 0 0 16px #FBBF24` : `0 5px 0 ${c.sh}`,
+                  }}
+                  initial={{ scale: 0 }}
+                  animate={glow ? { scale: [1, 1.12, 1] } : { scale: 1 }}
+                  transition={glow ? { duration: 0.9, repeat: Infinity } : { delay: i * 0.04, ...POP }}
+                  whileTap={{ scale: 0.92, y: 3 }}
                 >
-                  <span style={numStyle('32px')}>{opt}</span>
+                  <span style={numStyle('26px')}>{value}</span>
                 </motion.button>
               );
             })}
           </div>
 
           {/* feedback */}
-          <div className="h-12 flex items-center mt-3">
+          <div className="h-12 flex items-center mt-2">
             <AnimatePresence>
               {feedback && (
                 <motion.p
