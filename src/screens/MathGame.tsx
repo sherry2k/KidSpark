@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { GameBackground } from '../components/Background';
 import Navigation from '../components/Navigation';
 import TenFrame from '../components/TenFrame';
+import MissingNumbers from './MissingNumbers';
 import ItemIcon from '../components/mechanics/ItemIcon';
 import { GameProgress, PlayerProfile } from '../store/gameStore';
 import { MATH_MODES, MathMode, ModeId, Band, Question, frameSize, maxFor } from '../data/mathModes';
@@ -185,6 +186,7 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
   const [streak, setStreak] = useState(0);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [missingOpen, setMissingOpen] = useState(false);
 
   /* number-line state */
   const trackRef = useRef<HTMLDivElement>(null);
@@ -275,6 +277,17 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
   };
 
   /* ---------------- mode picker ---------------- */
+    if (missingOpen) {
+    return (
+      <MissingNumbers
+        defaultBand={band}
+        progress={progress}
+        onBack={() => setMissingOpen(false)}
+        onAnswer={onAnswer}
+        onComplete={onComplete}
+      />
+    );
+  }
   if (!mode) {
     return (
       <GameBackground variant="game">
@@ -288,6 +301,24 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
               Numbers up to <span style={numStyle('13px')}>{max}</span>
             </p>
 
+            <motion.button
+              onClick={() => { playClick(); buzz('tick'); setMissingOpen(true); }}
+              className="w-full max-w-lg mx-auto mb-3 rounded-3xl p-4 text-white border-4 border-white bg-gradient-to-r from-emerald-400 to-teal-500 flex items-center gap-4 text-left"
+              style={{ boxShadow: '0 8px 0 #0F766E, 0 12px 22px rgba(0,0,0,.18)' }}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={POP}
+              whileTap={{ scale: 0.96, y: 4 }}
+            >
+              <ItemIcon icon="🔢" size={44} label="Missing numbers" />
+              <div className="flex-1">
+                <h3 className="text-lg font-bold" style={{ fontFamily: NUM, textShadow: '2px 2px 0 rgba(0,0,0,.18)' }}>
+                  Missing Numbers
+                </h3>
+                <p className="text-xs opacity-90">Which number is missing? 1 to 50</p>
+              </div>
+            </motion.button>
+            
             <div className="grid grid-cols-2 gap-3 max-w-lg mx-auto">
               {MATH_MODES.map((m, i) => (
                 <motion.button
