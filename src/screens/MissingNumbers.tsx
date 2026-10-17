@@ -10,9 +10,16 @@ import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds
 /**
  * MissingNumbers — "which number is missing?"
  *
- * A row of five counting numbers with one gap, e.g. 14, 15, __, 17, 18.
- * The child picks the missing number from three choices. Questions are
- * generated in code (no data to maintain) at three levels: 1–10, 1–20, 1–50.
+ * A row of five counting numbers with a gap, e.g. 14, 15, __, 17, 18.
+ * Questions are generated in code (no data to maintain) at three levels:
+ * 1–10, 1–20 and 1–50.
+ *
+ *   1–10  one number missing in every question
+ *   1–20  one missing, then two missing in the second half of the round
+ *   1–50  one missing, then two missing from the third question on
+ *
+ * With one gap the child picks from three choices. With two gaps there are
+ * four choices and the child taps the numbers in order, left to right.
  *
  * The wrong choices are numbers just outside the row (and, on the 1–50 level,
  * the number ten away), so the child has to check that the number really fits
@@ -51,18 +58,19 @@ interface Level {
   shadow: string;
   diff: 1 | 2 | 3;
   band: Band;
+  plan: number[]; // how many numbers are hidden in each of the TOTAL questions
 }
 
 const LEVELS: Level[] = [
-  { max: 10, title: '1 to 10', sub: 'Small numbers', icon: '🌱', grad: 'from-lime-400 to-green-500', shadow: '#15803D', diff: 1, band: 'easy' },
-  { max: 20, title: '1 to 20', sub: 'Getting bigger', icon: '🌳', grad: 'from-sky-400 to-blue-500', shadow: '#1D4ED8', diff: 2, band: 'medium' },
-  { max: 50, title: '1 to 50', sub: 'Big numbers!', icon: '🚀', grad: 'from-fuchsia-500 to-purple-600', shadow: '#7E22CE', diff: 3, band: 'hard' },
+  { max: 10, title: '1 to 10', sub: 'One missing number', icon: '🌱', grad: 'from-lime-400 to-green-500', shadow: '#15803D', diff: 1, band: 'easy', plan: [1, 1, 1, 1, 1, 1, 1, 1] },
+  { max: 20, title: '1 to 20', sub: 'Sometimes two missing', icon: '🌳', grad: 'from-sky-400 to-blue-500', shadow: '#1D4ED8', diff: 2, band: 'medium', plan: [1, 1, 1, 1, 2, 2, 2, 2] },
+  { max: 50, title: '1 to 50', sub: 'Big numbers, two missing!', icon: '🚀', grad: 'from-fuchsia-500 to-purple-600', shadow: '#7E22CE', diff: 3, band: 'hard', plan: [1, 1, 2, 2, 2, 2, 2, 2] },
 ];
 
 interface Question {
   start: number; // first number in the row
-  blank: number; // index (0–4) of the missing number
-  answer: number;
+  blanks: number[]; // indexes (0–4) of the hidden numbers, left to right
+  answers: number[]; // the hidden numbers, left to right
   options: number[];
 }
 
@@ -77,30 +85,37 @@ const shuffle = <T,>(items: T[]): T[] => {
   return a;
 };
 
-const makeQuestions = (max: number): Question[] => {
+const makeQuestions = (max: number, plan: number[]): Question[] => {
   const seen = new Set<string>();
   const out: Question[] = [];
-  let guard = 0;
 
-  while (out.length < TOTAL && guard < 200) {
-    guard += 1;
-    const start = randInt(1, max - (ROW - 1));
-    const blank = randInt(0, ROW - 1);
-    const key = `${start}-${blank}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
+  for (const count of plan) {
+    let q: Question | null = null;
+    let guard = 0;
 
-    const answer = start + blank;
-    const inRow = (n: number) => n >= start && n < start + ROW;
+    while (!q && guard < 200) {
+      guard += 1;
+      const start = randInt(1, max - (ROW - 1));
+      const blanks = shuffle([0, 1, 2, 3, 4])
+        .slice(0, count)
+        .sort((a, b) => a - b);
+      const key = `${start}-${blanks.join(',')}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
 
-    // wrong choices: numbers just outside the row, plus the number ten away on the big level
-    const pool = [start - 1, start - 2, start + ROW, start + ROW + 1];
-    if (max >= 50) pool.push(answer - 10, answer + 10);
-    const wrong = shuffle(
-      Array.from(new Set(pool)).filter((n) => n >= 1 && n <= max && !inRow(n))
-    ).slice(0, 2);
+      const answers = blanks.map((b) => start + b);
+      const inRow = (n: number) => n >= start && n < start + ROW;
 
-    out.push({ start, blank, answer, options: shuffle([answer, ...wrong]) });
+      // wrong choices: numbers just outside the row, plus the number ten away on the big level
+      const pool = [start - 1, start - 2, start + ROW, start + ROW + 1];
+      if (max >= 50) answers.forEach((a) => pool.push(a - 10, a + 10));
+      const wrong = shuffle(
+        Array.from(new Set(pool)).filter((n) => n >= 1 && n <= max && !inRow(n))
+      ).slice(0, 2);
+
+      q = { start, blanks, answers, options: shuffle([...answers, ...wrong]) };
+    }
+    if (q) out.push(q);
   }
   return out;
 };
@@ -115,9 +130,10 @@ const OPTION_COLORS = [
 /* One number in the row                                               */
 /* ------------------------------------------------------------------ */
 
-const Tile: React.FC<{ value: number | string; tone: 'normal' | 'blank' | 'right' | 'wrong' }> = ({ value, tone }) => {
-  const color = tone === 'blank' ? '#F59E0B' : tone === 'right' ? '#16A34A' : tone === 'wrong' ? '#DC2626' : '#2C7BE5';
-  const bg = tone === 'blank' ? '#FFFBEB' : tone === 'right' ? '#DCFCE7' : tone === 'wrong' ? '#FEE2E2' : '#fff';
+const Tile: React.FC<{ value: number | string; tone: 'normal' | 'blank' | 'active' | 'right' | 'wrong' }> = ({ value, tone }) => {
+  const amber = tone === 'blank' || tone === 'active';
+  const color = amber ? '#F59E0B' : tone === 'right' ? '#16A34A' : tone === 'wrong' ? '#DC2626' : '#2C7BE5';
+  const bg = amber ? '#FFFBEB' : tone === 'right' ? '#DCFCE7' : tone === 'wrong' ? '#FEE2E2' : '#fff';
   return (
     <div
       className="rounded-2xl flex items-center justify-center"
@@ -126,7 +142,7 @@ const Tile: React.FC<{ value: number | string; tone: 'normal' | 'blank' | 'right
         height: 68,
         background: bg,
         border: `4px ${tone === 'blank' ? 'dashed' : 'solid'} ${color}`,
-        boxShadow: `0 5px 0 ${color}`,
+        boxShadow: tone === 'active' ? `0 5px 0 ${color}, 0 0 14px #FBBF24` : `0 5px 0 ${color}`,
       }}
     >
       <span style={{ ...numStyle(String(value).length > 1 ? '26px' : '32px'), color }}>{value}</span>
@@ -142,13 +158,16 @@ const MissingNumbers: React.FC<MissingNumbersProps> = ({ defaultBand, progress, 
   const [level, setLevel] = useState<Level | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [qIndex, setQIndex] = useState(0);
-  const [picked, setPicked] = useState<number | null>(null);
+  const [filled, setFilled] = useState<number[]>([]); // numbers placed so far, left to right
+  const [outcome, setOutcome] = useState<'right' | 'wrong' | null>(null);
+  const [wrongPick, setWrongPick] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
   const awarded = useRef(false);
+  const scoreRef = useRef(0); // always current, so the last answer counts toward the stars
   const timer = useRef<number | null>(null);
 
   const clearTimer = () => {
@@ -165,23 +184,30 @@ const MissingNumbers: React.FC<MissingNumbersProps> = ({ defaultBand, progress, 
   );
 
   const spokenRow = (q: Question) =>
-    Array.from({ length: ROW }, (_, i) => (i === q.blank ? 'what number?' : String(q.start + i))).join(', ');
+    Array.from({ length: ROW }, (_, i) => (q.blanks.includes(i) ? 'what number?' : String(q.start + i))).join(', ');
+
+  const resetAnswer = () => {
+    setFilled([]);
+    setOutcome(null);
+    setWrongPick(null);
+  };
 
   const startLevel = (l: Level) => {
     clearTimer();
     playClick();
     buzz('tick');
-    const qs = makeQuestions(l.max);
+    const qs = makeQuestions(l.max, l.plan);
     setLevel(l);
     setQuestions(qs);
     setQIndex(0);
+    scoreRef.current = 0;
     setScore(0);
     setStreak(0);
-    setPicked(null);
+    resetAnswer();
     setFeedback(null);
     setDone(false);
     awarded.current = false;
-    speak(`Which number is missing? ${spokenRow(qs[0])}`);
+    speak(`${qs[0].blanks.length > 1 ? 'Which numbers are missing?' : 'Which number is missing?'} ${spokenRow(qs[0])}`);
   };
 
   const leaveToMenu = () => {
@@ -199,27 +225,45 @@ const MissingNumbers: React.FC<MissingNumbersProps> = ({ defaultBand, progress, 
       buzz('success');
       if (!awarded.current) {
         awarded.current = true;
-        onComplete(score >= TOTAL * 0.8 ? 3 : score >= TOTAL * 0.5 ? 2 : 1);
+        const finalScore = scoreRef.current;
+        onComplete(finalScore >= TOTAL * 0.8 ? 3 : finalScore >= TOTAL * 0.5 ? 2 : 1);
       }
       return;
     }
     setQIndex((i) => i + 1);
-    setPicked(null);
+    resetAnswer();
     const next = questions[qIndex + 1];
-    timer.current = window.setTimeout(() => speak(`Which number is missing? ${spokenRow(next)}`), 120);
+    timer.current = window.setTimeout(
+      () => speak(`${next.blanks.length > 1 ? 'Which numbers are missing?' : 'Which number is missing?'} ${spokenRow(next)}`),
+      120
+    );
   };
 
   const resolve = (value: number) => {
     const q = questions[qIndex];
-    if (!q || picked !== null) return;
-    setPicked(value);
-    const right = value === q.answer;
-    onAnswer(right);
+    if (!q || outcome !== null || filled.includes(value)) return;
 
-    if (right) {
+    const expected = q.answers[filled.length];
+
+    if (value === expected) {
+      const next = [...filled, value];
+      setFilled(next);
+
+      // one gap filled, more to go
+      if (next.length < q.answers.length) {
+        playClick();
+        buzz('tick');
+        speak(String(value));
+        return;
+      }
+
+      // all gaps filled
+      setOutcome('right');
+      onAnswer(true);
       playCorrect();
       buzz('soft');
-      setScore((s) => s + 1);
+      scoreRef.current += 1;
+      setScore(scoreRef.current);
       const st = streak + 1;
       setStreak(st);
       setFeedback(st >= 3 ? `${st} in a row! 🔥` : 'Yes! Well done.');
@@ -228,18 +272,26 @@ const MissingNumbers: React.FC<MissingNumbersProps> = ({ defaultBand, progress, 
         setFeedback(null);
         nextQuestion();
       }, 1100);
-    } else {
-      playWrong();
-      buzz('oops');
-      setStreak(0);
-      const msg = `The missing number is ${q.answer}.`;
-      setFeedback(msg);
-      speak(`${msg} ${Array.from({ length: ROW }, (_, i) => q.start + i).join(', ')}.`);
-      timer.current = window.setTimeout(() => {
-        setFeedback(null);
-        nextQuestion();
-      }, 2800);
+      return;
     }
+
+    // wrong number: one try per question, then show the answer
+    setOutcome('wrong');
+    setWrongPick(value);
+    onAnswer(false);
+    playWrong();
+    buzz('oops');
+    setStreak(0);
+    const msg =
+      q.answers.length > 1
+        ? `The missing numbers are ${q.answers.join(' and ')}.`
+        : `The missing number is ${q.answers[0]}.`;
+    setFeedback(msg);
+    speak(`${msg} ${Array.from({ length: ROW }, (_, i) => q.start + i).join(', ')}.`);
+    timer.current = window.setTimeout(() => {
+      setFeedback(null);
+      nextQuestion();
+    }, 3000);
   };
 
   /* ---------------- level picker ---------------- */
@@ -364,7 +416,8 @@ const MissingNumbers: React.FC<MissingNumbersProps> = ({ defaultBand, progress, 
 
   const q = questions[qIndex];
   if (!q) return null;
-  const answered = picked !== null;
+  const two = q.blanks.length > 1;
+  const question = two ? 'Which numbers are missing?' : 'Which number is missing?';
 
   /* ---------------- playing ---------------- */
   return (
@@ -409,7 +462,7 @@ const MissingNumbers: React.FC<MissingNumbersProps> = ({ defaultBand, progress, 
           {/* prompt, tap to hear the row */}
           <motion.button
             key={`p-${qIndex}`}
-            onClick={() => speak(`Which number is missing? ${spokenRow(q)}`)}
+            onClick={() => speak(`${question} ${spokenRow(q)}`)}
             className={`w-full max-w-sm rounded-2xl px-4 py-3 mb-4 text-white border-4 border-white bg-gradient-to-r ${level.grad}`}
             style={{ boxShadow: `0 5px 0 ${level.shadow}`, fontFamily: NUM }}
             initial={{ y: -12, opacity: 0 }}
@@ -418,7 +471,7 @@ const MissingNumbers: React.FC<MissingNumbersProps> = ({ defaultBand, progress, 
             whileTap={{ scale: 0.97, y: 2 }}
           >
             <span className="text-lg font-bold" style={{ textShadow: '1px 2px 0 rgba(0,0,0,.18)' }}>
-              Which number is missing?
+              {question}
             </span>
             <span className="opacity-80 text-xs ml-2">🔊</span>
           </motion.button>
@@ -427,34 +480,63 @@ const MissingNumbers: React.FC<MissingNumbersProps> = ({ defaultBand, progress, 
           <div className="bg-white/95 rounded-3xl p-4 border-4 border-white" style={{ boxShadow: '0 6px 0 rgba(0,0,0,.10)' }}>
             <div className="flex items-center justify-center gap-2">
               {Array.from({ length: ROW }, (_, i) => {
-                if (i !== q.blank) return <Tile key={i} value={q.start + i} tone="normal" />;
-                if (!answered) return <Tile key={i} value="?" tone="blank" />;
-                return <Tile key={i} value={q.answer} tone={picked === q.answer ? 'right' : 'wrong'} />;
+                const k = q.blanks.indexOf(i);
+                if (k === -1) return <Tile key={i} value={q.start + i} tone="normal" />;
+                if (k < filled.length) return <Tile key={i} value={filled[k]} tone="right" />;
+                if (outcome === 'wrong') {
+                  // reveal the answers; the one the child missed is red
+                  return <Tile key={i} value={q.answers[k]} tone={k === filled.length ? 'wrong' : 'normal'} />;
+                }
+                return <Tile key={i} value="?" tone={k === filled.length ? 'active' : 'blank'} />;
               })}
             </div>
           </div>
 
+          {two && outcome === null && (
+            <p className="text-xs text-gray-500 font-semibold mt-2" style={{ fontFamily: NUM }}>
+              👆 Tap the numbers in order, left to right
+            </p>
+          )}
+
           {/* answer buttons */}
-          <div className="grid grid-cols-3 gap-3 w-full max-w-sm mt-5">
+          <div className={`grid gap-3 w-full max-w-sm mt-5 ${q.options.length > 3 ? 'grid-cols-4' : 'grid-cols-3'}`}>
             {q.options.map((opt, i) => {
-              const isRight = opt === q.answer;
-              const isPicked = picked === opt;
+              const used = filled.includes(opt);
+              const isAnswer = q.answers.includes(opt);
+              const isWrongPick = wrongPick === opt;
               const c = OPTION_COLORS[i % OPTION_COLORS.length];
-              const bg = !answered ? c.bg : isRight ? '#22C55E' : isPicked ? '#DC2626' : '#D8DCE8';
-              const sh = !answered ? c.sh : isRight ? '#047857' : isPicked ? '#991B1B' : '#9AA0A6';
+
+              let bg = c.bg;
+              let sh = c.sh;
+              if (used) {
+                bg = '#22C55E';
+                sh = '#047857';
+              } else if (outcome === 'wrong') {
+                if (isWrongPick) {
+                  bg = '#DC2626';
+                  sh = '#991B1B';
+                } else if (isAnswer) {
+                  bg = '#22C55E';
+                  sh = '#047857';
+                } else {
+                  bg = '#D8DCE8';
+                  sh = '#9AA0A6';
+                }
+              }
+
               return (
                 <motion.button
                   key={`${qIndex}-${opt}`}
                   onClick={() => resolve(opt)}
-                  disabled={answered}
+                  disabled={outcome !== null || used}
                   className="rounded-2xl border-4 border-white flex items-center justify-center"
-                  style={{ background: bg, boxShadow: `0 6px 0 ${sh}`, minHeight: 74, color: '#fff' }}
+                  style={{ background: bg, boxShadow: `0 6px 0 ${sh}`, minHeight: 74, color: '#fff', opacity: used && outcome === null ? 0.55 : 1 }}
                   initial={{ scale: 0, y: 16 }}
                   animate={{ scale: 1, y: 0 }}
                   transition={{ delay: 0.1 + i * 0.05, ...POP }}
-                  whileTap={!answered ? { scale: 0.95, y: 3 } : {}}
+                  whileTap={outcome === null && !used ? { scale: 0.95, y: 3 } : {}}
                 >
-                  <span style={numStyle('34px')}>{opt}</span>
+                  <span style={numStyle('32px')}>{opt}</span>
                 </motion.button>
               );
             })}

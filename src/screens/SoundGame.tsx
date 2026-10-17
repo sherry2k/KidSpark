@@ -219,6 +219,7 @@ const SoundGame: React.FC<SoundGameProps> = ({ progress, onBack, onAnswer, onCom
   const [done, setDone] = useState(false);
 
   const awarded = useRef(false);
+  const scoreRef = useRef(0); // always current, so the last answer counts toward the stars
   const timer = useRef<number | null>(null);
 
   const clearTimer = () => {
@@ -242,6 +243,7 @@ const SoundGame: React.FC<SoundGameProps> = ({ progress, onBack, onAnswer, onCom
     setMode(m);
     setQuestions(qs);
     setQIndex(0);
+    scoreRef.current = 0;
     setScore(0);
     setStreak(0);
     setPicked(null);
@@ -266,7 +268,8 @@ const SoundGame: React.FC<SoundGameProps> = ({ progress, onBack, onAnswer, onCom
       buzz('success');
       if (!awarded.current) {
         awarded.current = true;
-        onComplete(score >= TOTAL * 0.8 ? 3 : score >= TOTAL * 0.5 ? 2 : 1);
+        const finalScore = scoreRef.current;
+        onComplete(finalScore >= TOTAL * 0.8 ? 3 : finalScore >= TOTAL * 0.5 ? 2 : 1);
       }
       return;
     }
@@ -286,7 +289,8 @@ const SoundGame: React.FC<SoundGameProps> = ({ progress, onBack, onAnswer, onCom
     if (right) {
       playCorrect();
       buzz('soft');
-      setScore((s) => s + 1);
+      scoreRef.current += 1;
+      setScore(scoreRef.current);
       const st = streak + 1;
       setStreak(st);
       const msg = st >= 3 ? `${st} in a row! 🔥` : `Yes! ${entry.word}.`;
