@@ -55,6 +55,7 @@ const GAME_MODE_STYLES: Record<string, { gradient: string; shadow: string; diffi
   puzzle: { gradient: 'from-violet-500 to-purple-500', shadow: '#6D28D9', difficulty: 'Medium', stars: '⭐⭐' },
   skills: { gradient: 'from-amber-400 to-orange-500', shadow: '#C2410C', difficulty: 'Fun', stars: '⭐⭐⭐' },
   creative: { gradient: 'from-pink-400 to-purple-500', shadow: '#7a2ec9', difficulty: 'Fun', stars: '⭐⭐' },
+  sounds: { gradient: 'from-indigo-500 to-purple-500', shadow: '#4338CA', difficulty: 'Medium', stars: '⭐⭐' },
 };
 
 const getStreakMessage = (streak: number) => {
