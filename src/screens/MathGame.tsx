@@ -170,7 +170,7 @@ const Options: React.FC<{
 );
 
 /* ================================================================== */
-/* The screen                                                          */
+/* The                                                           */
 /* ================================================================== */
 
 const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer, onComplete }) => {
