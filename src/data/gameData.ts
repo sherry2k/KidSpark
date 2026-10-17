@@ -929,6 +929,7 @@ export const gameModes: GameMode[] = [
   { id: 'puzzle', name: 'Puzzle', emoji: '🧩', description: 'Solve fun puzzles!', color: '#7e57c2', gradient: 'from-violet-400 to-purple-400' },
   { id: 'skills', name: 'Skills', emoji: '🌟', description: 'Learn fun real-world skills!', color: '#f59e0b', gradient: 'from-amber-400 to-yellow-400' },
   { id: 'creative', name: 'Creative', emoji: '🎨', description: 'Draw and create!', color: '#f97316', gradient: 'from-orange-400 to-pink-500' },
+  { id: 'sounds', name: 'Sounds', emoji: '🔤', description: 'Find the missing letters!', color: '#6366f1', gradient: 'from-indigo-400 to-purple-400' },
 ];
 
 // LEARN CATEGORIES
