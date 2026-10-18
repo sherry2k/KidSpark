@@ -4,6 +4,7 @@ import { GameBackground } from '../components/Background';
 import Navigation from '../components/Navigation';
 import TenFrame from '../components/TenFrame';
 import MissingNumbers from './MissingNumbers';
+import SkipCounting from './SkipCounting';
 import ItemIcon from '../components/mechanics/ItemIcon';
 import { GameProgress, PlayerProfile } from '../store/gameStore';
 import { MATH_MODES, MathMode, ModeId, Band, Question, frameSize, maxFor } from '../data/mathModes';
@@ -187,6 +188,7 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
   const [feedback, setFeedback] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [missingOpen, setMissingOpen] = useState(false);
+  const [skipOpen, setSkipOpen] = useState(false);
 
   /* number-line state */
   const trackRef = useRef<HTMLDivElement>(null);
@@ -288,6 +290,17 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
       />
     );
   }
+     if (skipOpen) {
+     return (
+       <SkipCounting
+         defaultBand={band}
+         progress={progress}
+         onBack={() => setSkipOpen(false)}
+         onAnswer={onAnswer}
+         onComplete={onComplete}
+       />
+     );
+   }
   if (!mode) {
     return (
       <GameBackground variant="game">
