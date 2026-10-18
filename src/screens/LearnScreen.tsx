@@ -24,17 +24,59 @@ const CATEGORY_STYLES: Record<string, { gradient: string; shadow: string }> = {
   'vehicles': { gradient: 'from-sky-500 to-blue-500', shadow: '#1E40AF' },
   'birds': { gradient: 'from-pink-500 to-rose-500', shadow: '#BE185D' },
   'body': { gradient: 'from-violet-500 to-purple-500', shadow: '#7B2CBF' },
+  // ---- new in 1.3 ----
+  'days': { gradient: 'from-indigo-500 to-blue-500', shadow: '#3730A3' },
+  'months': { gradient: 'from-pink-500 to-rose-500', shadow: '#9D174D' },
+  'seasons': { gradient: 'from-orange-500 to-amber-500', shadow: '#B45309' },
+  'opposites': { gradient: 'from-teal-500 to-emerald-500', shadow: '#0F766E' },
+  'feelings': { gradient: 'from-yellow-400 to-orange-400', shadow: '#CA8A04' },
+  'weather': { gradient: 'from-sky-400 to-blue-500', shadow: '#0369A1' },
+  'clothes': { gradient: 'from-purple-500 to-fuchsia-500', shadow: '#86198F' },
+  'sea': { gradient: 'from-cyan-500 to-blue-600', shadow: '#0E7490' },
+  'insects': { gradient: 'from-lime-500 to-green-600', shadow: '#3F6212' },
+  'food': { gradient: 'from-red-500 to-orange-500', shadow: '#B91C1C' },
 };
+
+/* ---- which NEW categories this child has already opened (per device) ---- */
+const SEEN_KEY = 'kidspark_learn_seen';
+
+function loadSeen(): string[] {
+  try {
+    const raw = localStorage.getItem(SEEN_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr.filter((x) => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveSeen(ids: string[]) {
+  try {
+    localStorage.setItem(SEEN_KEY, JSON.stringify(ids));
+  } catch {
+    /* storage blocked: the badge just comes back next time */
+  }
+}
 
 const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteLesson }) => {
   const learnCategories = useLearnCategories();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showFunFact, setShowFunFact] = useState(false);
+  const [seen, setSeen] = useState<string[]>(loadSeen);
 
   const category = learnCategories.find((c) => c.id === selectedCategory);
   const currentItem = category?.items[currentIndex];
   const style = category ? (CATEGORY_STYLES[category.id] || { gradient: 'from-purple-500 to-pink-500', shadow: '#7B2CBF' }) : { gradient: 'from-purple-500 to-pink-500', shadow: '#7B2CBF' };
+
+  const unseenNew = learnCategories.filter((c) => c.isNew && !seen.includes(c.id));
+
+  const markSeen = (id: string) => {
+    if (seen.includes(id)) return;
+    const next = [...seen, id];
+    setSeen(next);
+    saveSeen(next);
+  };
 
   const handleNext = () => {
     playClick();
@@ -78,29 +120,53 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
               </h2>
               <p className="text-gray-500 text-sm mt-1">Pick a category and explore!</p>
             </motion.div>
+
+            {unseenNew.length > 0 && (
+              <motion.div
+                data-kind="new-banner"
+                className="max-w-4xl mx-auto mb-4 rounded-2xl px-4 py-3 text-white text-center font-bold border-4 border-white shadow-lg bg-gradient-to-r from-pink-500 via-orange-400 to-yellow-400"
+                style={{
+                  fontFamily: "'Bubblegum One', cursive",
+                  textShadow: '2px 2px 0 rgba(0,0,0,0.18)',
+                  boxShadow: '0 5px 0 #BE185D, 0 8px 18px rgba(0,0,0,0.15)',
+                }}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: [1, 1.03, 1], opacity: 1 }}
+                transition={{ scale: { duration: 1.6, repeat: Infinity }, opacity: { duration: 0.3 } }}
+              >
+                🎉 {unseenNew.length} new {unseenNew.length === 1 ? 'topic' : 'topics'} to learn! 🎉
+              </motion.div>
+            )}
             
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 max-w-4xl mx-auto">
               {learnCategories.map((cat, i) => {
                 const isCompleted = progress.completedLessons.includes(cat.id);
+                const showNew = !!cat.isNew && !seen.includes(cat.id);
                 const catStyle = CATEGORY_STYLES[cat.id] || { gradient: 'from-gray-400 to-gray-500', shadow: '#374151' };
                 
                 return (
                   <motion.button
                     key={cat.id}
+                    data-kind="cat"
+                    data-id={cat.id}
+                    data-new={showNew ? '1' : '0'}
                     onClick={() => {
                       playClick();
+                      markSeen(cat.id);
                       setSelectedCategory(cat.id);
                       setCurrentIndex(0);
                       setShowFunFact(false);
                     }}
-                    className={`bg-gradient-to-br ${catStyle.gradient} rounded-3xl p-4 md:p-5 text-white shadow-xl border-4 border-white relative overflow-hidden`}
+                    className={`bg-gradient-to-br ${catStyle.gradient} rounded-3xl p-4 md:p-5 text-white shadow-xl border-4 ${showNew ? 'border-yellow-300' : 'border-white'} relative overflow-hidden`}
                     style={{
-                      boxShadow: `0 8px 0 ${catStyle.shadow}, 0 12px 25px rgba(0,0,0,0.2)`,
+                      boxShadow: showNew
+                        ? `0 8px 0 ${catStyle.shadow}, 0 0 0 3px rgba(253,224,71,0.9), 0 12px 25px rgba(0,0,0,0.2)`
+                        : `0 8px 0 ${catStyle.shadow}, 0 12px 25px rgba(0,0,0,0.2)`,
                       minHeight: '160px',
                     }}
                     initial={{ y: 30, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: i * 0.05, type: 'spring' }}
+                    transition={{ delay: Math.min(i, 12) * 0.05, type: 'spring' }}
                     whileHover={{ scale: 1.05, y: -3 }}
                     whileTap={{ 
                       scale: 0.95, 
@@ -116,6 +182,27 @@ const LearnScreen: React.FC<LearnScreenProps> = ({ progress, onBack, onCompleteL
                       >
                         ✓
                       </motion.div>
+                    )}
+
+                    {showNew && !isCompleted && (
+                      <div
+                        data-kind="new-badge"
+                        className="absolute text-center text-white font-bold bg-gradient-to-r from-red-500 to-pink-500 shadow-md"
+                        style={{
+                          top: 14,
+                          right: -30,
+                          width: 100,
+                          transform: 'rotate(40deg)',
+                          fontFamily: "'Bubblegum One', cursive",
+                          fontSize: 13,
+                          letterSpacing: '1px',
+                          padding: '2px 0',
+                          borderTop: '2px solid #fff',
+                          borderBottom: '2px solid #fff',
+                        }}
+                      >
+                        NEW
+                      </div>
                     )}
 
                     <motion.div
