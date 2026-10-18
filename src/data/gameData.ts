@@ -318,23 +318,23 @@ export const quizQuestions: QuizQuestion[] = [
   { question: 'Which animal is this?', emoji: '🐻', options: ['Dog', 'Bear', 'Wolf', 'Tiger'], correct: 1, category: 'animals' },
   { question: 'Which animal is this?', emoji: '🐼', options: ['Polar Bear', 'Panda', 'Koala', 'Raccoon'], correct: 1, category: 'animals' },
   { question: 'Which animal is this?', emoji: '🦊', options: ['Dog', 'Wolf', 'Fox', 'Cat'], correct: 2, category: 'animals' },
-  { question: 'Which animal is this?', emoji: '🐨', options: ['Bear', 'Panda', 'Koala', 'Sloth'], correct: 2, category: 'animals' },
-  { question: 'Which animal is this?', emoji: '🐸', options: ['Toad', 'Lizard', 'Frog', 'Snake'], correct: 2, category: 'animals' },
+  { question: 'Which animal is this?', emoji: '🐨', options: ['Bear', 'Panda', 'Koala', 'Monkey'], correct: 2, category: 'animals' },
+  { question: 'Which animal is this?', emoji: '🐸', options: ['Turtle', 'Lizard', 'Frog', 'Snake'], correct: 2, category: 'animals' },
   // Fruits
   { question: 'Which fruit is this?', emoji: '🍎', options: ['Cherry', 'Strawberry', 'Apple', 'Tomato'], correct: 2, category: 'fruits' },
   { question: 'Which fruit is this?', emoji: '🍌', options: ['Corn', 'Banana', 'Pineapple', 'Mango'], correct: 1, category: 'fruits' },
-  { question: 'Which fruit is this?', emoji: '🍇', options: ['Blueberry', 'Plum', 'Grapes', 'Fig'], correct: 2, category: 'fruits' },
+  { question: 'Which fruit is this?', emoji: '🍇', options: ['Cherry', 'Banana', 'Grapes', 'Apple'], correct: 2, category: 'fruits' },
   { question: 'Which fruit is this?', emoji: '🍊', options: ['Peach', 'Orange', 'Lemon', 'Mango'], correct: 1, category: 'fruits' },
-  { question: 'Which fruit is this?', emoji: '🍓', options: ['Cherry', 'Raspberry', 'Strawberry', 'Apple'], correct: 2, category: 'fruits' },
-  { question: 'Which fruit is this?', emoji: '🍉', options: ['Melon', 'Apple', 'Watermelon', 'Pumpkin'], correct: 2, category: 'fruits' },
-  { question: 'Which fruit is this?', emoji: '🍍', options: ['Lemon', 'Durian', 'Pineapple', 'Jackfruit'], correct: 2, category: 'fruits' },
-  { question: 'Which fruit is this?', emoji: '🥭', options: ['Papaya', 'Mango', 'Peach', 'Apricot'], correct: 1, category: 'fruits' },
+  { question: 'Which fruit is this?', emoji: '🍓', options: ['Cherry', 'Peach', 'Strawberry', 'Apple'], correct: 2, category: 'fruits' },
+  { question: 'Which fruit is this?', emoji: '🍉', options: ['Banana', 'Apple', 'Watermelon', 'Pumpkin'], correct: 2, category: 'fruits' },
+  { question: 'Which fruit is this?', emoji: '🍍', options: ['Lemon', 'Banana', 'Pineapple', 'Mango'], correct: 2, category: 'fruits' },
+  { question: 'Which fruit is this?', emoji: '🥭', options: ['Banana', 'Mango', 'Peach', 'Orange'], correct: 1, category: 'fruits' },
   // Vegetables
-  { question: 'Which vegetable is this?', emoji: '🥕', options: ['Radish', 'Carrot', 'Beet', 'Parsnip'], correct: 1, category: 'vegetables' },
-  { question: 'Which vegetable is this?', emoji: '🥦', options: ['Lettuce', 'Spinach', 'Broccoli', 'Cabbage'], correct: 2, category: 'vegetables' },
-  { question: 'Which vegetable is this?', emoji: '🌽', options: ['Wheat', 'Rice', 'Corn', 'Barley'], correct: 2, category: 'vegetables' },
+  { question: 'Which vegetable is this?', emoji: '🥕', options: ['Potato', 'Carrot', 'Tomato', 'Corn'], correct: 1, category: 'vegetables' },
+  { question: 'Which vegetable is this?', emoji: '🥦', options: ['Carrot', 'Cucumber', 'Broccoli', 'Potato'], correct: 2, category: 'vegetables' },
+  { question: 'Which vegetable is this?', emoji: '🌽', options: ['Wheat', 'Rice', 'Corn', 'Potato'], correct: 2, category: 'vegetables' },
   { question: 'Which vegetable is this?', emoji: '🍅', options: ['Apple', 'Strawberry', 'Tomato', 'Cherry'], correct: 2, category: 'vegetables' },
-  { question: 'Which vegetable is this?', emoji: '🥔', options: ['Onion', 'Garlic', 'Potato', 'Turnip'], correct: 2, category: 'vegetables' },
+  { question: 'Which vegetable is this?', emoji: '🥔', options: ['Carrot', 'Tomato', 'Potato', 'Corn'], correct: 2, category: 'vegetables' },
   // Colors
   { question: 'What color is a fire truck?', emoji: '🚒', options: ['Blue', 'Green', 'Red', 'Yellow'], correct: 2, category: 'colors' },
   { question: 'What color is the sun?', emoji: '☀️', options: ['Red', 'Yellow', 'Orange', 'White'], correct: 1, category: 'colors' },
@@ -353,13 +353,13 @@ export const quizQuestions: QuizQuestion[] = [
   // Shapes
   { question: 'How many sides does a triangle have?', emoji: '🔺', options: ['2', '3', '4', '5'], correct: 1, category: 'shapes' },
   { question: 'What shape is a ball?', emoji: '⚽', options: ['Square', 'Triangle', 'Circle', 'Star'], correct: 2, category: 'shapes' },
-  { question: 'What shape is a dice?', emoji: '🎲', options: ['Circle', 'Cube', 'Triangle', 'Pyramid'], correct: 1, category: 'shapes' },
+  { question: 'What shape is a dice?', emoji: '🎲', options: ['Circle', 'Cube', 'Triangle', 'Star'], correct: 1, category: 'shapes' },
   { question: 'What shape has 4 equal sides?', emoji: '🟧', options: ['Circle', 'Rectangle', 'Square', 'Triangle'], correct: 2, category: 'shapes' },
   // Vehicles
   { question: 'Which vehicle flies?', emoji: '✈️', options: ['Car', 'Boat', 'Airplane', 'Bus'], correct: 2, category: 'vehicles' },
   { question: 'Which vehicle sails on water?', emoji: '⛵', options: ['Boat', 'Car', 'Train', 'Bus'], correct: 0, category: 'vehicles' },
   { question: 'Which vehicle has two wheels?', emoji: '🚲', options: ['Car', 'Bicycle', 'Bus', 'Truck'], correct: 1, category: 'vehicles' },
-  { question: 'Which vehicle goes to space?', emoji: '🚀', options: ['Airplane', 'Helicopter', 'Rocket', 'Jet'], correct: 2, category: 'vehicles' },
+  { question: 'Which vehicle goes to space?', emoji: '🚀', options: ['Airplane', 'Helicopter', 'Rocket', 'Boat'], correct: 2, category: 'vehicles' },
   // Math
   { question: 'What is 1 + 1?', emoji: '🧮', options: ['1', '2', '3', '4'], correct: 1, category: 'math' },
   { question: 'What is 2 + 3?', emoji: '🧮', options: ['4', '5', '6', '7'], correct: 1, category: 'math' },
@@ -372,15 +372,16 @@ export const quizQuestions: QuizQuestion[] = [
   { question: 'What is 2 x 3?', emoji: '🧮', options: ['4', '5', '6', '7'], correct: 2, category: 'math' },
   { question: 'What is 5 x 2?', emoji: '🧮', options: ['8', '9', '10', '11'], correct: 2, category: 'math' },
   // Birds
-  { question: 'Which bird cannot fly?', emoji: '🐧', options: ['Eagle', 'Penguin', 'Sparrow', 'Crow'], correct: 1, category: 'birds' },
+  { question: 'Which bird cannot fly?', emoji: '🐧', options: ['Eagle', 'Penguin', 'Parrot', 'Owl'], correct: 1, category: 'birds' },
   { question: 'Which bird can talk?', emoji: '🦜', options: ['Owl', 'Parrot', 'Duck', 'Eagle'], correct: 1, category: 'birds' },
-  { question: 'Which bird is pink?', emoji: '🦩', options: ['Swan', 'Dove', 'Flamingo', 'Pelican'], correct: 2, category: 'birds' },
+  { question: 'Which bird is pink?', emoji: '🦩', options: ['Swan', 'Dove', 'Flamingo', 'Parrot'], correct: 2, category: 'birds' },
   // Sounds
   { question: 'What sound does a cat make?', emoji: '🐱', options: ['Woof', 'Meow', 'Moo', 'Oink'], correct: 1, category: 'sounds' },
   { question: 'What sound does a dog make?', emoji: '🐶', options: ['Woof', 'Meow', 'Quack', 'Roar'], correct: 0, category: 'sounds' },
   { question: 'What sound does a cow make?', emoji: '🐄', options: ['Woof', 'Neigh', 'Moo', 'Baa'], correct: 2, category: 'sounds' },
   { question: 'What sound does a lion make?', emoji: '🦁', options: ['Meow', 'Bark', 'Roar', 'Hiss'], correct: 2, category: 'sounds' },
 ];
+
 
 // MEMORY GAME SETS
 export const memoryGameSets = {
