@@ -10,7 +10,6 @@ import { GameProgress, PlayerProfile } from '../store/gameStore';
 import { MATH_MODES, MathMode, ModeId, Band, Question, frameSize, maxFor } from '../data/mathModes';
 import { buzz, speak, stopSpeaking, POP } from '../utils/kidJuice';
 import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds';
-import SoundGame from './screens/SoundGame';
 
 /**
  * MathGame — rebuilt as four modes, with every quantity made visible.
@@ -184,6 +183,7 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
   const [q, setQ] = useState<Question | null>(null);
   const [picked, setPicked] = useState<number | null>(null);
   const [score, setScore] = useState(0);
+  const scoreRef = useRef(0);
   const [streak, setStreak] = useState(0);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -209,6 +209,7 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
     setMode(m);
     setQIndex(0);
     setScore(0);
+    scoreRef.current = 0;
     setStreak(0);
     setPicked(null);
     setDone(false);
@@ -228,7 +229,7 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
       buzz('success');
       if (!awarded.current) {
         awarded.current = true;
-        onComplete(score >= TOTAL * 0.8 ? 3 : score >= TOTAL * 0.5 ? 2 : 1);
+        onComplete(scoreRef.current >= TOTAL * 0.8 ? 3 : scoreRef.current >= TOTAL * 0.5 ? 2 : 1);
       }
       return;
     }
@@ -250,6 +251,7 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
       playCorrect();
       buzz('soft');
       setScore((s) => s + 1);
+      scoreRef.current += 1;
       const st = streak + 1;
       setStreak(st);
       setFeedback(st >= 3 ? `${st} in a row! 🔥` : 'Yes! Well done.');
@@ -368,6 +370,40 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
                   Missing Numbers
                 </h3>
                 <p className="text-xs opacity-90">Find the missing number</p>
+                <div className="flex justify-center gap-0.5 mt-1.5">
+                  {[1, 2, 3].map((d) => (
+                    <span key={d} className="text-[11px]" style={{ opacity: d <= 2 ? 1 : 0.28 }}>
+                      ⭐
+                    </span>
+                  ))}
+                </div>
+              </motion.button>
+              <motion.button
+                onClick={() => { playClick(); buzz('tick'); setSkipOpen(true); }}
+                className="relative overflow-hidden rounded-3xl p-4 text-white border-4 border-white bg-gradient-to-br from-lime-400 to-green-500"
+                style={{ boxShadow: '0 8px 0 #15803D, 0 12px 22px rgba(0,0,0,.18)', minHeight: 150 }}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: (MATH_MODES.length + 1) * 0.06, ...POP }}
+                whileTap={{ scale: 0.94, y: 4 }}
+              >
+                <div
+                  className="absolute text-center text-white font-bold bg-gradient-to-r from-red-500 to-pink-500 shadow-md"
+                  style={{ top: 14, right: -30, width: 100, transform: 'rotate(40deg)', fontSize: 13, letterSpacing: '1px', padding: '2px 0', borderTop: '2px solid #fff', borderBottom: '2px solid #fff' }}
+                >
+                  NEW
+                </div>
+                <motion.div
+                  className="flex justify-center mb-2"
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 2.4 + (MATH_MODES.length + 1) * 0.3, repeat: Infinity }}
+                >
+                  <ItemIcon icon="🐸" size={44} label="Skip counting" />
+                </motion.div>
+                <h3 className="text-lg font-bold" style={{ fontFamily: NUM, textShadow: '2px 2px 0 rgba(0,0,0,.18)' }}>
+                  Skip Counting
+                </h3>
+                <p className="text-xs opacity-90">Count by 2s, 5s, 10s</p>
                 <div className="flex justify-center gap-0.5 mt-1.5">
                   {[1, 2, 3].map((d) => (
                     <span key={d} className="text-[11px]" style={{ opacity: d <= 2 ? 1 : 0.28 }}>
