@@ -9,7 +9,6 @@ import { GameProgress, PlayerProfile } from '../store/gameStore';
 import { MATH_MODES, MathMode, ModeId, Band, Question, frameSize, maxFor } from '../data/mathModes';
 import { buzz, speak, stopSpeaking, POP } from '../utils/kidJuice';
 import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds';
-import SoundGame from './screens/SoundGame';
 
 /**
  * MathGame — rebuilt as four modes, with every quantity made visible.
