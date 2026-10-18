@@ -570,6 +570,7 @@ const BASE_PAGES: ColoringPage[] = [
 export const COLORING_PAGES: ColoringPage[] = [...NEW_PAGES, ...BASE_PAGES];
 
 export const getPage = (id: string): ColoringPage | undefined =>
+  COLORING_PAGES.find((p) => p.id === id);
 
 /* ---------------- the palette ---------------- */
 
