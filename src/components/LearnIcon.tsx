@@ -26,6 +26,7 @@
  */
 
 import React from 'react';
+import DayGlyph, { dayIndex } from './DayGlyph';
 
 export type LearnLike = {
   id?: string;
@@ -71,7 +72,10 @@ function ColorSwatch({ hex, size }: { hex: string; size: number }) {
     </svg>
   );
 }
-
+  // days of the week — drawn as a calendar page
+  if (category === 'days' && dayIndex(item.name) >= 0) {
+    return wrap(<DayGlyph name={item.name || ''} size={size} />);
+  }
 /* ------------------------------------------------------------------ */
 /* numbers and letters                                                 */
 /* ------------------------------------------------------------------ */
@@ -318,7 +322,11 @@ export default function LearnIcon({ item, size = 64, className = '' }: Props) {
   if (category === 'colors' && item.color) {
     return wrap(<ColorSwatch hex={item.color} size={size} />);
   }
-
+    // days of the week — drawn as a calendar page
+  if (category === 'days' && dayIndex(item.name) >= 0) {
+    return wrap(<DayGlyph name={item.name || ''} size={size} />);
+  }
+ 
   // 2. numbers — draw the digits
   if (category === 'numbers') {
     const n = numberFrom(item);
