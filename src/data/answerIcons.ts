@@ -151,6 +151,141 @@ add('key', { icon: '🔑' });
 add('hat', { icon: '🎩' });
 add('shoe|shoes', { icon: '👟' });
 
+/* ================================================================== */
+/* ADDED IN 1.3 — every answer word in the quiz now has a picture.     */
+/* Every emoji below is Unicode 11 or older (works on old Android).    */
+/* A later add() with the same word replaces an earlier one.           */
+/* ================================================================== */
+
+/* more animals */
+add('koala', { icon: '🐨' });
+add('rhino|rhinoceros', { icon: '🦏' });
+add('raccoon', { icon: '🦝' });
+add('lizard', { icon: '🦎' });
+add('hippo', { icon: '🦛' });
+add('eagle', { icon: '🦅' });
+add('parrot', { icon: '🦜' });
+add('swan', { icon: '🦢' });
+add('dove', { icon: '🕊️' });
+add('flamingo', { icon: '🦩' });
+add('polar bear', { icon: '🐻' });
+
+/* berries: the berry emoji is too new for many phones, so use a drawn dot */
+add('raspberry|raspberries', { color: '#C2185B' });
+add('blueberry|blueberries', { color: '#4B55C9' });
+
+/* animal sounds: show the animal that makes them */
+add('woof|bark', { icon: '🐶' });
+add('meow', { icon: '🐱' });
+add('moo', { icon: '🐄' });
+add('baa', { icon: '🐑' });
+add('oink', { icon: '🐷' });
+add('quack', { icon: '🦆' });
+add('roar', { icon: '🦁' });
+add('neigh', { icon: '🐴' });
+add('hiss', { icon: '🐍' });
+
+/* things */
+add('cube', { icon: '📦' });
+add('pumpkin', { icon: '🎃' });
+add('rice', { icon: '🍚' });
+add('wheat', { icon: '🌾' });
+
+/* sea animals */
+add('crab', { icon: '🦀' });
+add('shrimp', { icon: '🦐' });
+add('squid', { icon: '🦑' });
+add('lobster', { icon: '🦞' });
+add('pufferfish', { icon: '🐡' });
+add('tropical fish', { icon: '🐠' });
+
+/* insects */
+add('mosquito', { icon: '🦟' });
+add('cricket', { icon: '🦗' });
+add('snail', { icon: '🐌' });
+add('caterpillar', { icon: '🐛' });
+
+/* weather and clothes */
+add('umbrella', { icon: '☂️' });
+add('gloves', { icon: '🧤' });
+add('sunglasses', { icon: '🕶️' });
+add('scarf', { icon: '🧣' });
+add('boots', { icon: '👢' });
+add('socks', { icon: '🧦' });
+add('shirt', { icon: '👕' });
+add('coat', { icon: '🧥' });
+add('sunny', { icon: '☀️' });
+add('rainy', { icon: '🌧️' });
+add('snowy', { icon: '❄️' });
+add('windy', { icon: '🌬️' });
+add('foggy|fog', { icon: '🌫️' });
+add('stormy|thunder', { icon: '⛈️' });
+
+/* feelings */
+add('happy', { icon: '😀' });
+add('sad', { icon: '😢' });
+add('angry', { icon: '😠' });
+add('sleepy', { icon: '😴' });
+add('scared', { icon: '😨' });
+add('surprised', { icon: '😮' });
+add('sick', { icon: '🤒' });
+add('excited', { icon: '🤩' });
+add('silly', { icon: '😜' });
+add('loved', { icon: '😍' });
+
+/* opposites */
+add('hot', { icon: '🔥' });
+add('cold', { icon: '🥶' });
+add('big', { icon: '🐘' });
+add('small', { icon: '🐜' });
+add('tall', { icon: '🦒' });
+add('fast', { icon: '🐆' });
+add('slow', { icon: '🐢' });
+add('day', { icon: '☀️' });
+add('night', { icon: '🌙' });
+add('up', { icon: '⬆️' });
+add('down', { icon: '⬇️' });
+add('open', { icon: '📖' });
+add('closed', { icon: '📕' });
+add('wet', { icon: '💧' });
+add('dry', { icon: '🏜️' });
+add('old', { icon: '👴' });
+add('young', { icon: '👶' });
+add('loud', { icon: '📣' });
+add('quiet', { icon: '🤫' });
+
+/* days, months, seasons: real letters, never an emoji */
+add('monday', { text: 'Mon' });
+add('tuesday', { text: 'Tue' });
+add('wednesday', { text: 'Wed' });
+add('thursday', { text: 'Thu' });
+add('friday', { text: 'Fri' });
+add('saturday', { text: 'Sat' });
+add('sunday', { text: 'Sun' });
+add('january', { text: 'Jan' });
+add('february', { text: 'Feb' });
+add('march', { text: 'Mar' });
+add('april', { text: 'Apr' });
+add('june', { text: 'Jun' });
+add('july', { text: 'Jul' });
+add('august', { text: 'Aug' });
+add('september', { text: 'Sep' });
+add('october', { text: 'Oct' });
+add('november', { text: 'Nov' });
+add('december', { text: 'Dec' });
+add('spring', { icon: '🌸' });
+add('summer', { icon: '☀️' });
+add('autumn', { icon: '🍁' });
+add('winter', { icon: '❄️' });
+
+/* food and drinks */
+add('noodles', { icon: '🍜' });
+add('burger', { icon: '🍔' });
+add('juice', { icon: '🍹' });
+add('tea', { icon: '🍵' });
+add('water', { icon: '💧' });
+add('honey', { icon: '🍯' });
+
 const NUMBER_WORDS: Record<string, string> = {
   zero: '0', one: '1', two: '2', three: '3', four: '4', five: '5',
   six: '6', seven: '7', eight: '8', nine: '9', ten: '10',
@@ -206,6 +341,16 @@ export const CATEGORY_LABEL: Record<string, { label: string; icon: string }> = {
   math: { label: 'Maths', icon: '🧮' },
   food: { label: 'Food', icon: '🍽️' },
   nature: { label: 'Nature', icon: '🌳' },
+  // added in 1.3
+  vegetables: { label: 'Vegetables', icon: '🥕' },
+  birds: { label: 'Birds', icon: '🦅' },
+  sounds: { label: 'Sounds', icon: '🔊' },
+  sea: { label: 'Sea animals', icon: '🐠' },
+  insects: { label: 'Insects', icon: '🐞' },
+  weather: { label: 'Weather', icon: '⛅' },
+  feelings: { label: 'Feelings', icon: '😊' },
+  opposites: { label: 'Opposites', icon: '↔️' },
+  time: { label: 'Days & seasons', icon: '📅' },
 };
 
 export const categoryOf = (c?: string) =>
