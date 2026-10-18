@@ -1,5 +1,6 @@
 import { extraLearnCategories, isNewPeriod, NewableLearnCategory } from '../data/learnExtras';
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { extraQuizQuestions } from '../data/quizExtras';
 import {
   fetchAllContent,
   isAirtableConfigured,
@@ -167,7 +168,8 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     loadContent();
   }, [loadContent]);
-
+  
+  const allQuizQuestions = useMemo(() => [...quizQuestions, ...extraQuizQuestions], [quizQuestions]);
   const value: ContentState = {
     isLoading,
     isAirtable,
@@ -181,7 +183,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     bodyParts,
     alphabet,
     numbers,
-    quizQuestions,
+    quizQuestions: allQuizQuestions,
     wordBuilderWords,
     refreshContent: loadContent,
     lastUpdated,
