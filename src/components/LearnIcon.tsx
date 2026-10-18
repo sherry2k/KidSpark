@@ -72,11 +72,8 @@ function ColorSwatch({ hex, size }: { hex: string; size: number }) {
     </svg>
   );
 }
-  // days of the week — drawn as a calendar page
-  if (category === 'days' && dayIndex(item.name) >= 0) {
-    return wrap(<DayGlyph name={item.name || ''} size={size} />);
-  }
-/* ------------------------------------------------------------------ */
+
+ /* ------------------------------------------------------------------ */
 /* numbers and letters                                                 */
 /* ------------------------------------------------------------------ */
 
