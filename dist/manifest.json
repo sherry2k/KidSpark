@@ -7,7 +7,7 @@
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#a855f7",
-  "orientation": "portrait",
+  "orientation": "any",
   "scope": "/",
   "lang": "en",
   "dir": "ltr",
@@ -50,7 +50,7 @@
   ]
   "screenshots": [
   {
-    "src": "/image/screenshot-1.png",
+    "src": "/images/screenshot-1.png",
     "sizes": "1080x1920",
     "type": "image/png",
     "form_factor": "narrow",
