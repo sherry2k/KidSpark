@@ -124,16 +124,7 @@ export default defineConfig({
             ],
           },
         ],
-                screenshots: [
-          {
-            src: "/images/screenshot-1.png",
-            sizes: "1080x1920",
-            type: "image/png",
-            form_factor: "narrow",
-            label: "Home Screen",
-          },
-        ],
-      },
+         },
     }),
   ],
 
