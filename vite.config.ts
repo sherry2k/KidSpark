@@ -89,7 +89,7 @@ export default defineConfig({
         display: "standalone",
         background_color: "#ffffff",
         theme_color: "#a855f7",
-        orientation: "portrait",
+        orientation: "any",
         scope: "/",
         lang: "en",
         dir: "ltr",
