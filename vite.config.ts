@@ -94,6 +94,7 @@ export default defineConfig({
         lang: "en",
         dir: "ltr",
         categories: ["education", "kids", "games"],
+        iarc_rating_id: "914f4c66-f4fe-8ddd-8c30-3fac457b84e3",
         icons: [
           {
             src: "/icons/icon-192.png",
@@ -121,6 +122,15 @@ export default defineConfig({
                 type: "image/png",
               },
             ],
+          },
+        ],
+                screenshots: [
+          {
+            src: "/images/screenshot-1.png",
+            sizes: "1080x1920",
+            type: "image/png",
+            form_factor: "narrow",
+            label: "Home Screen",
           },
         ],
       },
