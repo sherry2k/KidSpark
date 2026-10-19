@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { extraLearnCategories, isNewPeriod, NewableLearnCategory } from '../data/learnExtras';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { extraQuizQuestions } from '../data/quizExtras';
 import {
   fetchAllContent,
   isAirtableConfigured,
@@ -166,7 +168,8 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     loadContent();
   }, [loadContent]);
-
+  
+  const allQuizQuestions = useMemo(() => [...quizQuestions, ...extraQuizQuestions], [quizQuestions]);
   const value: ContentState = {
     isLoading,
     isAirtable,
@@ -180,7 +183,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     bodyParts,
     alphabet,
     numbers,
-    quizQuestions,
+    quizQuestions: allQuizQuestions,
     wordBuilderWords,
     refreshContent: loadContent,
     lastUpdated,
@@ -202,10 +205,10 @@ export function useContent(): ContentState {
 }
 
 // Hook to get learn categories with dynamic data
-export function useLearnCategories() {
+export function useLearnCategories(): NewableLearnCategory[] {
   const content = useContent();
 
-  return [
+  const base: NewableLearnCategory[] = [
     { id: 'alphabet', name: 'Alphabet', emoji: '🔤', color: '#4fc3f7', gradient: 'from-blue-400 to-cyan-400', items: content.alphabet },
     { id: 'numbers', name: 'Numbers', emoji: '🔢', color: '#ff7043', gradient: 'from-orange-400 to-red-400', items: content.numbers },
     { id: 'animals', name: 'Animals', emoji: '🦁', color: '#66bb6a', gradient: 'from-green-400 to-emerald-400', items: content.animals },
@@ -217,4 +220,9 @@ export function useLearnCategories() {
     { id: 'birds', name: 'Birds', emoji: '🦅', color: '#f06292', gradient: 'from-pink-400 to-rose-400', items: content.birds },
     { id: 'body', name: 'Body Parts', emoji: '🧠', color: '#7e57c2', gradient: 'from-violet-400 to-purple-400', items: content.bodyParts },
   ];
+
+  // New categories: shown first and flagged NEW until NEW_UNTIL, then they move to the end
+  const fresh = isNewPeriod();
+  const extras: NewableLearnCategory[] = extraLearnCategories.map((c) => ({ ...c, isNew: fresh }));
+  return fresh ? [...extras, ...base] : [...base, ...extras];
 }
