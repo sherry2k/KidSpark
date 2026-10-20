@@ -391,6 +391,12 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
                 transition={{ delay: MATH_MODES.length * 0.06, ...POP }}
                 whileTap={{ scale: 0.94, y: 4 }}
               >
+                <div
+                  className="absolute text-center text-white font-bold bg-gradient-to-r from-red-500 to-pink-500 shadow-md"
+                  style={{ top: 14, right: -30, width: 100, transform: 'rotate(40deg)', fontSize: 13, letterSpacing: '1px', padding: '2px 0', borderTop: '2px solid #fff', borderBottom: '2px solid #fff' }}
+                >
+                  NEW
+                </div>              
                 <motion.div
                   className="flex justify-center mb-2"
                   animate={{ y: [0, -5, 0] }}
