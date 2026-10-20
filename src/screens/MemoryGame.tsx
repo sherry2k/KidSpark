@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { GameBackground } from '../components/Background';
 import Navigation from '../components/Navigation';
 import ItemIcon from '../components/mechanics/ItemIcon';
+import OddOneOutScreen from './OddOneOut';
 import { GameProgress } from '../store/gameStore';
 import {
   MEMORY_CATEGORIES,
@@ -10,7 +11,6 @@ import {
   MemItem,
   BOARD_SIZES,
   MISSING_POOL,
-  ODD_SETS,
   HIDDEN_TREASURES,
   TAP_TARGET,
   TAP_DECOYS,
@@ -1176,151 +1176,6 @@ const CupShuffle: React.FC<GameProps> = ({ onWin, onExit }) => {
 };
 
 /* ================================================================== */
-/* 6. ODD ONE OUT                                                      */
-/* ================================================================== */
-
-const OddOneOut: React.FC<GameProps> = ({ onWin, onExit }) => {
-  const [set, setSet] = useState(() => ODD_SETS[rnd(ODD_SETS.length)]);
-  const [grid, setGrid] = useState<boolean[]>([]);
-  const [score, setScore] = useState(0);
-  const [left, setLeft] = useState(45);
-  const [running, setRunning] = useState(false);
-  const [over, setOver] = useState(false);
-  const [wrongAt, setWrongAt] = useState<number | null>(null);
-  const awarded = useRef(false);
-
-  const build = useCallback((round: number) => {
-    const s = ODD_SETS[rnd(ODD_SETS.length)];
-    const count = Math.min(6 + Math.floor(round / 3) * 3, 12);
-    const oddIndex = rnd(count);
-    setSet(s);
-    setGrid(Array.from({ length: count }, (_, i) => i === oddIndex));
-  }, []);
-
-  const start = () => {
-    playClick();
-    unlockAudio();
-    setScore(0);
-    setLeft(45);
-    setOver(false);
-    awarded.current = false;
-    build(0);
-    setRunning(true);
-    speak('Find the one that is different!');
-  };
-
-  useEffect(() => {
-    if (!running) return;
-    const id = window.setInterval(() => setLeft((t) => t - 1), 1000);
-    return () => window.clearInterval(id);
-  }, [running]);
-
-  useEffect(() => {
-    if (!running || left > 0) return;
-    setRunning(false);
-    setOver(true);
-    playComplete();
-    if (!awarded.current) {
-      awarded.current = true;
-      onWin(score >= 14 ? 3 : score >= 7 ? 2 : 1);
-    }
-  }, [left, running, score, onWin]);
-
-  const tap = (i: number) => {
-    if (!running) return;
-    if (grid[i]) {
-      playCorrect();
-      buzz('soft');
-      setScore((s) => {
-        build(s + 1);
-        return s + 1;
-      });
-    } else {
-      playOops();
-      buzz('oops');
-      setWrongAt(i);
-      window.setTimeout(() => setWrongAt(null), 400);
-    }
-  };
-
-  if (over) {
-    return (
-      <WinCard
-        title="Eagle eyes! 🔍"
-        detail={`${score} found`}
-        stars={score >= 14 ? 3 : score >= 7 ? 2 : 1}
-        learned="Visual discrimination · spotting small differences"
-        onAgain={start}
-        onMenu={onExit}
-      />
-    );
-  }
-
-  if (!running) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8 text-center">
-        <div className="text-7xl ks-bob-tilt">🔍</div>
-        <h2 className="text-2xl font-bold text-gray-800 mt-3" style={{ fontFamily: FONT }}>
-          Odd One Out
-        </h2>
-        <p className="text-gray-600 mt-1">One of them is different. Find it!</p>
-        <p className="text-gray-400 text-sm mt-1">45 seconds — how many can you spot?</p>
-        <motion.button
-          onClick={start}
-          className="mt-6 rounded-3xl px-9 py-5 text-white font-bold border-4 border-white"
-          style={{ background: 'linear-gradient(135deg,#14B8A6,#0E9F6E)', boxShadow: '0 8px 0 #0F766E', fontFamily: FONT, fontSize: '1.25rem' }}
-          whileTap={{ scale: 0.95, y: 4 }}
-        >
-          🔎 Start!
-        </motion.button>
-        <button onClick={onExit} className="mt-4 text-gray-500 font-semibold text-sm underline">
-          ← Back to games
-        </button>
-      </div>
-    );
-  }
-
-  const cols = grid.length <= 6 ? 3 : 4;
-
-  return (
-    <div className="flex-1 flex flex-col items-center px-4 pb-4">
-      <div className="flex items-center justify-between gap-3 w-full max-w-sm my-2">
-        <span className="bg-white/95 border-4 border-white rounded-full px-4 py-1.5 text-sm font-bold text-gray-700" style={{ fontFamily: FONT, fontVariantNumeric: 'tabular-nums' }}>
-          🔍 {score}
-        </span>
-        <span
-          className={`border-4 border-white rounded-full px-4 py-1.5 text-sm font-bold ${left <= 5 ? 'bg-red-500 text-white' : 'bg-white/95 text-gray-700'}`}
-          style={{ fontFamily: FONT, fontVariantNumeric: 'tabular-nums' }}
-        >
-          ⏱️ {left}s
-        </span>
-      </div>
-
-      <p className="text-sm font-bold text-gray-500 mb-3" style={{ fontFamily: FONT }}>
-        👆 Tap the different one
-      </p>
-
-      <div className="grid gap-2 w-full max-w-sm" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))` }}>
-        {grid.map((isOdd, i) => (
-          <motion.button
-            key={`${score}-${i}`}
-            onClick={() => tap(i)}
-            className="aspect-square rounded-2xl bg-white border-4 border-white flex items-center justify-center"
-            style={{ boxShadow: '0 5px 0 rgba(0,0,0,.14)' }}
-            initial={{ scale: 0 }}
-            animate={{ scale: 1, x: wrongAt === i ? [-5, 5, -5, 0] : 0 }}
-            transition={{ delay: Math.min(i, 6) * 0.02, duration: 0.2 }}
-            whileTap={{ scale: 0.92 }}
-          >
-            <Face item={isOdd ? set.odd : set.same} size={34} />
-          </motion.button>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-/* ================================================================== */
 /* Shell                                                               */
 /* ================================================================== */
 
@@ -1329,7 +1184,7 @@ const GAMES: { id: GameId; icon: string; title: string; sub: string; diff: numbe
   { id: 'missing', icon: '🫣', title: "What's Missing?", sub: 'One has vanished!', diff: 1, grad: 'from-fuchsia-500 to-purple-600', shadow: '#6B21A8' },
   { id: 'cups', icon: '🥤', title: 'Where Did It Go?', sub: 'Follow the cup!', diff: 2, grad: 'from-amber-400 to-orange-500', shadow: '#C2410C' },
   { id: 'color', icon: '🌈', title: 'Colour Memory', sub: 'Copy the tune!', diff: 3, grad: 'from-blue-500 to-cyan-500', shadow: '#0369A1' },
-  { id: 'odd', icon: '🔍', title: 'Odd One Out', sub: 'Spot the different one!', diff: 2, grad: 'from-teal-400 to-emerald-500', shadow: '#0F766E' },
+  { id: 'odd', icon: '🔍', title: 'Odd One Out', sub: 'Which one is different?', diff: 2, grad: 'from-teal-400 to-emerald-500', shadow: '#0F766E' },
   { id: 'tap', icon: '⚡', title: 'Quick Tap', sub: 'Tap the stars fast!', diff: 2, grad: 'from-orange-500 to-red-500', shadow: '#C2410C' },
 ];
 
@@ -1345,6 +1200,21 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
   };
 
   const current = useMemo(() => GAMES.find((g) => g.id === which), [which]);
+
+  /* Odd One Out is its own full screen (with its own header and level picker),
+     so it replaces the whole Memory shell while it is open. Back returns to the
+     list of memory games. */
+  if (which === 'odd') {
+    return (
+      <OddOneOutScreen
+        defaultBand="medium"
+        progress={progress}
+        onBack={() => { stopSpeaking(); setWhich(null); }}
+        onAnswer={() => {}}
+        onComplete={onComplete}
+      />
+    );
+  }
 
   return (
     <GameBackground variant="game">
@@ -1398,7 +1268,6 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
         {which === 'color' && <ColorMemory onWin={onComplete} onExit={exit} />}
         {which === 'missing' && <WhatsMissing onWin={onComplete} onExit={exit} />}
         {which === 'cups' && <CupShuffle onWin={onComplete} onExit={exit} />}
-        {which === 'odd' && <OddOneOut onWin={onComplete} onExit={exit} />}
       </div>
     </GameBackground>
   );
