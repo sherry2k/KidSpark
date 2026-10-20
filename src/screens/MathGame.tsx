@@ -199,11 +199,30 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
   const frame = frameSize(band);
 
   const counters = q ? (q.op === '-' ? q.a : q.a + q.b) : 0;
-  const { lit, run, stop } = useCountAlong(Math.max(1, q?.op === 'count' ? q.a : counters));
+    const { lit, run, stop } = useCountAlong(Math.max(1, q?.op === 'count' ? q.a : counters));
 
-  useEffect(() => () => stopSpeaking(), []);
+  /* every pending timeout lives here, so leaving the game cancels them all */
+  const timers = useRef<number[]>([]);
+  const later = (fn: () => void, ms: number) => {
+    timers.current.push(window.setTimeout(fn, ms));
+  };
+  const clearTimers = () => {
+    timers.current.forEach(window.clearTimeout);
+    timers.current = [];
+  };
+  const leave = () => {
+    clearTimers();
+    stopSpeaking();
+    stop();
+    setFeedback(null);
+    setPicked(null);
+    ;
+  };
+
+  useEffect(() => () => { clearTimers(); stopSpeaking(); }, []);
 
   const startMode = (m: MathMode) => {
+    clearTimers();
     playClick();
     buzz('tick');
     setMode(m);
@@ -238,7 +257,7 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
     setHop(0);
     const nq = mode.make(band);
     setQ(nq);
-    window.setTimeout(() => speak(nq.prompt), 120);
+    later(() => speak(nq.prompt), 120);
   };
 
   const resolve = (value: number) => {
@@ -256,7 +275,7 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
       setStreak(st);
       setFeedback(st >= 3 ? `${st} in a row! 🔥` : 'Yes! Well done.');
       speak(st >= 3 ? `${st} in a row!` : 'Yes! Well done.');
-      window.setTimeout(() => {
+      later(() => {
         setFeedback(null);
         nextQuestion();
       }, 1100);
@@ -273,7 +292,7 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
       setFeedback(msg);
       speak(msg);
       // longer pause on a wrong answer — this is the moment to look at the dots
-      window.setTimeout(() => {
+      later(() => {
         setFeedback(null);
         nextQuestion();
       }, 2600);
@@ -426,7 +445,7 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
     return (
       <GameBackground variant="game">
         <div className="h-full flex flex-col overflow-x-hidden">
-          <Navigation title={`🧮 ${mode.title}`} onBack={() => { playClick(); setMode(null); }} stars={progress.stars} />
+          <Navigation title={`🧮 ${mode.title}`} onBack={() => { playClick(); leave(); }} stars={progress.stars} />
           <div className="flex-1 overflow-y-auto px-5 pb-8">
             <div className="max-w-md mx-auto text-center">
               <div className="text-6xl mt-4">🧮</div>
@@ -469,7 +488,7 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
                   🔄 Again
                 </motion.button>
                 <motion.button
-                  onClick={() => { playClick(); setMode(null); }}
+                  onClick={() => { playClick(); leave(); }}
                   className="rounded-2xl px-6 py-4 text-white font-bold border-4 border-white"
                   style={{ background: 'linear-gradient(135deg,#2C7BE5,#6366F1)', boxShadow: '0 5px 0 #1E40AF', fontFamily: NUM }}
                   whileTap={{ scale: 0.95, y: 3 }}
@@ -505,7 +524,7 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
       <div className="h-full flex flex-col overflow-x-hidden">
         <Navigation
           title={`🧮 ${mode.title}`}
-          onBack={() => { playClick(); stopSpeaking(); setMode(null); }}
+          onBack={() => { playClick(); stopSpeaking(); leave(); }}
           stars={progress.stars}
           showProgress
           progress={(qIndex / TOTAL) * 100}
