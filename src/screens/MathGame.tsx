@@ -216,7 +216,7 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
     stop();
     setFeedback(null);
     setPicked(null);
-    ;
+    setMode(null);
   };
 
   useEffect(() => () => { clearTimers(); stopSpeaking(); }, []);
