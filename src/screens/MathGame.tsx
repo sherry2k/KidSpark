@@ -384,14 +384,19 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
               ))}
                             <motion.button
                 onClick={() => { playClick(); buzz('tick'); setMissingOpen(true); }}
-                className="rounded-3xl p-4 text-white border-4 border-white bg-gradient-to-br from-emerald-400 to-teal-500"
+                className="relative overflow-hidden rounded-3xl p-4 text-white border-4 border-white bg-gradient-to-br from-emerald-400 to-teal-500"
                 style={{ boxShadow: '0 8px 0 #0F766E, 0 12px 22px rgba(0,0,0,.18)', minHeight: 150 }}
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: MATH_MODES.length * 0.06, ...POP }}
                 whileTap={{ scale: 0.94, y: 4 }}
               >
-                           
+                    <div
+  className="absolute text-center text-white font-bold bg-gradient-to-r from-red-500 to-pink-500 shadow-md"
+  style={{ top: 14, right: -30, width: 100, transform: 'rotate(40deg)', fontSize: 13, letterSpacing: '1px', padding: '2px 0', borderTop: '2px solid #fff', borderBottom: '2px solid #fff' }}
+>
+  NEW
+</div>       
                 <motion.div
                   className="flex justify-center mb-2"
                   animate={{ y: [0, -5, 0] }}
