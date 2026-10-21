@@ -58,6 +58,29 @@ const GAME_MODE_STYLES: Record<string, { gradient: string; shadow: string; diffi
   sounds: { gradient: 'from-indigo-500 to-purple-500', shadow: '#4338CA', difficulty: 'Medium', stars: '⭐⭐' },
 };
 
+/* the order the cards appear on the Home screen. Any game not listed here goes to the end. */
+const HOME_ORDER = [
+  'learn',
+  'quiz',
+  'sounds',
+  'memory',
+  'math',
+  'wordbuilder',
+  'match',
+  'coloring',
+  'puzzle',
+  'skills',
+  'creative',
+];
+
+const rank = (id: string) => {
+  const i = HOME_ORDER.indexOf(id);
+  return i === -1 ? 999 : i;
+};
+
+const orderedModes = [...gameModes].sort((a, b) => rank(a.id) - rank(b.id));
+
+
 const getStreakMessage = (streak: number) => {
   if (streak === 0) return { message: 'Start your learning journey!', emoji: '🚀', color: 'from-blue-400 to-purple-500' };
   if (streak === 1) return { message: 'Great start! Keep going!', emoji: '🌱', color: 'from-green-400 to-emerald-500' };
@@ -296,7 +319,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
           </h3>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-w-4xl mx-auto">
-            {gameModes.map((mode, index) => {
+            {orderedModes.map((mode, index) => {
               const style = GAME_MODE_STYLES[mode.id] || {
                 gradient: 'from-gray-400 to-gray-500',
                 shadow: '#374151',
