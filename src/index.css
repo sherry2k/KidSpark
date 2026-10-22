@@ -14,11 +14,26 @@
   --font-bubble: 'Bubblegum One', 'Fredoka', system-ui, -apple-system, cursive;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
+/* Base reset — inside @layer base so Tailwind utilities (mx-auto, px-4,
+   p-4, mb-3 ...) can override it. Unlayered, it beat every Tailwind
+   spacing class, which is why boxes never centred and padding vanished. */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Phones and small tablets: keep the original look exactly.
+   This unlayered reset is what the app has always shipped with on mobile
+   (it overrides Tailwind spacing). Only screens 960px and wider skip it. */
+@media (max-width: 959px) {
+  * {
+    margin: 0;
+    padding: 0;
+  }
 }
 
 html, body, #root {
@@ -233,4 +248,32 @@ body {
   border-color: #66bb6a;
   background: rgba(102, 187, 106, 0.2);
   transform: scale(1.05);
+}
+
+/* ============================================================
+   Desktop / large-screen layout
+   On phones nothing changes. On wide screens the app is centred
+   in a frame the width of its content (max-w-4xl = 56rem) instead
+   of sticking to the left edge.
+   ============================================================ */
+@media (min-width: 960px) {
+  html,
+  body {
+    background:
+      radial-gradient(circle, rgba(171, 71, 188, 0.10) 1px, transparent 1px),
+      linear-gradient(135deg, #ede7f6 0%, #e3f2fd 50%, #fce4ec 100%);
+    background-size: 24px 24px, 100% 100%;
+  }
+
+  #root {
+    max-width: 56rem;
+    margin: 0 auto;
+    position: relative;
+    /* Screens use position: fixed (full-screen). A transform makes #root
+       their container, so they stay inside this centred column
+       instead of stretching across the whole browser window. */
+    transform: translateZ(0);
+    background: linear-gradient(180deg, #e3f2fd 0%, #f3e5f5 50%, #fce4ec 100%);
+    box-shadow: 0 0 0 1px rgba(171, 71, 188, 0.08), 0 0 60px rgba(124, 58, 237, 0.18);
+  }
 }
