@@ -26,6 +26,16 @@
   }
 }
 
+/* Phones and small tablets: keep the original look exactly.
+   This unlayered reset is what the app has always shipped with on mobile
+   (it overrides Tailwind spacing). Only screens 960px and wider skip it. */
+@media (max-width: 959px) {
+  * {
+    margin: 0;
+    padding: 0;
+  }
+}
+
 html, body, #root {
   width: 100%;
   height: 100%;
