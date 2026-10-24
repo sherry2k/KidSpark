@@ -56,13 +56,18 @@ const GAME_MODE_STYLES: Record<string, { gradient: string; shadow: string; diffi
   skills: { gradient: 'from-amber-400 to-orange-500', shadow: '#C2410C', difficulty: 'Fun', stars: '⭐⭐⭐' },
   creative: { gradient: 'from-pink-400 to-purple-500', shadow: '#7a2ec9', difficulty: 'Fun', stars: '⭐⭐' },
   sounds: { gradient: 'from-indigo-500 to-purple-500', shadow: '#4338CA', difficulty: 'Medium', stars: '⭐⭐' },
+  music: { gradient: 'from-teal-400 to-cyan-500', shadow: '#0F766E', difficulty: 'Fun', stars: '⭐⭐' },
 };
+
+/* games that show a NEW ribbon on their card. Remove an id here after a few weeks. */
+const NEW_MODES = ['music'];
 
 /* the order the cards appear on the Home screen. Any game not listed here goes to the end. */
 const HOME_ORDER = [
   'learn',
   'quiz',
   'sounds',
+  'music',
   'math',
   'wordbuilder',
   'memory',
@@ -344,6 +349,16 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                   {sparkles && (
                     <div className={`absolute top-2 right-2 text-yellow-200 text-lg opacity-70 ks-twinkle ks-d${(index % 5) + 1}`}>
                       ✨
+                    </div>
+                  )}
+
+                  {NEW_MODES.includes(mode.id) && (
+                    <div
+                      data-kind="new"
+                      className="absolute z-10 text-center text-white font-bold bg-gradient-to-r from-red-500 to-pink-500 shadow-md pointer-events-none"
+                      style={{ top: 16, right: -32, width: 110, transform: 'rotate(40deg)', fontSize: 13, letterSpacing: '1px', padding: '2px 0', borderTop: '2px solid #fff', borderBottom: '2px solid #fff' }}
+                    >
+                      NEW
                     </div>
                   )}
 
