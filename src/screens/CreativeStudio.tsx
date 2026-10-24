@@ -638,12 +638,12 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
         </div>
 
         {/* bottom panel */}
-        <div className="px-3 pb-3 shrink-0">
-          <div className="bg-white/95 rounded-3xl p-3 border-4 border-white" style={{ boxShadow: '0 6px 0 rgba(0,0,0,.10)' }}>
+        <div className="px-3 pb-2 shrink-0">
+          <div className="bg-white/95 rounded-3xl p-2 border-4 border-white" style={{ boxShadow: '0 6px 0 rgba(0,0,0,.10)' }}>
             {/* sticker picker */}
             {tool === 'sticker' && (
-              <div className="mb-2">
-                <div className="grid grid-cols-8 gap-1.5 max-h-28 overflow-y-auto mb-2">
+              <div className="mb-1.5">
+                <div className="grid grid-cols-8 gap-1 max-h-24 overflow-y-auto mb-1.5">
                   {STICKERS.map((s) => (
                     <motion.button
                       key={s}
@@ -663,13 +663,13 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
 
             {/* shape picker */}
             {tool === 'shape' && (
-              <div className="mb-2">
-                <div className="grid grid-cols-6 gap-1.5 mb-2">
+              <div className="mb-1.5">
+                <div className="grid grid-cols-6 gap-1 mb-1.5">
                   {SHAPES.map((s) => (
                     <motion.button
                       key={s.id}
                       onClick={() => { setShape(s.id); playClick(); buzz('tick'); speak(s.label); }}
-                      className={`aspect-square rounded-xl flex items-center justify-center border-4 ${
+                      className={`h-10 rounded-xl flex items-center justify-center border-4 ${
                         shape === s.id ? 'border-blue-400 bg-blue-50' : 'border-white bg-gray-50'
                       }`}
                       whileTap={{ scale: 0.88 }}
@@ -685,7 +685,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
 
             {/* brush sizes — dots at true size, no letters */}
             {(tool === 'draw' || tool === 'eraser') && (
-              <div className="flex items-center justify-center gap-2 mb-2">
+              <div className="flex items-center justify-center gap-2 mb-1.5">
                 {BRUSHES.map((w) => (
                   <motion.button
                     key={w}
@@ -693,7 +693,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
                     className={`rounded-2xl flex items-center justify-center border-4 ${
                       brush === w ? 'bg-purple-100 border-purple-400' : 'bg-gray-50 border-white'
                     }`}
-                    style={{ width: 54, height: 44, boxShadow: '0 4px 0 rgba(0,0,0,.10)' }}
+                    style={{ width: 54, height: 38, boxShadow: '0 3px 0 rgba(0,0,0,.10)' }}
                     whileTap={{ scale: 0.92 }}
                     aria-label={`brush size ${w}`}
                   >
@@ -713,20 +713,21 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
 
             {/* colours */}
             {tool !== 'sticker' && tool !== 'move' && (
-              <div className="grid grid-cols-7 gap-1.5">
+              <div className="grid grid-cols-7 gap-1">
                 {PALETTE.map((s) => (
                   <motion.button
                     key={s.color}
                     onClick={() => { setColor(s.color); playClick(); buzz('tick'); speak(s.name); }}
-                    className="rounded-full aspect-square"
+                    className="rounded-xl w-full"
                     style={{
+                      height: 30,
                       background: s.color,
-                      border: color === s.color ? '3px solid #FFFFFF' : '3px solid #D8DCE8',
+                      border: color === s.color ? '2px solid #FFFFFF' : '2px solid #D8DCE8',
                       boxShadow: color === s.color
-                        ? '0 0 0 3px #1B1B1F, 0 3px 0 rgba(0,0,0,.12)'
-                        : '0 3px 0 rgba(0,0,0,.12)',
+                        ? '0 0 0 2px #1B1B1F, 0 2px 0 rgba(0,0,0,.12)'
+                        : '0 2px 0 rgba(0,0,0,.12)',
                     }}
-                    whileTap={{ scale: 0.85 }}
+                    whileTap={{ scale: 0.88 }}
                     aria-label={s.name}
                   />
                 ))}
@@ -735,14 +736,14 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ progress, onBack, onCom
 
             <button
               onClick={() => { playClick(); setConfirmClear(true); }}
-              className="w-full rounded-2xl py-1.5 mt-2 text-xs font-bold text-red-500 bg-red-50 border-2 border-red-200"
+              className="w-full rounded-xl py-1 mt-1.5 text-xs font-bold text-red-500 bg-red-50 border-2 border-red-200"
               style={{ fontFamily: "'Bubblegum One', cursive" }}
             >
               🗑️ Start again
             </button>
           </div>
 
-          <p className="text-center text-[11px] text-gray-500 font-semibold mt-1.5">
+          <p className="text-center text-[11px] leading-tight text-gray-500 font-semibold mt-1">
             {tool === 'fill' && '👆 Tap an area to fill just that bit'}
             {tool === 'draw' && '👆 Drag to draw'}
             {tool === 'eraser' && '👆 Drag to rub out'}
@@ -830,7 +831,7 @@ const SizeRow: React.FC<{
         className={`rounded-2xl flex items-center justify-center border-4 ${
           value === v ? 'bg-purple-100 border-purple-400' : 'bg-gray-50 border-white'
         }`}
-        style={{ width: 52, height: 44, boxShadow: '0 4px 0 rgba(0,0,0,.10)' }}
+        style={{ width: 52, height: 38, boxShadow: '0 3px 0 rgba(0,0,0,.10)' }}
         whileTap={{ scale: 0.92 }}
         aria-label={`size ${v}`}
       >
