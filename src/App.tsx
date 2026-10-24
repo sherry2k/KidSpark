@@ -20,6 +20,7 @@ import ProfileScreen from './screens/ProfileScreen';
 import SkillsScreen from './screens/SkillsScreen';
 import CreativeStudio from './screens/CreativeStudio';
 import SoundGame from './screens/SoundGame';
+import MusicGame from './screens/MusicGame';
 
 // Store
 import {
@@ -62,18 +63,21 @@ type Screen =
   | 'settings'
   | 'profile'
   | 'creative'
-  | 'sounds';
+  | 'sounds'
+  | 'music';
 
 const KidSparkApp: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('splash');
   const [profile, setProfile] = useState<PlayerProfile>(loadProfile);
   const [progress, setProgress] = useState<GameProgress>(loadProgress);
   const [settings, setSettings] = useState<GameSettings>(loadSettings);
-  
+
   const [hasStarted, setHasStarted] = useState(false);
 
+  // The background tune is switched off on the Music screen so it does not
+  // play over the xylophone and the songs the child is playing.
   const { fadeIn } = useBackgroundMusic({
-    enabled: hasStarted && (settings.musicEnabled ?? true),
+    enabled: hasStarted && (settings.musicEnabled ?? true) && currentScreen !== 'music',
     volume: 0.3,
   });
 
@@ -123,7 +127,7 @@ const KidSparkApp: React.FC = () => {
 
   const handleSplashComplete = useCallback(() => {
     setHasStarted(true);
-    
+
     setTimeout(() => {
       if (settings.musicEnabled ?? true) {
         fadeIn(2000);
@@ -155,7 +159,8 @@ const KidSparkApp: React.FC = () => {
       case 'puzzle': setCurrentScreen('puzzle'); break;
       case 'skills': setCurrentScreen('skills'); break;
       case 'creative': setCurrentScreen('creative'); break;
-      case 'sounds': setCurrentScreen('sounds'); break;  
+      case 'sounds': setCurrentScreen('sounds'); break;
+      case 'music': setCurrentScreen('music'); break;
       default: setCurrentScreen('home');
     }
   }, []);
@@ -237,10 +242,12 @@ const KidSparkApp: React.FC = () => {
         return <ProfileScreen profile={profile} progress={progress} onBack={goHome} onUpdateProfile={handleUpdateProfile} />;
       case 'skills':
         return <SkillsScreen progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
-        case 'creative':
+      case 'creative':
         return <CreativeStudio progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
-        case 'sounds':
+      case 'sounds':
         return <SoundGame progress={progress} onBack={goHome} onAnswer={handleQuizAnswer} onComplete={handleGameComplete} />;
+      case 'music':
+        return <MusicGame progress={progress} onBack={goHome} onAnswer={handleQuizAnswer} onComplete={handleGameComplete} />;
       default:
         return null;
     }
@@ -255,7 +262,7 @@ const KidSparkApp: React.FC = () => {
           : "'Fredoka', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
       }}
     >
-      
+
       <AnimatePresence mode="wait">
         <motion.div
           key={currentScreen}
