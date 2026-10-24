@@ -14,14 +14,24 @@ import {
   shWords,
   thWords,
   oaWords,
+  eeWords,
+  ooWords,
+  oiWords,
+  arWords,
+  urWords,
   allDigraphWords,
+  OO_OPTIONS,
+  OI_OPTIONS,
+  AR_OPTIONS,
+  UR_OPTIONS,
 } from '../data/soundWords';
 
 /**
  * SoundGame — "which letters are missing?"
  *
  * The child sees a picture and the word with a gap, e.g. a ship and "__ip",
- * and taps the missing letter pair (ch / sh / th, or oa for the vowel team).
+ * and taps the missing letter pair (ch / sh / th, the vowel teams oa / ee / oo / oi,
+ * or the vowel-with-R pairs ar / ur).
  * Tapping the picture says the word aloud. The word is always shown together
  * with a picture so the child is never guessing between two real words.
  */
@@ -47,6 +57,8 @@ interface SoundMode {
   pool: SoundWord[];
   options: string[];
   learned: string;
+  /** shows a NEW ribbon on the card */
+  isNew?: boolean;
 }
 
 const MODES: SoundMode[] = [
@@ -115,6 +127,83 @@ const MODES: SoundMode[] = [
     learned:
       'A vowel team is two vowels that work together. When o and a sit side by side they usually say the long "o" sound, as in goat and boat.',
   },
+  {
+    id: 'ee',
+    title: 'EE team',
+    sub: 'bee, tree, sheep',
+    icon: '🐝',
+    grad: 'from-lime-400 to-green-500',
+    shadow: '#15803D',
+    diff: 1,
+    pool: eeWords,
+    options: VOWEL_TEAM_OPTIONS,
+    isNew: true,
+    learned:
+      'When two e letters sit side by side they say the long "ee" sound, as in bee and tree. Ask your child to say the word out loud, stretch the "eee" sound, and then pick the letters.',
+  },
+  {
+    id: 'oo',
+    title: 'OO team',
+    sub: 'moon, spoon, book',
+    icon: '🌙',
+    grad: 'from-violet-500 to-purple-600',
+    shadow: '#6D28D9',
+    diff: 2,
+    pool: ooWords,
+    options: OO_OPTIONS,
+    isNew: true,
+    learned:
+      'The letters oo make two different sounds: a long "oo" as in moon and spoon, and a short "oo" as in book and foot. Both are in this round, because the spelling is the same. Say each word out loud together.',
+  },
+  {
+    id: 'oi',
+    title: 'OI team',
+    sub: 'coin, oil, point',
+    icon: '🛢️',
+    grad: 'from-rose-400 to-red-500',
+    shadow: '#B91C1C',
+    diff: 2,
+    pool: oiWords,
+    options: OI_OPTIONS,
+    isNew: true,
+    learned:
+      'The letters oi make the "oy" sound in coin, oil and point. Ask your child to listen for that sound in the middle of the word before choosing.',
+  },
+  {
+    id: 'ar',
+    title: 'AR words',
+    sub: 'car, star, shark',
+    icon: '🚗',
+    grad: 'from-cyan-400 to-sky-500',
+    shadow: '#0369A1',
+    diff: 2,
+    pool: arWords,
+    options: AR_OPTIONS,
+    isNew: true,
+    learned:
+      'When a is followed by r, the vowel changes: ar says "ah" as in car and star. This round mixes ar with or and er so your child learns to tell them apart. Say the word out loud and listen for the "ah".',
+  },
+  {
+    id: 'ur',
+    title: 'UR words',
+    sub: 'turtle, burger, hurt',
+    icon: '🐢',
+    grad: 'from-fuchsia-500 to-pink-500',
+    shadow: '#A21CAF',
+    diff: 3,
+    pool: urWords,
+    options: UR_OPTIONS,
+    isNew: true,
+    learned:
+      'The letters ur make the "er" sound, as in turtle and burger. The same sound can also be spelled er and ir (as in bird), which come later, so this round only asks ur against ar and or.',
+  },
+];
+
+/** how the mode cards are grouped on the picker; a mode not listed here goes into a last group */
+const SECTIONS: { title: string; hint: string; ids: string[] }[] = [
+  { title: 'Digraphs', hint: 'ch · sh · th', ids: ['mix', 'ch', 'sh', 'th'] },
+  { title: 'Vowel teams', hint: 'oa · ee · oo · oi', ids: ['oa', 'ee', 'oo', 'oi'] },
+  { title: 'Vowels with R', hint: 'ar · ur', ids: ['ar', 'ur'] },
 ];
 
 const shuffle = <T,>(items: T[]): T[] => {
@@ -175,6 +264,29 @@ const WordPicture: React.FC<{ entry: SoundWord; size: number }> = ({ entry, size
         <path d="M58 54 h14" fill="none" stroke="#FDE68A" strokeWidth="3" strokeLinecap="round" />
         <rect x="10" y="76" width="80" height="6" rx="2" fill="#6B4423" />
         <rect x="64" y="72" width="12" height="4" rx="1.5" fill="#fff" />
+      </svg>
+    );
+  }
+  if (entry.draw === 'coin') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 100 100" role="img" aria-label="coin">
+        <ellipse cx="50" cy="86" rx="30" ry="5" fill="rgba(0,0,0,.12)" />
+        <circle cx="50" cy="48" r="38" fill="#FBBF24" stroke="#B45309" strokeWidth="4" />
+        <circle cx="50" cy="48" r="29" fill="#FCD34D" stroke="#D97706" strokeWidth="3" />
+        <path d="M50 28 L55 42 L70 42 L58 51 L62 66 L50 57 L38 66 L42 51 L30 42 L45 42 Z" fill="#F59E0B" stroke="#B45309" strokeWidth="2" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  if (entry.draw === 'soil') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 100 100" role="img" aria-label="soil">
+        <path d="M6 88 Q 50 22 94 88 Z" fill="#7C4A21" stroke="#4A2C10" strokeWidth="3" strokeLinejoin="round" />
+        <circle cx="34" cy="76" r="3" fill="#4A2C10" />
+        <circle cx="62" cy="70" r="3.5" fill="#4A2C10" />
+        <circle cx="48" cy="82" r="2.5" fill="#4A2C10" />
+        <path d="M50 52 L50 30" fill="none" stroke="#15803D" strokeWidth="4" strokeLinecap="round" />
+        <path d="M50 34 Q 36 32 32 20 Q 46 20 50 34 Z" fill="#4ADE80" stroke="#15803D" strokeWidth="2.5" strokeLinejoin="round" />
+        <path d="M50 38 Q 64 36 68 24 Q 54 24 50 38 Z" fill="#86EFAC" stroke="#15803D" strokeWidth="2.5" strokeLinejoin="round" />
       </svg>
     );
   }
@@ -328,35 +440,70 @@ const SoundGame: React.FC<SoundGameProps> = ({ progress, onBack, onAnswer, onCom
               Look at the picture, then pick the letters that fit.
             </p>
 
-            <div className="grid grid-cols-2 gap-3 max-w-lg mx-auto">
-              {MODES.map((m, i) => (
-                <motion.button
-                  key={m.id}
-                  onClick={() => startMode(m)}
-                  className={`rounded-3xl p-4 text-white border-4 border-white bg-gradient-to-br ${m.grad}`}
-                  style={{ boxShadow: `0 8px 0 ${m.shadow}, 0 12px 22px rgba(0,0,0,.18)`, minHeight: 150 }}
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: i * 0.06, ...POP }}
-                  whileTap={{ scale: 0.94, y: 4 }}
-                >
-                  <div className="flex justify-center mb-2">
-                    <ItemIcon icon={m.icon} size={44} label={m.title} />
-                  </div>
-                  <h3 className="text-lg font-bold" style={{ fontFamily: FONT, textShadow: '2px 2px 0 rgba(0,0,0,.18)' }}>
-                    {m.title}
+            {(() => {
+              const unlisted = MODES.filter((m) => !SECTIONS.some((sec) => sec.ids.includes(m.id)));
+              const sections = unlisted.length
+                ? [...SECTIONS, { title: 'More', hint: '', ids: unlisted.map((m) => m.id) }]
+                : SECTIONS;
+              let n = 0; // running card number, for the entrance delay
+              return sections.map((sec) => (
+                <div key={sec.title} className="max-w-lg mx-auto mb-4" data-kind="section">
+                  <h3
+                    className="text-sm font-bold text-gray-600 mb-2 px-1 flex items-baseline gap-2"
+                    style={{ fontFamily: FONT }}
+                  >
+                    {sec.title}
+                    {sec.hint && <span className="text-xs font-semibold text-gray-400">{sec.hint}</span>}
                   </h3>
-                  <p className="text-xs opacity-90">{m.sub}</p>
-                  <div className="flex justify-center gap-0.5 mt-1.5">
-                    {[1, 2, 3].map((d) => (
-                      <span key={d} className="text-[11px]" style={{ opacity: d <= m.diff ? 1 : 0.28 }}>
-                        ⭐
-                      </span>
-                    ))}
+                  <div className="grid grid-cols-2 gap-3">
+                    {sec.ids
+                      .map((id) => MODES.find((m) => m.id === id))
+                      .filter((m): m is SoundMode => !!m)
+                      .map((m) => {
+                        const i = n++;
+                        return (
+                          <motion.button
+                            key={m.id}
+                            data-kind="mode"
+                            data-id={m.id}
+                            onClick={() => startMode(m)}
+                            className={`relative overflow-hidden rounded-3xl p-4 text-white border-4 border-white bg-gradient-to-br ${m.grad}`}
+                            style={{ boxShadow: `0 8px 0 ${m.shadow}, 0 12px 22px rgba(0,0,0,.18)`, minHeight: 150 }}
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: Math.min(i, 8) * 0.05, ...POP }}
+                            whileTap={{ scale: 0.94, y: 4 }}
+                          >
+                            {m.isNew && (
+                              <div
+                                data-kind="new"
+                                className="absolute text-center text-white font-bold bg-gradient-to-r from-red-500 to-pink-500 shadow-md"
+                                style={{ top: 14, right: -30, width: 100, transform: 'rotate(40deg)', fontSize: 13, letterSpacing: '1px', padding: '2px 0', borderTop: '2px solid #fff', borderBottom: '2px solid #fff' }}
+                              >
+                                NEW
+                              </div>
+                            )}
+                            <div className="flex justify-center mb-2">
+                              <ItemIcon icon={m.icon} size={44} label={m.title} />
+                            </div>
+                            <h3 className="text-lg font-bold" style={{ fontFamily: FONT, textShadow: '2px 2px 0 rgba(0,0,0,.18)' }}>
+                              {m.title}
+                            </h3>
+                            <p className="text-xs opacity-90">{m.sub}</p>
+                            <div className="flex justify-center gap-0.5 mt-1.5">
+                              {[1, 2, 3].map((d) => (
+                                <span key={d} className="text-[11px]" style={{ opacity: d <= m.diff ? 1 : 0.28 }}>
+                                  ⭐
+                                </span>
+                              ))}
+                            </div>
+                          </motion.button>
+                        );
+                      })}
                   </div>
-                </motion.button>
-              ))}
-            </div>
+                </div>
+              ));
+            })()}
           </div>
         </div>
       </GameBackground>
