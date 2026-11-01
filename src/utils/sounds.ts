@@ -1,5 +1,6 @@
 // src/utils/sounds.ts
 import { Howl, Howler } from 'howler';
+import { sparkReact } from './sparkVoice';
 
 // Sound file paths - ONLY files you actually have
 const SOUND_FILES = {
@@ -81,10 +82,14 @@ export function playClick() {
 
 export function playCorrect() {
   playSoundEffect('correct', 0.5);
+  // Spark sometimes says "Yes! That's right!" (only now and then)
+  if (soundEnabled) sparkReact('correct');
 }
 
 export function playWrong() {
   playSoundEffect('wrong', 0.4);
+  // Spark sometimes says "Oops! Try again!" (only now and then)
+  if (soundEnabled) sparkReact('wrong');
 }
 
 export function playComplete() {
