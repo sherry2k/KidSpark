@@ -7,6 +7,7 @@ import { encouragementMessages } from '../data/gameData';
 import { useContent } from '../context/ContentContext';
 import { GameProgress } from '../store/gameStore';
 import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds';
+import SparkResult from '../components/SparkResult';
 
 interface WordBuilderProps {
   progress: GameProgress;
@@ -111,13 +112,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete 
             animate={{ scale: 1 }}
             transition={{ delay: 0.5, type: 'spring' }}
           >
-            <motion.div 
-              className="text-7xl mb-3"
-              animate={{ rotate: [0, -10, 10, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              📝
-            </motion.div>
+            <SparkResult stars={stars} />
             <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4" style={{ fontFamily: "'Bubblegum One', cursive" }}>
               All Words Built! 🎉
             </h2>
