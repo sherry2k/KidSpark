@@ -7,6 +7,7 @@ import { GameProgress } from '../store/gameStore';
 import { MATCH_PACKS, MatchPack, MatchItem, difficultyOf } from '../data/matchPacks';
 import { buzz, speak, stopSpeaking, POP } from '../utils/kidJuice';
 import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds';
+import SparkResult from '../components/SparkResult';
 
 /**
  * MatchGame — rebuilt as drag-into-bins, one item at a time.
@@ -235,6 +236,7 @@ const MatchGame: React.FC<MatchGameProps> = ({ progress, onBack, onComplete }) =
                 animate={{ y: 0, opacity: 1 }}
               >
                 All sorted! 🎉
+                 <SparkResult stars={stars} />
               </motion.p>
 
               <div className="flex justify-center gap-1 mt-2">
