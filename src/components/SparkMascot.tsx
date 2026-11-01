@@ -6,6 +6,7 @@ import React from 'react';
  *
  *   mode="hello"  waves three times, then stands still and blinks now and then
  *   mode="cheer"  jumps and waves fast with a big open mouth (use on win screens)
+ *   mode="wave"   keeps waving non-stop (use on the splash screen)
  *
  * Images live in /public/spark/ (body.webp, arm.webp, mouth.webp).
  * Set the size with className (for example "w-24"). To position him, put the
@@ -23,6 +24,7 @@ const CSS = `
 @keyframes sp-line   { 0%,93%,100%{opacity:0} 94.5%,97%{opacity:1} }
 .sp-arm{transform-origin:21.33% 53.7%}
 .sp-hello .sp-arm{animation:sp-wave 3.6s ease-in-out 0.4s 3 both}
+.sp-wave .sp-arm{animation:sp-wave 1.8s ease-in-out infinite}
 .sp-cheer .sp-arm{animation:sp-cheer-arm .42s ease-in-out infinite alternate}
 .sp-cheer .sp-body{animation:sp-jump .8s ease-in-out infinite;transform-origin:50% 100%}
 .sp-mouth{transform-origin:50% 8%}
@@ -32,7 +34,7 @@ const CSS = `
 @media (prefers-reduced-motion: reduce){ .sp-arm,.sp-body,.sp-mouth,.sp-lid,.sp-line{animation:none!important} }
 `;
 
-const SparkMascot: React.FC<{ mode?: 'hello' | 'cheer'; className?: string }> = ({ mode = 'hello', className = '' }) => (
+const SparkMascot: React.FC<{ mode?: 'hello' | 'cheer' | 'wave'; className?: string }> = ({ mode = 'hello', className = '' }) => (
   <div className={className} style={{ aspectRatio: `${W} / ${H}` }} role="img" aria-label="Spark, the KidSpark star">
     <style>{CSS}</style>
     <div className={`sp-${mode}`} style={{ position: 'relative', width: '100%', height: '100%' }}>
