@@ -451,8 +451,7 @@ const ShadowMatch: React.FC<{ onWin: (s: number) => void; onExit: () => void }> 
         onAgain={() => { setRoundIndex(0); setMatched([]); setMistakes(0); setWon(false); awarded.current = false; }}
         onMenu={onExit}
       >
-        <div className="text-6xl mt-3">🌑</div>
-      </WinCard>
+              </WinCard>
     );
   }
 
@@ -594,8 +593,7 @@ const Patterns: React.FC<{ onWin: (s: number) => void; onExit: () => void }> = (
         onAgain={() => { setIndex(0); setMistakes(0); setPicked(null); setWon(false); awarded.current = false; }}
         onMenu={onExit}
       >
-        <div className="text-6xl mt-3">🌈</div>
-      </WinCard>
+              </WinCard>
     );
   }
 
@@ -759,8 +757,7 @@ const SizeSort: React.FC<{ onWin: (s: number) => void; onExit: () => void }> = (
         onAgain={() => { setRoundIndex(0); setPlacedItems([]); setMistakes(0); setWon(false); awarded.current = false; }}
         onMenu={onExit}
       >
-        <div className="text-6xl mt-3">📏</div>
-      </WinCard>
+              </WinCard>
     );
   }
 
