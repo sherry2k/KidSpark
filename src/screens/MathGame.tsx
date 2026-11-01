@@ -11,6 +11,7 @@ import { GameProgress, PlayerProfile } from '../store/gameStore';
 import { MATH_MODES, MathMode, ModeId, Band, Question, frameSize, maxFor } from '../data/mathModes';
 import { buzz, speak, stopSpeaking, POP } from '../utils/kidJuice';
 import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds';
+import SparkMascot from '../components/SparkMascot';
 
 /**
  * MathGame — rebuilt as four modes, with every quantity made visible.
@@ -503,7 +504,9 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
           <Navigation title={`🧮 ${mode.title}`} onBack={() => { playClick(); leave(); }} stars={progress.stars} />
           <div className="flex-1 overflow-y-auto px-5 pb-8">
             <div className="max-w-md mx-auto text-center">
-              <div className="text-6xl mt-4">🧮</div>
+              <div className="flex justify-center" style={{ marginTop: 16 }}>
+  <SparkMascot mode={stars === 3 ? 'cheer' : 'wave'} className="w-28" />
+</div>
               <p className="text-2xl font-bold text-gray-800 mt-2" style={{ fontFamily: NUM }}>
                 {stars === 3 ? 'Number star!' : 'Good work!'} 🎉
               </p>
