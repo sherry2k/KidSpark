@@ -35,7 +35,7 @@ export function buzz(kind: Buzz = 'tick') {
 /* Voice — free voice-over via the OS speech engine                    */
 /* ------------------------------------------------------------------ */
 
-let voiceEnabled = true;
+let voiceEnabled = false;
 let chosenVoice: SpeechSynthesisVoice | null = null;
 
 export function setVoiceEnabled(on: boolean) {
