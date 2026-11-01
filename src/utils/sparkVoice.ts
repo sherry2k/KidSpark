@@ -22,8 +22,8 @@ const GROUPS = {
 export type SparkGroup = keyof typeof GROUPS;
 
 /* how often Spark comments on answers */
-const REACT_CHANCE = { correct: 0.35, wrong: 0.5 };
-const REACT_MIN_GAP_MS = 7000;
+const REACT_CHANCE = { correct: 0.5, wrong: 1 };
+const REACT_MIN_GAP_MS = 2500;
 
 const KEY = 'sparkVoiceEnabled';
 let enabled = true;
@@ -64,7 +64,7 @@ export function isSparkSpeaking() {
 
 function getHowl(name: string): Howl {
   if (!cache[name]) {
-    cache[name] = new Howl({ src: [`${BASE}${name}.mp3`], volume: 0.9, preload: true });
+    cache[name] = new Howl({ src: [`${BASE}${name}.mp3`], volume: 1, preload: true });
   }
   return cache[name];
 }
@@ -158,6 +158,12 @@ export function playSparkVoice(group: SparkGroup, delayMs = 0): boolean {
 /** A short comment after an answer. Only sometimes, and never while he is already talking. */
 export function sparkReact(kind: 'correct' | 'wrong') {
   if (!enabled || speaking) return;
+  /* don't talk over the game's own question narration */
+  try {
+    if (typeof window !== 'undefined' && window.speechSynthesis && window.speechSynthesis.speaking) return;
+  } catch {
+    /* ignore */
+  }
   const now = Date.now();
   if (now - lastReactionAt < REACT_MIN_GAP_MS) return;
   if (Math.random() > REACT_CHANCE[kind]) return;
