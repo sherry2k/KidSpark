@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { fireConfetti, fireStars } from '../utils/confetti';
 import { playComplete } from '../utils/sounds';
+import SparkMascot from './SparkMascot';
 
 interface CelebrationScreenProps {
   message?: string;
@@ -26,7 +27,10 @@ export default function CelebrationScreen({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="animate-bounce-in bg-white rounded-3xl p-8 mx-4 max-w-sm w-full text-center shadow-2xl">
-        <div className="text-6xl mb-4 animate-float">🎉</div>
+        {/* Spark cheers instead of the 🎉 (spacing is written inline so the phone CSS reset can't remove it) */}
+        <div className="flex justify-center" style={{ marginBottom: 8 }}>
+          <SparkMascot mode="cheer" className="w-28" />
+        </div>
         <h2 className="text-3xl font-bold text-purple-600 font-[Bubblegum_Sans] mb-2">{message}</h2>
         <div className="flex justify-center gap-2 my-4">
           {Array.from({ length: 3 }).map((_, i) => (
