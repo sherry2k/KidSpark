@@ -1,7 +1,8 @@
 // src/utils/sparkVoice.ts
 // Spark's voice clips (ElevenLabs). Short MP3 files in /public/sounds/spark-*.mp3
 //
-//  - playSparkVoice('hello' | 'correct' | 'wrong' | 'result3' | 'result2' | 'result1')
+//  - playSparkVoice('hello' | 'correct' | 'wrong' | 'hint' | 'result3' | 'result2' | 'result1')
+//  - playSparkIntro(gameId)  -> the opening line of a game (intro-<gameId>.mp3)
 //  - sparkReact('correct' | 'wrong')  -> only now and then, so it never gets annoying
 //  - the background music gets quieter while Spark speaks
 //  - one on/off switch: setSparkVoiceEnabled(false)
@@ -14,12 +15,16 @@ const GROUPS = {
   hello: ['hello-1', 'hello-2'],
   correct: ['correct-1', 'correct-2', 'correct-3', 'correct-4'],
   wrong: ['wrong-1', 'wrong-2', 'wrong-3'],
+  hint: ['hint-1', 'hint-2'],
   result3: ['result-3star'],
   result2: ['result-2star'],
   result1: ['result-1star'],
 } as const;
 
 export type SparkGroup = keyof typeof GROUPS;
+
+/* games that have an opening line (intro-<id>.mp3) */
+const INTRO_IDS = ['learn', 'quiz', 'sounds', 'music', 'math', 'wordbuilder', 'memory', 'match', 'coloring', 'puzzle', 'skills', 'creative'];
 
 /* how often Spark comments on answers */
 const REACT_CHANCE = { correct: 0.5, wrong: 1 };
@@ -93,6 +98,7 @@ function unduck() {
 /** Download all the clips quietly in the background (they are small) so they play without delay. */
 export function preloadSparkVoice() {
   (Object.keys(GROUPS) as SparkGroup[]).forEach((g) => GROUPS[g].forEach((n) => getHowl(n)));
+  INTRO_IDS.forEach((id) => getHowl(`intro-${id}`));
 }
 
 export function stopSparkVoice() {
@@ -118,14 +124,14 @@ function pick(group: SparkGroup): string {
   return name;
 }
 
-/** Play one of Spark's clips from a group. Returns false when the voice is switched off. */
-export function playSparkVoice(group: SparkGroup, delayMs = 0): boolean {
+/** Play one clip by file name (without the spark- prefix and .mp3). */
+function playByName(name: string, delayMs: number): boolean {
   if (!enabled) return false;
   stopSparkVoice();
 
   const start = () => {
     delayTimer = null;
-    const howl = getHowl(pick(group));
+    const howl = getHowl(name);
     current = howl;
     const finish = () => {
       if (current === howl) {
@@ -155,8 +161,26 @@ export function playSparkVoice(group: SparkGroup, delayMs = 0): boolean {
   return true;
 }
 
+/** Play one of Spark's clips from a group. Returns false when the voice is switched off. */
+export function playSparkVoice(group: SparkGroup, delayMs = 0): boolean {
+  return playByName(pick(group), delayMs);
+}
+
+/** The opening line of a game, for example playSparkIntro('math'). Call it when the game opens. */
+export function playSparkIntro(gameId: string): boolean {
+  if (!INTRO_IDS.includes(gameId)) return false;
+  wrongStreak = 0;
+  return playByName(`intro-${gameId}`, 300);
+}
+
+/** Counts wrong answers in a row, so two misses in a row get a gentle hint instead. */
+let wrongStreak = 0;
+
 /** A short comment after an answer. Only sometimes, and never while he is already talking. */
 export function sparkReact(kind: 'correct' | 'wrong') {
+  if (kind === 'correct') wrongStreak = 0;
+  else wrongStreak += 1;
+
   if (!enabled || speaking) return;
   /* don't talk over the game's own question narration */
   try {
@@ -166,6 +190,14 @@ export function sparkReact(kind: 'correct' | 'wrong') {
   }
   const now = Date.now();
   if (now - lastReactionAt < REACT_MIN_GAP_MS) return;
+
+  if (kind === 'wrong' && wrongStreak >= 2) {
+    wrongStreak = 0;
+    lastReactionAt = now;
+    playSparkVoice('hint', 350);
+    return;
+  }
+
   if (Math.random() > REACT_CHANCE[kind]) return;
   lastReactionAt = now;
   playSparkVoice(kind, 350);
