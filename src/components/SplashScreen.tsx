@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import SparkMascot from './SparkMascot';
 
@@ -25,38 +25,25 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
 
   const letters = 'KidSpark'.split('');
 
-  // Star positions are picked once. (Before, they were re-picked on every
-  // progress tick, so the stars jumped around while loading.)
-  const stars = useMemo(
-    () =>
-      Array.from({ length: 20 }).map(() => ({
-        left: Math.random() * 100,
-        top: Math.random() * 100,
-        duration: 2 + Math.random() * 2,
-        delay: Math.random() * 2,
-      })),
-    []
-  );
-
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center overflow-hidden" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 30%, #f093fb 60%, #f5576c 100%)' }}>
       {/* Background stars */}
-      {stars.map((s, i) => (
+      {Array.from({ length: 20 }).map((_, i) => (
         <motion.div
           key={i}
           className="absolute text-xl"
           style={{
-            left: `${s.left}%`,
-            top: `${s.top}%`,
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
           }}
           animate={{
             opacity: [0.2, 1, 0.2],
             scale: [0.5, 1.2, 0.5],
           }}
           transition={{
-            duration: s.duration,
+            duration: 2 + Math.random() * 2,
             repeat: Infinity,
-            delay: s.delay,
+            delay: Math.random() * 2,
           }}
         >
           ✨
