@@ -7,6 +7,7 @@ import { playClick } from '../utils/sounds';
 import FeedbackButton, { buildId } from '../components/FeedbackButton';
 import SparkMascot from '../components/SparkMascot';
 import SparkTapButton from '../components/SparkTapButton';
+import { playSparkIntro } from '../utils/sparkVoice';
 
 /**
  * HomeScreen — same screen, without the main-thread tax.
@@ -240,7 +241,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* ---------------- daily challenge ---------------- */}
         <motion.div className="mx-4 md:mx-6 mb-4" {...rise(3)}>
           <motion.button
-            onClick={() => !challengeCompleted && onSelectMode(todayChallenge.gameMode)}
+            onClick={() => { if (!challengeCompleted) { playSparkIntro(todayChallenge.gameMode); onSelectMode(todayChallenge.gameMode); } }}
             className="w-full text-left"
             whileTap={!challengeCompleted ? { scale: 0.98 } : {}}
             disabled={challengeCompleted}
@@ -343,7 +344,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
               return (
                 <motion.button
                   key={mode.id}
-                  onClick={() => { playClick(); onSelectMode(mode.id); }}
+                  onClick={() => { playClick(); playSparkIntro(mode.id); onSelectMode(mode.id); }}
                   className={`bg-gradient-to-br ${style.gradient} rounded-3xl p-4 md:p-5 text-white border-4 border-white relative overflow-hidden`}
                   style={{ boxShadow: `0 8px 0 ${style.shadow}, 0 12px 25px rgba(0,0,0,0.2)`, minHeight: 160 }}
                   initial={{ y: 16, opacity: 0 }}
