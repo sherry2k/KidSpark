@@ -5,6 +5,7 @@ import { gameModes, dailyChallenges } from '../data/gameData';
 import { PlayerProfile, GameProgress } from '../store/gameStore';
 import { playClick } from '../utils/sounds';
 import FeedbackButton, { buildId } from '../components/FeedbackButton';
+import SparkMascot from '../components/SparkMascot';
 
 /**
  * HomeScreen — same screen, without the main-thread tax.
@@ -214,22 +215,25 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
           </div>
         </motion.div>
 
-        {/* ---------------- welcome ---------------- */}
-        <motion.div className="mx-4 md:mx-6 mb-4" {...rise(2)}>
-          <div className="bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 rounded-3xl p-5 md:p-6 text-white shadow-xl relative overflow-hidden">
-            <div className="absolute -top-4 -right-4 text-7xl opacity-20 rotate-12 pointer-events-none">🎓</div>
-            <div className="absolute bottom-2 right-4 text-3xl md:text-4xl opacity-70 pointer-events-none ks-bob-tilt ks-d2">🦄</div>
+       {/* ---------------- welcome ---------------- */}
+<motion.div className="mx-4 md:mx-6 mb-4" {...rise(2)}>
+  <div className="bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 rounded-3xl p-5 md:p-6 text-white shadow-xl relative overflow-hidden min-h-[116px] flex items-center">
+    <div className="absolute -top-4 -right-4 text-7xl opacity-20 rotate-12 pointer-events-none">🎓</div>
 
-            <div className="relative z-10 pr-16 md:pr-20 text-center">
-              <h2 className="text-xl md:text-2xl font-black mb-2" style={{ fontFamily: FONT, textShadow: '2px 2px 0 rgba(0,0,0,0.2)' }}>
-                Welcome back, {profile.name || 'Little Star'}! 🎉
-              </h2>
-              <p className="text-white/90 text-sm md:text-base font-semibold" style={{ textShadow: '1px 1px 0 rgba(0,0,0,0.2)' }}>
-                Ready to learn and play today?
-              </p>
-            </div>
-          </div>
-        </motion.div>
+    <div className="absolute right-1 md:right-4 bottom-0 pointer-events-none">
+      <SparkMascot mode="hello" className="w-[84px] md:w-28" />
+    </div>
+
+    <div className="relative z-10 w-full pr-[88px] md:pr-32 text-center">
+      <h2 className="text-lg md:text-2xl font-black mb-2" style={{ fontFamily: FONT, textShadow: '2px 2px 0 rgba(0,0,0,0.2)' }}>
+        Welcome back, {profile.name || 'Little Star'}! 🎉
+      </h2>
+      <p className="text-white/90 text-sm md:text-base font-semibold" style={{ textShadow: '1px 1px 0 rgba(0,0,0,0.2)' }}>
+        Ready to learn and play today?
+      </p>
+    </div>
+  </div>
+</motion.div>
 
         {/* ---------------- daily challenge ---------------- */}
         <motion.div className="mx-4 md:mx-6 mb-4" {...rise(3)}>
