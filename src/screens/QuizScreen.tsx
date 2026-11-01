@@ -9,6 +9,7 @@ import { GameProgress } from '../store/gameStore';
 import { faceFor, categoryOf } from '../data/answerIcons';
 import { buzz, speak, stopSpeaking, POP } from '../utils/kidJuice';
 import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds';
+import SparkMascot from '../components/SparkMascot';
 
 /**
  * QuizScreen — rebuilt for four- to eight-year-olds.
@@ -219,7 +220,9 @@ const QuizScreen: React.FC<QuizScreenProps> = ({ progress, onBack, onAnswer, onC
 
           <div className="flex-1 overflow-y-auto px-5 pb-8">
             <div className="max-w-md mx-auto text-center">
-              <div className="text-6xl mt-4">{stars === 3 ? '🏆' : stars === 2 ? '⭐' : '💪'}</div>
+              <div className="flex justify-center" style={{ marginTop: 16 }}>
+  <SparkMascot mode={stars >= 2 ? 'cheer' : 'wave'} className="w-28" />
+</div>
               <p className="text-2xl font-bold text-gray-800 mt-2" style={{ fontFamily: FONT }}>
                 {stars === 3 ? 'Superstar!' : stars === 2 ? 'Great work!' : 'Good try!'}
               </p>
