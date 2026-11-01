@@ -6,6 +6,7 @@ import ItemIcon from '../components/mechanics/ItemIcon';
 import { GameProgress } from '../store/gameStore';
 import { buzz, speak, stopSpeaking, POP } from '../utils/kidJuice';
 import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds';
+import SparkResult from '../components/SparkResult';
 import {
   SoundWord,
   DIGRAPH_PATTERNS,
@@ -519,7 +520,7 @@ const SoundGame: React.FC<SoundGameProps> = ({ progress, onBack, onAnswer, onCom
           <Navigation title={`🔤 ${mode.title}`} onBack={() => { playClick(); leaveToMenu(); }} stars={progress.stars} />
           <div className="flex-1 overflow-y-auto px-5 pb-8">
             <div className="max-w-md mx-auto text-center">
-              <div className="text-6xl mt-4">🔤</div>
+              <SparkResult stars={stars} />
               <p className="text-2xl font-bold text-gray-800 mt-2" style={{ fontFamily: FONT }}>
                 {stars === 3 ? 'Sound star!' : 'Good work!'} 🎉
               </p>
