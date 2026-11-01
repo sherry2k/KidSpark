@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import SparkMascot from '../components/SparkMascot';
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -56,16 +57,16 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8, type: 'spring' }}
       >
-        {/* Mascot */}
+        {/* Mascot: Spark waves hello (replaces the unicorn) */}
         <motion.div
-          className="text-7xl md:text-9xl mb-4"
+          className="mx-auto mb-4 w-36 md:w-56"
           animate={{
-            y: [0, -15, 0],
-            rotate: [0, -5, 5, 0],
+            y: [0, -12, 0],
+            rotate: [0, -3, 3, 0],
           }}
           transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
         >
-          🦄
+          <SparkMascot mode="wave" className="w-full" />
         </motion.div>
 
         {/* Title */}
