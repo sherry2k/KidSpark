@@ -8,6 +8,8 @@ import React from 'react';
  *   mode="cheer"  jumps and waves fast with a big open mouth (use on win screens)
  *   mode="wave"   keeps waving non-stop (use on the splash screen)
  *   mode="talk"   moves his mouth and bobs while he speaks (the tappable Spark)
+ *   mode="proud"  slow happy wave and a gentle bounce (a good, not perfect, result)
+ *   mode="comfort" kind "that's okay" Spark: head tilted, worried brows, small mouth, slow pat
  *
  * Images live in /public/spark/ (body.webp, arm.webp, mouth.webp).
  * Set the size with className (for example "w-24"). To position him, put the
@@ -23,6 +25,9 @@ const CSS = `
 @keyframes sp-mouth  { from{transform:scale(1.08,1.05)} to{transform:scale(1.2,1.3)} }
 @keyframes sp-flap   { 0%{transform:scale(1,.55)} 18%{transform:scale(1.05,1.2)} 38%{transform:scale(.95,.7)} 58%{transform:scale(1.1,1.3)} 78%{transform:scale(1,.6)} 100%{transform:scale(1.05,1.1)} }
 @keyframes sp-bob    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4%)} }
+@keyframes sp-sway  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3.5%)} }
+@keyframes sp-tilt  { 0%,100%{transform:rotate(-5deg) translateY(0)} 50%{transform:rotate(-6.5deg) translateY(1.5%)} }
+@keyframes sp-pat   { 0%,100%{transform:rotate(4deg)} 50%{transform:rotate(14deg)} }
 @keyframes sp-blink  { 0%,92%,100%{transform:scaleY(0)} 95.5%{transform:scaleY(1)} }
 @keyframes sp-line   { 0%,93%,100%{opacity:0} 94.5%,97%{opacity:1} }
 .sp-arm{transform-origin:21.33% 53.7%}
@@ -33,6 +38,17 @@ const CSS = `
 .sp-talk .sp-mouth{animation:sp-flap .55s linear infinite}
 .sp-cheer .sp-arm{animation:sp-cheer-arm .42s ease-in-out infinite alternate}
 .sp-cheer .sp-body{animation:sp-jump .8s ease-in-out infinite;transform-origin:50% 100%}
+.sp-proud .sp-arm{animation:sp-wave 2.8s ease-in-out infinite}
+.sp-proud .sp-body{animation:sp-sway 1.6s ease-in-out infinite;transform-origin:50% 100%}
+.sp-comfort .sp-arm{animation:sp-pat 2.4s ease-in-out infinite}
+.sp-comfort .sp-body{animation:sp-tilt 3s ease-in-out infinite;transform-origin:50% 100%}
+.sp-comfort .sp-mouth{transform:scale(.62,.42)}
+.sp-comfort .sp-lid{animation-duration:3.2s}
+.sp-comfort .sp-line{animation-duration:3.2s}
+.sp-brow-fix{display:none}
+.sp-comfort .sp-brow-fix{display:block}
+.sp-brow{display:none;fill:none;stroke:#4A1D7A;stroke-width:12;stroke-linecap:round}
+.sp-comfort .sp-brow{display:block}
 .sp-mouth{transform-origin:50% 8%}
 .sp-cheer .sp-mouth{animation:sp-mouth .4s ease-in-out infinite alternate}
 .sp-lid{fill:#FDDB06;transform-box:fill-box;transform-origin:50% 0%;transform:scaleY(0);animation:sp-blink 5s infinite}
@@ -40,7 +56,7 @@ const CSS = `
 @media (prefers-reduced-motion: reduce){ .sp-arm,.sp-body,.sp-mouth,.sp-lid,.sp-line{animation:none!important} }
 `;
 
-const SparkMascot: React.FC<{ mode?: 'hello' | 'cheer' | 'wave' | 'talk'; className?: string }> = ({ mode = 'hello', className = '' }) => (
+const SparkMascot: React.FC<{ mode?: 'hello' | 'cheer' | 'wave' | 'talk' | 'proud' | 'comfort'; className?: string }> = ({ mode = 'hello', className = '' }) => (
   <div className={className} style={{ aspectRatio: `${W} / ${H}` }} role="img" aria-label="Spark, the KidSpark star">
     <style>{CSS}</style>
     <div className={`sp-${mode}`} style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -50,6 +66,16 @@ const SparkMascot: React.FC<{ mode?: 'hello' | 'cheer' | 'wave' | 'talk'; classN
         <svg viewBox={`0 0 ${W} ${H}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} aria-hidden="true">
           <ellipse className="sp-lid" cx="496.5" cy="534" rx="82.5" ry="89" />
           <ellipse className="sp-lid" cx="764.5" cy="513" rx="82.5" ry="89" />
+          <defs>
+            <filter id="sp-soft" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="7" /></filter>
+          </defs>
+          {/* comfort mode: cover his happy brows with face colour, then draw worried ones */}
+          <g className="sp-brow-fix" filter="url(#sp-soft)">
+            <ellipse cx="474" cy="386" rx="56" ry="38" fill="#FDDF1C" />
+            <ellipse cx="764" cy="360" rx="52" ry="34" fill="#FEDD0F" />
+          </g>
+          <path className="sp-brow" d="M432 424 Q490 392 560 366" />
+          <path className="sp-brow" d="M830 404 Q770 366 700 342" />
           <path className="sp-line" d="M443 566 A54 11 0 0 0 551 566" />
           <path className="sp-line" d="M711 545 A54 11 0 0 0 819 545" />
         </svg>
