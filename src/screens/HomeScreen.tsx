@@ -215,16 +215,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
           </div>
         </motion.div>
 
-    {/* ---------------- welcome ---------------- */}
-<motion.div className="mx-4 md:mx-6 mb-4" {...rise(2)}>
+{/* ---------------- welcome ---------------- */}
+<motion.div className="mx-4 md:mx-6 mb-4 relative" {...rise(2)}>
   <div className="bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 rounded-3xl px-4 py-5 md:p-6 text-white shadow-xl relative overflow-hidden flex items-center">
     <div className="absolute -top-4 -right-4 text-7xl opacity-20 rotate-12 pointer-events-none">🎓</div>
 
-    <div className="absolute right-1 md:right-4 bottom-0 pointer-events-none">
-      <SparkMascot mode="hello" className="w-[72px] md:w-24" />
-    </div>
-
-    <div className="relative z-10 w-full pr-[76px] md:pr-28 text-center">
+    <div className="relative z-10 w-full pr-[80px] md:pr-28 text-center">
       <h2 className="text-[17px] md:text-2xl font-black mb-2" style={{ fontFamily: FONT, textShadow: '2px 2px 0 rgba(0,0,0,0.2)' }}>
         Welcome back, {profile.name || 'Little Star'}! 🎉
       </h2>
@@ -232,6 +228,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
         Ready to learn and play today?
       </p>
     </div>
+  </div>
+
+  {/* Spark sits on top of the banner, so he is never clipped */}
+  <div className="absolute right-3 md:right-5 bottom-1 z-20 pointer-events-none">
+    <SparkMascot mode="hello" className="w-[68px] md:w-24" />
   </div>
 </motion.div>
 
