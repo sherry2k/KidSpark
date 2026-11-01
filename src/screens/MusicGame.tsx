@@ -8,6 +8,7 @@ import { buzz, POP } from '../utils/kidJuice';
 import { playClick, playComplete } from '../utils/sounds';
 import { playMusicNote, pauseMusicAudio } from '../utils/musicAudio';
 import { NOTES, SONGS, Song, starsFor } from '../data/musicData';
+import SparkResult from '../components/SparkResult';
 
 /**
  * MusicGame — the Music hub.
@@ -460,7 +461,7 @@ const MusicGame: React.FC<MusicGameProps> = ({ progress, onBack, onAnswer, onCom
           <Navigation title={`🎵 ${song.title}`} onBack={() => { playClick(); toHub(); }} stars={progress.stars} />
           <div className="flex-1 overflow-y-auto px-5 pb-8">
             <div className="max-w-md mx-auto text-center">
-              <div className="text-6xl mt-4">{song.icon}</div>
+               <SparkResult stars={stars} />
               <p className="text-2xl font-bold text-gray-800 mt-2" style={{ fontFamily: FONT }}>
                 {stars === 3 ? 'You played it!' : 'Lovely playing!'} 🎉
               </p>
