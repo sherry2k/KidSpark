@@ -66,7 +66,7 @@ const SparkTapButton: React.FC<{ className?: string }> = ({ className = '' }) =>
             animation: 'ks-tap-bob 1.1s ease-in-out infinite',
           }}
         >
-          Tap me! 👆
+          Tap me! 👇
           <span
             style={{
               position: 'absolute',
