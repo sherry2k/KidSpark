@@ -6,6 +6,7 @@ import { PlayerProfile, GameProgress } from '../store/gameStore';
 import { playClick } from '../utils/sounds';
 import FeedbackButton, { buildId } from '../components/FeedbackButton';
 import SparkMascot from '../components/SparkMascot';
+import SparkTapButton from '../components/SparkTapButton';
 
 /**
  * HomeScreen — same screen, without the main-thread tax.
@@ -231,9 +232,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   </div>
 
   {/* Spark sits on top of the banner, so he is never clipped */}
-  <div className="absolute right-3 md:right-5 bottom-1 z-20 pointer-events-none">
-    <SparkMascot mode="hello" className="w-[68px] md:w-24" />
-  </div>
+  <div className="absolute right-3 md:right-5 bottom-1 z-20">
+  <SparkTapButton className="w-[68px] md:w-24" />
+</div>
 </motion.div>
 
         {/* ---------------- daily challenge ---------------- */}
