@@ -19,6 +19,7 @@ import {
 import { unlockAudio, playPad, playWin, playOops, playBlip } from '../utils/tones';
 import { buzz, speak, stopSpeaking, POP } from '../utils/kidJuice';
 import { playClick, playCorrect, playWrong, playComplete, playFlip } from '../utils/sounds';
+import SparkResult from '../components/SparkResult';
 
 /**
  * MemoryGame — six games instead of three, and four real bugs fixed.
@@ -111,7 +112,7 @@ const WinCard: React.FC<{
 }> = ({ title, stars, detail, learned, onAgain, onMenu }) => (
   <div className="flex-1 overflow-y-auto px-5 pb-8">
     <div className="max-w-md mx-auto text-center">
-      <div className="text-6xl mt-4">🎉</div>
+           <SparkResult stars={stars} />
       <p className="text-2xl font-bold text-gray-800 mt-2" style={{ fontFamily: FONT }}>
         {title}
       </p>
