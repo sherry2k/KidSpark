@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import SparkMascot from './SparkMascot';
 
 interface CelebrationProps {
   show: boolean;
@@ -67,34 +68,27 @@ const Celebration: React.FC<CelebrationProps> = ({ show, message = '🎉 Amazing
 
           {/* 🎯 SMALL Top Notification - Doesn't block content */}
           <motion.div
-            className="fixed top-20 md:top-24 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+            className="fixed top-20 md:top-24 inset-x-0 flex justify-center z-50 pointer-events-none"
             initial={{ y: -100, opacity: 0, scale: 0.5 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: -100, opacity: 0, scale: 0.5 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
           >
             <motion.div
-              className="bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-400 rounded-full px-6 py-3 md:px-8 md:py-4 shadow-2xl border-4 border-white flex items-center gap-3"
+              className="bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-400 rounded-full pl-3 pr-6 py-3 md:pl-4 md:pr-8 md:py-4 shadow-2xl border-4 border-white flex items-center gap-2"
               style={{
                 boxShadow: '0 8px 0 rgba(217, 119, 6, 0.5), 0 12px 25px rgba(0,0,0,0.3)',
               }}
               animate={{ y: [0, -5, 0] }}
               transition={{ duration: 1.5, repeat: Infinity }}
             >
-              <motion.span
-                className="text-3xl md:text-4xl"
-                animate={{ 
-                  scale: [1, 1.3, 1],
-                  rotate: [0, -10, 10, 0]
-                }}
-                transition={{ duration: 0.8, repeat: Infinity }}
-              >
-                🏆
-              </motion.span>
+              {/* Spark cheers instead of the trophy. The negative margins let him
+                  stand a little taller than the pill without making it bigger. */}
+              <SparkMascot mode="cheer" className="w-16 md:w-20 shrink-0 -my-4" />
               <div className="flex flex-col items-start">
                 <h2
                   className="text-lg md:text-2xl font-black text-white"
-                  style={{ 
+                  style={{
                     fontFamily: "'Fredoka', 'Arial Black', sans-serif",
                     textShadow: '2px 2px 0 rgba(0,0,0,0.2)'
                   }}
