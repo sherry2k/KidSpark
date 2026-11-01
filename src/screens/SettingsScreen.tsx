@@ -1,10 +1,12 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { GameBackground } from '../components/Background';
 import Navigation from '../components/Navigation';
 import { GameSettings, GameProgress } from '../store/gameStore';
 import { useContent } from '../context/ContentContext';
 import { playClick, setSoundEnabled } from '../utils/sounds';
+import { isSparkVoiceEnabled, setSparkVoiceEnabled } from '../utils/sparkVoice';
+
 
 interface SettingsScreenProps {
   settings: GameSettings;
@@ -22,6 +24,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onResetProgress,
 }) => {
   const { isAirtable, lastUpdated, refreshContent, isLoading } = useContent();
+  const [sparkVoiceOn, setSparkVoiceOn] = useState(isSparkVoiceEnabled());
 
   // 🎵 Sync sound setting with sound system on load
   useEffect(() => {
@@ -148,6 +151,18 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
               value={settings.musicEnabled ?? true}
               onToggle={() => toggleSetting('musicEnabled')}
             />
+            <SettingToggle
+  label="Spark's Voice"
+  emoji="⭐"
+  description="Spark says hello and cheers you on"
+  value={sparkVoiceOn}
+  onToggle={() => {
+    playClick();
+    const next = !sparkVoiceOn;
+    setSparkVoiceOn(next);
+    setSparkVoiceEnabled(next);
+  }}
+/>
 
             {/* Accessibility */}
             <motion.h3
