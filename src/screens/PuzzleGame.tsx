@@ -19,6 +19,7 @@ import {
 } from '../data/puzzleData';
 import { buzz, speak, stopSpeaking, POP } from '../utils/kidJuice';
 import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds';
+import SparkResult from '../components/SparkResult';
 
 /**
  * PuzzleGame — rebuilt, with a real jigsaw added.
@@ -70,7 +71,8 @@ const WinCard: React.FC<{
 }> = ({ title, stars, learned, onAgain, onMenu, children }) => (
   <div className="flex-1 overflow-y-auto px-5 pb-8">
     <div className="max-w-md mx-auto text-center">
-      {children}
+            {children}
+      <SparkResult stars={stars} className="w-24" />
       <motion.p
         className="text-2xl font-bold text-gray-800 mt-3"
         style={{ fontFamily: "'Bubblegum One', cursive" }}
