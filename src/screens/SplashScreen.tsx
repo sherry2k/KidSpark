@@ -59,8 +59,9 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
       >
         {/* Mascot: Spark waves hello (replaces the unicorn) */}
         <motion.div
-          className="mx-auto mb-4 w-36 md:w-56"
-          animate={{
+  className="w-36 md:w-56"
+  style={{ marginLeft: 'auto', marginRight: 'auto', marginBottom: 16 }}
+  animate={{
             y: [0, -12, 0],
             rotate: [0, -3, 3, 0],
           }}
