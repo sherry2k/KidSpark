@@ -59,6 +59,7 @@ const MatchGame: React.FC<MatchGameProps> = ({ progress, onBack, onComplete }) =
 
   const binRefs = useRef<(HTMLDivElement | null)[]>([]);
   const awarded = useRef(false);
+  const completing = useRef(false);  
 
   useEffect(() => () => stopSpeaking(), []);
 
@@ -77,6 +78,7 @@ const MatchGame: React.FC<MatchGameProps> = ({ progress, onBack, onComplete }) =
     setWrongs(0);
     setDone(false);
     awarded.current = false;
+    completing.current = false;
     speak(`${p.title}. ${p.question}`);
   };
 
@@ -90,7 +92,7 @@ const MatchGame: React.FC<MatchGameProps> = ({ progress, onBack, onComplete }) =
   }, [index, current, done]);
 
   const drop = (x: number, y: number) => {
-    if (!pack || !current || done) return;
+        if (!pack || !current || done || completing.current) return;
 
     const hit = binRefs.current.findIndex((el) => {
       if (!el) return false;
@@ -120,6 +122,7 @@ const MatchGame: React.FC<MatchGameProps> = ({ progress, onBack, onComplete }) =
       }
 
       if (index + 1 >= total) {
+        completing.current = true;
         window.setTimeout(() => {
           playComplete();
           buzz('success');
