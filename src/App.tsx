@@ -204,13 +204,10 @@ const KidSparkApp: React.FC = () => {
         return <SplashScreen onComplete={handleSplashComplete} />;
       case 'profile-setup':
         return <ProfileSetup onComplete={handleProfileSetup} />;
-      case 'home':
+           case 'home':
         return (
           <HomeScreen
             profile={profile}
-            return <WordBuilder profile={profile} progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
-            return <PuzzleGame profile={profile} progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
-            return <MemoryGame profile={profile} progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
             progress={progress}
             onSelectMode={handleSelectMode}
             onOpenProfile={() => setCurrentScreen('profile')}
@@ -223,18 +220,18 @@ const KidSparkApp: React.FC = () => {
         return <LearnScreen progress={progress} onBack={goHome} onCompleteLesson={handleCompleteLesson} />;
       case 'quiz':
         return <QuizScreen progress={progress} onBack={goHome} onAnswer={handleQuizAnswer} onComplete={handleQuizComplete} />;
-      case 'memory':
-        return <MemoryGame progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
+            case 'memory':
+        return <MemoryGame profile={profile} progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
       case 'match':
         return <MatchGame progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
       case 'math':
         return <MathGame profile={profile} progress={progress} onBack={goHome} onAnswer={handleQuizAnswer} onComplete={handleGameComplete} />;
-      case 'wordbuilder':
-        return <WordBuilder progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
+           case 'wordbuilder':
+        return <WordBuilder profile={profile} progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
       case 'coloring':
         return <ColoringBook progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
-      case 'puzzle':
-        return <PuzzleGame progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
+            case 'puzzle':
+        return <PuzzleGame profile={profile} progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
       case 'progress':
         return <ProgressScreen profile={profile} progress={progress} onBack={goHome} />;
       case 'achievements':
