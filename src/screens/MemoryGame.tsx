@@ -4,7 +4,7 @@ import { GameBackground } from '../components/Background';
 import Navigation from '../components/Navigation';
 import ItemIcon from '../components/mechanics/ItemIcon';
 import OddOneOutScreen from './OddOneOut';
-import { GameProgress } from '../store/gameStore';
+import { GameProgress, PlayerProfile } from '../store/gameStore';
 import {
   MEMORY_CATEGORIES,
   MemoryCategory,
@@ -20,6 +20,7 @@ import { unlockAudio, playPad, playWin, playOops, playBlip } from '../utils/tone
 import { buzz, speak, stopSpeaking, POP } from '../utils/kidJuice';
 import { playClick, playCorrect, playWrong, playComplete, playFlip } from '../utils/sounds';
 import SparkResult from '../components/SparkResult';
+import { memorySizeFor } from '../utils/difficulty';
 
 /**
  * MemoryGame — six games instead of three, and four real bugs fixed.
@@ -52,6 +53,7 @@ interface MemoryGameProps {
   progress: GameProgress;
   onBack: () => void;
   onComplete: (stars: number) => void;
+  profile?: PlayerProfile;
 }
 
 type GameId = 'match' | 'tap' | 'color' | 'missing' | 'cups' | 'odd';
@@ -112,7 +114,7 @@ const WinCard: React.FC<{
 }> = ({ title, stars, detail, learned, onAgain, onMenu }) => (
   <div className="flex-1 overflow-y-auto px-5 pb-8">
     <div className="max-w-md mx-auto text-center">
-           <SparkResult stars={stars} />
+      <SparkResult stars={stars} />
       <p className="text-2xl font-bold text-gray-800 mt-2" style={{ fontFamily: FONT }}>
         {title}
       </p>
@@ -163,6 +165,7 @@ const WinCard: React.FC<{
 interface GameProps {
   onWin: (stars: number) => void;
   onExit: () => void;
+  level?: string;
 }
 
 /* ================================================================== */
@@ -177,9 +180,10 @@ interface Card {
   matched: boolean;
 }
 
-const MemoryMatch: React.FC<GameProps> = ({ onWin, onExit }) => {
+const MemoryMatch: React.FC<GameProps> = ({ onWin, onExit, level }) => {
   const [cat, setCat] = useState<MemoryCategory | null>(null);
-  const [sizeIdx, setSizeIdx] = useState(1);
+  /* starting board size follows the child's age (the child can still change it) */
+  const [sizeIdx, setSizeIdx] = useState(() => Math.min(memorySizeFor(level), BOARD_SIZES.length - 1));
   const [cards, setCards] = useState<Card[]>([]);
   const [picked, setPicked] = useState<number[]>([]);
   const [locked, setLocked] = useState(true);
@@ -1189,7 +1193,7 @@ const GAMES: { id: GameId; icon: string; title: string; sub: string; diff: numbe
   { id: 'tap', icon: '⚡', title: 'Quick Tap', sub: 'Tap the stars fast!', diff: 2, grad: 'from-orange-500 to-red-500', shadow: '#C2410C' },
 ];
 
-const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete }) => {
+const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete, profile }) => {
   const [which, setWhich] = useState<GameId | null>(null);
 
   useEffect(() => () => stopSpeaking(), []);
@@ -1264,7 +1268,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete })
           </div>
         )}
 
-        {which === 'match' && <MemoryMatch onWin={onComplete} onExit={exit} />}
+        {which === 'match' && <MemoryMatch level={profile?.difficulty} onWin={onComplete} onExit={exit} />}
         {which === 'tap' && <QuickTap onWin={onComplete} onExit={exit} />}
         {which === 'color' && <ColorMemory onWin={onComplete} onExit={exit} />}
         {which === 'missing' && <WhatsMissing onWin={onComplete} onExit={exit} />}
