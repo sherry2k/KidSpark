@@ -4,7 +4,7 @@ import { GameBackground } from '../components/Background';
 import Navigation from '../components/Navigation';
 import ItemIcon from '../components/mechanics/ItemIcon';
 import PageArt from '../components/PageArt';
-import { GameProgress } from '../store/gameStore';
+import { GameProgress, PlayerProfile } from '../store/gameStore';
 import {
   JIGSAW_PICTURES,
   JIGSAW_GRIDS,
@@ -20,6 +20,7 @@ import {
 import { buzz, speak, stopSpeaking, POP } from '../utils/kidJuice';
 import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds';
 import SparkResult from '../components/SparkResult';
+import { jigsawGridFor, patternsForLevel } from '../utils/difficulty';
 
 /**
  * PuzzleGame — rebuilt, with a real jigsaw added.
@@ -39,6 +40,7 @@ import SparkResult from '../components/SparkResult';
  */
 
 interface PuzzleGameProps {
+  profile?: PlayerProfile;
   progress: GameProgress;
   onBack: () => void;
   onComplete: (stars: number) => void;
@@ -125,9 +127,9 @@ const WinCard: React.FC<{
 /* 1. JIGSAW                                                           */
 /* ================================================================== */
 
-const Jigsaw: React.FC<{ onWin: (s: number) => void; onExit: () => void }> = ({ onWin, onExit }) => {
+const Jigsaw: React.FC<{ onWin: (s: number) => void; onExit: () => void; level?: string }> = ({ onWin, onExit, level }) => {
   const [picture, setPicture] = useState<JigsawPicture | null>(null);
-  const [grid, setGrid] = useState<JigsawGrid>(3);
+  const [grid, setGrid] = useState<JigsawGrid>(jigsawGridFor(level));
   const [placed, setPlaced] = useState<Record<number, boolean>>({});
   const [tray, setTray] = useState<number[]>([]);
   const [fails, setFails] = useState<Record<number, number>>({});
@@ -530,8 +532,8 @@ const ShadowMatch: React.FC<{ onWin: (s: number) => void; onExit: () => void }> 
 /* 3. PATTERNS                                                         */
 /* ================================================================== */
 
-const Patterns: React.FC<{ onWin: (s: number) => void; onExit: () => void }> = ({ onWin, onExit }) => {
-  const levels = useMemo(() => shuffle(PATTERN_LEVELS).slice(0, 6), []);
+const Patterns: React.FC<{ onWin: (s: number) => void; onExit: () => void; level?: string }> = ({ onWin, onExit, level: difficulty }) => {
+  const levels = useMemo(() => shuffle(patternsForLevel(PATTERN_LEVELS, difficulty)).slice(0, 6), []);
   const [index, setIndex] = useState(0);
   const [mistakes, setMistakes] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
@@ -866,7 +868,7 @@ const GAMES: { id: Exclude<Which, null>; icon: string; title: string; sub: strin
   { id: 'size', icon: '📏', title: 'Size Sort', sub: 'Small to big!', diff: 2, grad: 'from-orange-400 to-red-500', shadow: '#C2410C' },
 ];
 
-const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete }) => {
+const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete, profile }) => {
   const [which, setWhich] = useState<Which>(null);
 
   useEffect(() => () => stopSpeaking(), []);
@@ -930,9 +932,9 @@ const PuzzleGame: React.FC<PuzzleGameProps> = ({ progress, onBack, onComplete })
           </div>
         )}
 
-        {which === 'jigsaw' && <Jigsaw onWin={onComplete} onExit={exit} />}
+        {which === 'jigsaw' && <Jigsaw level={profile?.difficulty} onWin={onComplete} onExit={exit} />}
         {which === 'shadow' && <ShadowMatch onWin={onComplete} onExit={exit} />}
-        {which === 'pattern' && <Patterns onWin={onComplete} onExit={exit} />}
+        {which === 'pattern' && <Patterns level={profile?.difficulty} onWin={onComplete} onExit={exit} />}
         {which === 'size' && <SizeSort onWin={onComplete} onExit={exit} />}
       </div>
     </GameBackground>
