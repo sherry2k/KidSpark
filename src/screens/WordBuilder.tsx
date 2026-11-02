@@ -18,7 +18,7 @@ interface WordBuilderProps {
 const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete }) => {
   const { wordBuilderWords } = useContent();
   const totalWords = 8;
-  const [words] = useState(() => {
+  const [words, setWords] = useState(() => {
     const shuffled = [...wordBuilderWords].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, totalWords);
   });
@@ -138,6 +138,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete 
                 onClick={() => {
                   playClick();
                   const shuffled = [...wordBuilderWords].sort(() => Math.random() - 0.5).slice(0, totalWords);
+                  setWords(shuffled);
                   setCurrentIndex(0);
                   setScore(0);
                   setIsFinished(false);
