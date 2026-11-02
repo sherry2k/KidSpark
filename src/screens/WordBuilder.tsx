@@ -5,18 +5,21 @@ import Navigation from '../components/Navigation';
 import Celebration, { FeedbackPopup } from '../components/Celebration';
 import { encouragementMessages } from '../data/gameData';
 import { useContent } from '../context/ContentContext';
-import { GameProgress } from '../store/gameStore';
+import { GameProgress, PlayerProfile } from '../store/gameStore';
+import { wordsForLevel } from '../utils/difficulty';
 import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds';
 import SparkResult from '../components/SparkResult';
 
 interface WordBuilderProps {
+  profile?: PlayerProfile;
   progress: GameProgress;
   onBack: () => void;
   onComplete: (stars: number) => void;
 }
 
-const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete }) => {
-  const { wordBuilderWords } = useContent();
+const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete, profile }) => {
+  const { wordBuilderWords: allWords } = useContent();
+  const wordBuilderWords = wordsForLevel(allWords, profile?.difficulty);
   const totalWords = 8;
   const [words, setWords] = useState(() => {
     const shuffled = [...wordBuilderWords].sort(() => Math.random() - 0.5);
