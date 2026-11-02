@@ -208,6 +208,9 @@ const KidSparkApp: React.FC = () => {
         return (
           <HomeScreen
             profile={profile}
+            return <WordBuilder profile={profile} progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
+            return <PuzzleGame profile={profile} progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
+            return <MemoryGame profile={profile} progress={progress} onBack={goHome} onComplete={handleGameComplete} />;
             progress={progress}
             onSelectMode={handleSelectMode}
             onOpenProfile={() => setCurrentScreen('profile')}
