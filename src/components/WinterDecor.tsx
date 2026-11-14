@@ -12,6 +12,12 @@ const WINTER_FORCE: boolean | null = null;
 
 export function isWinter(now: Date = new Date()): boolean {
   if (WINTER_FORCE !== null) return WINTER_FORCE;
+  // preview helper: open the site with ?winter=1 (on) or ?winter=0 (off) to test without editing code
+  if (typeof window !== 'undefined') {
+    const q = new URLSearchParams(window.location.search).get('winter');
+    if (q === '1') return true;
+    if (q === '0') return false;
+  }
   const m = now.getMonth(); // 0 = Jan
   const d = now.getDate();
   if (m === 10) return d >= 15; // Nov 15 -> Nov 30
@@ -110,7 +116,7 @@ function capPath(w: number, rnd: () => number) {
 }
 
 export function SnowCap({ seed = 1, width = 288 }: { seed?: number; width?: number }) {
-  const uid = useId().replace(/:/g, '');
+  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const d = useMemo(() => capPath(width, makeRnd(seed * 17 + 3)), [seed, width]);
   return (
     <svg
@@ -191,7 +197,7 @@ export function SnowDrift({
   trees?: boolean;
   zIndex?: number;
 }) {
-  const uid = useId().replace(/:/g, '');
+  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   return (
     <div
       aria-hidden
