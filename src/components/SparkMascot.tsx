@@ -1,4 +1,5 @@
 import React from 'react';
+import { isWinter } from './WinterDecor';
 
 /**
  * Spark, the KidSpark mascot. Light by design: CSS-only animation (transform and
@@ -12,6 +13,8 @@ import React from 'react';
  *   mode="comfort" kind "that's okay" Spark: head tilted, worried brows, small mouth, slow pat
  *
  * Images live in /public/spark/ (body.webp, arm.webp, mouth.webp).
+ * In winter (see isWinter() in WinterDecor.tsx) he wears his beanie and scarf:
+ * the body image switches to /public/spark/body-winter.webp. Nothing else changes.
  * Set the size with className (for example "w-24"). To position him, put the
  * position classes (absolute, right-2 ...) on a wrapper <div>, not on this component.
  */
@@ -56,13 +59,15 @@ const CSS = `
 @media (prefers-reduced-motion: reduce){ .sp-arm,.sp-body,.sp-mouth,.sp-lid,.sp-line{animation:none!important} }
 `;
 
-const SparkMascot: React.FC<{ mode?: 'hello' | 'cheer' | 'wave' | 'talk' | 'proud' | 'comfort'; className?: string }> = ({ mode = 'hello', className = '' }) => (
+const SparkMascot: React.FC<{ mode?: 'hello' | 'cheer' | 'wave' | 'talk' | 'proud' | 'comfort'; className?: string }> = ({ mode = 'hello', className = '' }) => {
+  const bodySrc = isWinter() ? '/spark/body-winter.webp' : '/spark/body.webp';
+  return (
   <div className={className} style={{ aspectRatio: `${W} / ${H}` }} role="img" aria-label="Spark, the KidSpark star">
     <style>{CSS}</style>
     <div className={`sp-${mode}`} style={{ position: 'relative', width: '100%', height: '100%' }}>
       <div className="sp-body" style={{ position: 'absolute', inset: 0 }}>
         <img className="sp-arm" src="/spark/arm.webp" alt="" aria-hidden="true" draggable={false} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
-        <img src="/spark/body.webp" alt="" aria-hidden="true" draggable={false} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+        <img src={bodySrc} alt="" aria-hidden="true" draggable={false} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
         <svg viewBox={`0 0 ${W} ${H}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} aria-hidden="true">
           <ellipse className="sp-lid" cx="496.5" cy="534" rx="82.5" ry="89" />
           <ellipse className="sp-lid" cx="764.5" cy="513" rx="82.5" ry="89" />
@@ -90,6 +95,7 @@ const SparkMascot: React.FC<{ mode?: 'hello' | 'cheer' | 'wave' | 'talk' | 'prou
       </div>
     </div>
   </div>
-);
+  );
+};
 
 export default SparkMascot;
