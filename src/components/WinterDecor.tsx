@@ -201,6 +201,7 @@ export function SnowDrift({
   return (
     <div
       aria-hidden
+      className="ks-drift"
       style={{
         position: fixed ? 'fixed' : 'relative',
         left: '50%',
@@ -212,6 +213,9 @@ export function SnowDrift({
         lineHeight: 0,
       }}
     >
+      {/* on wide screens (desktop) the ground is narrower than the app column, so soften its two ends.
+          Phones are unchanged (rule only applies above 640px). */}
+      <style>{`@media (min-width:641px){.ks-drift{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 7%,#000 93%,transparent 100%);mask-image:linear-gradient(to right,transparent 0,#000 7%,#000 93%,transparent 100%)}}`}</style>
       <svg viewBox="0 0 576 150" style={{ width: '100%', display: 'block' }}>
         <defs>
           <linearGradient id={`dg${uid}`} x1="0" y1="0" x2="0" y2="1">
