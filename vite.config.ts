@@ -95,18 +95,33 @@ export default defineConfig({
         dir: "ltr",
         categories: ["education", "kids", "games"],
         iarc_rating_id: "914f4c66-f4fe-8ddd-8c30-3fac457b84e3",
+
+        // ── CHANGED (winter 1.4.0) ──────────────────────────────────
+        // Three icons instead of two:
+        //   icon-192.png / icon-512.png        full winter icon, purpose "any"
+        //   icon-maskable-512.png              padded winter icon (artwork kept inside the
+        //                                      safe zone) so Android can crop it into a
+        //                                      circle / rounded square without cutting Spark.
+        // All three files live in public/icons/. PWABuilder uses the maskable one for the
+        // Android launcher icon.
         icons: [
           {
             src: "/icons/icon-192.png",
             sizes: "192x192",
             type: "image/png",
-            purpose: "any maskable",
+            purpose: "any",
           },
           {
             src: "/icons/icon-512.png",
             sizes: "512x512",
             type: "image/png",
-            purpose: "any maskable",
+            purpose: "any",
+          },
+          {
+            src: "/icons/icon-maskable-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
           },
         ],
         shortcuts: [
@@ -124,7 +139,7 @@ export default defineConfig({
             ],
           },
         ],
-         },
+      },
     }),
   ],
 
