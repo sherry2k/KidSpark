@@ -5,7 +5,6 @@ import { gameModes, dailyChallenges } from '../data/gameData';
 import { PlayerProfile, GameProgress } from '../store/gameStore';
 import { playClick } from '../utils/sounds';
 import FeedbackButton, { buildId } from '../components/FeedbackButton';
-import SparkMascot from '../components/SparkMascot';
 import SparkTapButton from '../components/SparkTapButton';
 import { playSparkIntro } from '../utils/sparkVoice';
 import { isWinter, SnowFall, SnowCap, Icicles, SnowDrift, WINTER_BG, DRIFT_PAD } from '../components/WinterDecor';
