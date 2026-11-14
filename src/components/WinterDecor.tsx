@@ -181,6 +181,30 @@ export function Icicles({ seed = 3, inset = 0 }: { seed?: number; inset?: number
   );
 }
 
+/* A snowy pine: three green tiers with a darker underside, white snow on each tier, small trunk and a soft shadow.
+   Drawn in a 60 x 90 box; place it inside an <svg> with x / y / scale. */
+function Pine({ x, y, scale = 1 }: { x: number; y: number; scale?: number }) {
+  const tier = (d: string, face: string) => (
+    <>
+      <path d={d} fill="#1F7A52" transform="translate(0 3)" />
+      <path d={d} fill={face} />
+    </>
+  );
+  const snow = { fill: '#fff', stroke: '#DCE6FF', strokeWidth: 0.8, strokeLinejoin: 'round' as const };
+  return (
+    <g transform={`translate(${x} ${y}) scale(${scale})`}>
+      <ellipse cx="30" cy="88" rx="22" ry="5" fill="#B9C6F2" opacity=".45" />
+      <rect x="26" y="74" width="8" height="14" rx="2" fill="#7A4B22" />
+      {tier('M30 34 L58 78 Q30 86 2 78 Z', '#2E9D6A')}
+      {tier('M30 18 L53 58 Q30 65 7 58 Z', '#34A874')}
+      {tier('M30 2 L47 38 Q30 44 13 38 Z', '#3DB57C')}
+      <path d="M30 34 L44 56 Q40 62 36 57.5 Q30 63 24 57.5 Q20 62 16 56 Z" {...snow} />
+      <path d="M30 18 L41.5 38 Q38.5 43 35 39.5 Q30 44 25 39.5 Q21.5 43 18.5 38 Z" {...snow} />
+      <path d="M30 2 L38.5 20 Q35 25 30 21 Q25 25 21.5 20 Z" {...snow} />
+    </g>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /*  Snowy ground with pine trees and the snowman                       */
 /*  fixed = stuck to the bottom of the screen, otherwise it sits in    */
@@ -231,20 +255,8 @@ export function SnowDrift({
           d="M0 62 C60 30 120 40 190 56 C260 72 320 36 390 40 C460 44 520 66 576 46 L576 150 L0 150 Z"
           fill={`url(#dg${uid})`}
         />
-        {trees && (
-          <g transform="translate(40 8)">
-            <rect x="22" y="76" width="10" height="16" fill="#8B5A2B" />
-            <path d="M27 6 L52 42 H38 L58 70 H-4 L16 42 H2 Z" fill="#2E9D6A" />
-            <path d="M27 6 L40 26 Q27 20 14 26 Z M12 44 Q27 38 42 44 L50 58 Q27 50 4 58 Z" fill="#fff" opacity=".92" />
-          </g>
-        )}
-        {trees && (
-          <g transform="translate(150 30) scale(.62)">
-            <rect x="22" y="76" width="10" height="16" fill="#8B5A2B" />
-            <path d="M27 6 L52 42 H38 L58 70 H-4 L16 42 H2 Z" fill="#2E9D6A" />
-            <path d="M27 6 L40 26 Q27 20 14 26 Z M12 44 Q27 38 42 44 L50 58 Q27 50 4 58 Z" fill="#fff" opacity=".92" />
-          </g>
-        )}
+        {trees && <Pine x={36} y={18} scale={1} />}
+        {trees && <Pine x={100} y={44} scale={0.68} />}
         {snowman && (
           <g transform="translate(470 4)">
             <ellipse cx="42" cy="108" rx="40" ry="8" fill="#B9C6F2" opacity=".5" />
