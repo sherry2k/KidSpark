@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import SparkMascot from '../components/SparkMascot';
+import { isWinter, SnowFall, SnowDrift } from '../components/WinterDecor';
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -8,6 +9,7 @@ interface SplashScreenProps {
 
 const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
+  const winter = useMemo(() => isWinter(), []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -25,25 +27,41 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
 
   const letters = 'KidSpark'.split('');
 
+  /* sparkle positions are picked once (they used to be re-rolled on every progress tick) */
+  const sparkles = useMemo(
+    () =>
+      Array.from({ length: 20 }).map(() => ({
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        dur: 2 + Math.random() * 2,
+        delay: Math.random() * 2,
+      })),
+    []
+  );
+
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center overflow-hidden" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 30%, #f093fb 60%, #f5576c 100%)' }}>
+    <div
+      className="fixed inset-0 flex flex-col items-center justify-center overflow-hidden"
+      style={{
+        background: winter
+          ? 'linear-gradient(180deg, #7B4DE8 0%, #9C7BF0 38%, #C9B6F7 70%, #E3F2FF 100%)'
+          : 'linear-gradient(135deg, #667eea 0%, #764ba2 30%, #f093fb 60%, #f5576c 100%)',
+      }}
+    >
       {/* Background stars */}
-      {Array.from({ length: 20 }).map((_, i) => (
+      {sparkles.map((s, i) => (
         <motion.div
           key={i}
           className="absolute text-xl"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-          }}
+          style={{ left: `${s.left}%`, top: `${s.top}%` }}
           animate={{
             opacity: [0.2, 1, 0.2],
             scale: [0.5, 1.2, 0.5],
           }}
           transition={{
-            duration: 2 + Math.random() * 2,
+            duration: s.dur,
             repeat: Infinity,
-            delay: Math.random() * 2,
+            delay: s.delay,
           }}
         >
           ✨
@@ -57,11 +75,11 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8, type: 'spring' }}
       >
-        {/* Mascot: Spark waves hello (replaces the unicorn) */}
+        {/* Mascot: Spark waves hello (wears his beanie and scarf in winter) */}
         <motion.div
-  className="w-36 md:w-56"
-  style={{ marginLeft: 'auto', marginRight: 'auto', marginBottom: 16 }}
-  animate={{
+          className="w-36 md:w-56"
+          style={{ marginLeft: 'auto', marginRight: 'auto', marginBottom: 16 }}
+          animate={{
             y: [0, -12, 0],
             rotate: [0, -3, 3, 0],
           }}
@@ -95,7 +113,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2 }}
         >
-          ✨ Fun Learning Adventure! ✨
+          {winter ? '❄️ Fun Learning Adventure! ❄️' : '✨ Fun Learning Adventure! ✨'}
         </motion.p>
       </motion.div>
 
@@ -107,8 +125,11 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
         transition={{ delay: 1.5 }}
       >
         <motion.div
-          className="h-full bg-gradient-to-r from-yellow-300 via-green-300 to-cyan-300 rounded-full"
-          style={{ width: `${progress}%` }}
+          className={`h-full rounded-full ${winter ? '' : 'bg-gradient-to-r from-yellow-300 via-green-300 to-cyan-300'}`}
+          style={{
+            width: `${progress}%`,
+            ...(winter ? { background: 'linear-gradient(90deg, #FFE46B, #FF9BC0)' } : {}),
+          }}
           transition={{ duration: 0.1 }}
         />
       </motion.div>
@@ -124,18 +145,25 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
       </motion.p>
 
       {/* Bottom decorations */}
-      <div className="absolute bottom-0 left-0 right-0 flex justify-around pb-4 opacity-40">
-        {['🌸', '🌻', '🌺', '🌷', '🌼', '🌸', '🌻', '🌺'].map((f, i) => (
-          <motion.span
-            key={i}
-            className="text-2xl md:text-3xl"
-            animate={{ y: [0, -5, 0] }}
-            transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
-          >
-            {f}
-          </motion.span>
-        ))}
-      </div>
+      {winter ? (
+        <>
+          <SnowFall count={20} zIndex={3} />
+          <SnowDrift />
+        </>
+      ) : (
+        <div className="absolute bottom-0 left-0 right-0 flex justify-around pb-4 opacity-40">
+          {['🌸', '🌻', '🌺', '🌷', '🌼', '🌸', '🌻', '🌺'].map((f, i) => (
+            <motion.span
+              key={i}
+              className="text-2xl md:text-3xl"
+              animate={{ y: [0, -5, 0] }}
+              transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
+            >
+              {f}
+            </motion.span>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
