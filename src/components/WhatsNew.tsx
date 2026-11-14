@@ -19,8 +19,7 @@ export const WHATS_NEW_ID = 'winter-2026';
 const WHATS_NEW_ITEMS: { icon: string; title: string; text: string; color: string }[] = [
   { icon: '❄️', title: 'Winter is here!', text: 'Snow, icicles and a cosy snowman.', color: 'linear-gradient(135deg,#60A5FA,#22D3EE)' },
   { icon: '🌟', title: 'Spark talks!', text: 'Tap Spark on the Home screen. He cheers for you too!', color: 'linear-gradient(135deg,#FBBF24,#F97316)' },
-  { icon: '🎵', title: 'Music games', text: 'Play the colour xylophone and your favourite songs.', color: 'linear-gradient(135deg,#2DD4BF,#06B6D4)' },
-  { icon: '🔢', title: 'New Math games', text: 'Number Bonds, Skip Counting and Missing Numbers.', color: 'linear-gradient(135deg,#F87171,#EC4899)' },
+  { icon: '🎨', title: 'New winter pictures', text: 'Colour a penguin, an igloo, a polar bear and more!', color: 'linear-gradient(135deg,#A78BFA,#EC4899)' },
 ];
 
 const STORAGE_KEY = 'kidspark_whatsnew_seen';
