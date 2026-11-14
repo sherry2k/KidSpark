@@ -435,6 +435,8 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
 
   /* ================================================================ */
   /* EDITOR  (same layout as Creative Studio)                         */
+  /* Spacing is written as inline styles on purpose: the phone reset  */
+  /* in index.css removes Tailwind padding/margin classes on phones.  */
   /* ================================================================ */
   /* the square picture: as big as the middle area allows, never tiny, never huge */
   const fallback = typeof window !== 'undefined' ? Math.min(window.innerWidth - 40, 320) : 320;
@@ -446,6 +448,12 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
     { id: 'eraser', icon: '🧽', label: 'Rub out', color: '#F0522B', on: eraser },
   ];
   const canUndo = past.length > 0;
+  const canClear = filledCount > 0 || strokes.length > 0;
+  const toolCount = TOOLS.length + (page.symmetric ? 1 : 0) + 1; // + Mirror (if any) + Clear
+
+  const SIDE = 12; // the same side gap for every bar and for the picture
+  const tileBase: React.CSSProperties = { padding: '6px 0', minWidth: 0 };
+  const smallBtn: React.CSSProperties = { padding: '8px 12px' };
 
   return (
     <GameBackground variant="game">
@@ -453,28 +461,20 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
         <Navigation title={`🎨 ${page.name}`} onBack={leavePage} stars={progress.stars} />
 
         {/* action bar */}
-        <div className="px-3 shrink-0">
-          <div className="bg-white/95 rounded-2xl p-2 border-4 border-white flex items-center gap-2" style={{ boxShadow: '0 4px 0 rgba(0,0,0,.10)' }}>
+        <div className="shrink-0" style={{ padding: `0 ${SIDE}px` }}>
+          <div
+            className="bg-white/95 rounded-2xl border-4 border-white flex items-center gap-2"
+            style={{ boxShadow: '0 4px 0 rgba(0,0,0,.10)', padding: 8 }}
+          >
             <motion.button
               onClick={undo}
               disabled={!canUndo}
-              className="rounded-xl px-3 py-2 font-bold text-white disabled:opacity-35 flex items-center gap-1"
-              style={{ background: 'linear-gradient(135deg,#38BDF8,#0EA5E9)', boxShadow: '0 4px 0 #0369A1', fontFamily: "'Bubblegum One', cursive" }}
+              className="rounded-xl font-bold text-white disabled:opacity-35 flex items-center gap-1"
+              style={{ ...smallBtn, background: 'linear-gradient(135deg,#38BDF8,#0EA5E9)', boxShadow: '0 4px 0 #0369A1', fontFamily: "'Bubblegum One', cursive" }}
               whileTap={{ scale: 0.93, y: 2 }}
             >
               <span className="text-lg">↩️</span>
               <span className="text-sm">Undo</span>
-            </motion.button>
-
-            <motion.button
-              onClick={() => { playClick(); setConfirmClear(true); }}
-              disabled={filledCount === 0 && strokes.length === 0}
-              className="rounded-xl px-3 py-2 font-bold text-white disabled:opacity-35 flex items-center gap-1"
-              style={{ background: 'linear-gradient(135deg,#F87171,#DC2626)', boxShadow: '0 4px 0 #991B1B', fontFamily: "'Bubblegum One', cursive" }}
-              whileTap={{ scale: 0.93, y: 2 }}
-              aria-label="Start this picture again"
-            >
-              <span className="text-lg">🗑️</span>
             </motion.button>
 
             {/* how much is coloured */}
@@ -487,8 +487,9 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
             <motion.button
               onClick={save}
               disabled={filledCount === 0}
-              className="rounded-xl px-3 py-2 font-bold text-white disabled:opacity-40 flex items-center gap-1"
+              className="rounded-xl font-bold text-white disabled:opacity-40 flex items-center gap-1"
               style={{
+                ...smallBtn,
                 background: saved ? 'linear-gradient(135deg,#22C55E,#0E9F6E)' : 'linear-gradient(135deg,#8B5CF6,#6366F1)',
                 boxShadow: saved ? '0 4px 0 #047857' : '0 4px 0 #4C1D95',
                 fontFamily: "'Bubblegum One', cursive",
@@ -504,8 +505,8 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
             {saved && (
               <motion.button
                 onClick={() => { playClick(); setShowOff(true); }}
-                className="rounded-xl px-3 py-2 font-bold text-white flex items-center gap-1"
-                style={{ background: 'linear-gradient(135deg,#FB923C,#EA580C)', boxShadow: '0 4px 0 #C2410C', fontFamily: "'Bubblegum One', cursive" }}
+                className="rounded-xl font-bold text-white flex items-center gap-1"
+                style={{ ...smallBtn, background: 'linear-gradient(135deg,#FB923C,#EA580C)', boxShadow: '0 4px 0 #C2410C', fontFamily: "'Bubblegum One', cursive" }}
                 whileTap={{ scale: 0.93, y: 2 }}
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
@@ -517,9 +518,9 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
           </div>
         </div>
 
-        {/* tools (+ the mirror switch on symmetrical pictures) */}
-        <div className="px-3 mt-2 shrink-0">
-          <div className={`grid gap-1.5 ${page.symmetric ? 'grid-cols-4' : 'grid-cols-3'}`}>
+        {/* tools: Fill, Draw, Rub out, Mirror (symmetrical pictures only), Clear */}
+        <div className="shrink-0" style={{ padding: `0 ${SIDE}px`, marginTop: 8 }}>
+          <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${toolCount}, minmax(0, 1fr))` }}>
             {TOOLS.map((t) => (
               <motion.button
                 key={t.id}
@@ -532,8 +533,9 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
                     setEraser(false);
                   }
                 }}
-                className="rounded-2xl py-1.5 flex flex-col items-center border-4 border-white"
+                className="rounded-2xl flex flex-col items-center border-4 border-white"
                 style={{
+                  ...tileBase,
                   background: t.on ? t.color : 'rgba(255,255,255,.95)',
                   color: t.on ? '#fff' : '#5B6079',
                   boxShadow: t.on ? '0 4px 0 rgba(0,0,0,.25)' : '0 3px 0 rgba(0,0,0,.10)',
@@ -550,8 +552,9 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
             {page.symmetric && (
               <motion.button
                 onClick={() => { setMirror((m) => !m); playClick(); buzz('tick'); speak(mirror ? 'Mirror off' : 'Mirror on!'); }}
-                className="rounded-2xl py-1.5 flex flex-col items-center border-4 border-white"
+                className="rounded-2xl flex flex-col items-center border-4 border-white"
                 style={{
+                  ...tileBase,
                   background: mirror ? '#8B5CF6' : 'rgba(255,255,255,.95)',
                   color: mirror ? '#fff' : '#5B6079',
                   boxShadow: mirror ? '0 4px 0 rgba(0,0,0,.25)' : '0 3px 0 rgba(0,0,0,.10)',
@@ -565,14 +568,34 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
                 </span>
               </motion.button>
             )}
+
+            {/* clear: same look as the other tools, asks before wiping */}
+            <motion.button
+              onClick={() => { if (!canClear) return; playClick(); setConfirmClear(true); }}
+              disabled={!canClear}
+              className="rounded-2xl flex flex-col items-center border-4 border-white disabled:opacity-40"
+              style={{
+                ...tileBase,
+                background: 'rgba(255,255,255,.95)',
+                color: '#5B6079',
+                boxShadow: '0 3px 0 rgba(0,0,0,.10)',
+              }}
+              whileTap={{ scale: 0.92, y: 2 }}
+              aria-label="Start this picture again"
+            >
+              <ItemIcon icon="🗑️" size={20} label="Clear" />
+              <span className="text-[9px] font-bold mt-0.5 leading-none" style={{ fontFamily: "'Bubblegum One', cursive" }}>
+                Clear
+              </span>
+            </motion.button>
           </div>
         </div>
 
-        {/* the picture — in the middle, as big as the free room allows */}
+        {/* the picture — in the middle, as big as the free room allows, with the same gap all round */}
         <div
           ref={wrapRef}
-          className="flex-1 mx-3 my-2 bg-white rounded-3xl border-4 border-white relative overflow-hidden flex items-center justify-center"
-          style={{ boxShadow: '0 6px 0 rgba(0,0,0,.10)', minHeight: 240 }}
+          className="flex-1 bg-white rounded-3xl border-4 border-white relative overflow-hidden flex items-center justify-center"
+          style={{ boxShadow: '0 6px 0 rgba(0,0,0,.10)', minHeight: 240, margin: `10px ${SIDE}px` }}
         >
           <PageArt
             page={page}
@@ -603,10 +626,10 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
         </div>
 
         {/* bottom panel: brush sizes (Draw only) + the small colour swatches, like Creative Studio */}
-        <div className="px-3 pb-2 shrink-0">
-          <div className="bg-white/95 rounded-3xl p-2 border-4 border-white" style={{ boxShadow: '0 6px 0 rgba(0,0,0,.10)' }}>
+        <div className="shrink-0" style={{ padding: `0 ${SIDE}px 8px` }}>
+          <div className="bg-white/95 rounded-3xl border-4 border-white" style={{ boxShadow: '0 6px 0 rgba(0,0,0,.10)', padding: 8 }}>
             {tool === 'brush' && (
-              <div className="flex items-center justify-center gap-2 mb-1.5">
+              <div className="flex items-center justify-center gap-2" style={{ marginBottom: 6 }}>
                 {BRUSHES.map((w) => (
                   <motion.button
                     key={w}
@@ -649,7 +672,7 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
             </div>
           </div>
 
-          <p className="text-center text-[11px] leading-tight text-gray-500 font-semibold mt-1">
+          <p className="text-center text-[11px] leading-tight text-gray-500 font-semibold" style={{ marginTop: 4 }}>
             {eraser
               ? '👆 Tap a part to take its colour off'
               : tool === 'fill'
