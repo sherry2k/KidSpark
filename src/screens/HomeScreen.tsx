@@ -7,6 +7,7 @@ import { playClick } from '../utils/sounds';
 import FeedbackButton, { buildId } from '../components/FeedbackButton';
 import SparkTapButton from '../components/SparkTapButton';
 import { playSparkIntro } from '../utils/sparkVoice';
+import WhatsNew from '../components/WhatsNew';
 import { isWinter, SnowFall, SnowCap, Icicles, SnowDrift, WINTER_BG, DRIFT_PAD } from '../components/WinterDecor';
 
 /**
@@ -136,6 +137,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   }, [progress.dailyChallengesCompleted, progress.lastPlayDate]);
 
   const winter = useMemo(() => isWinter(), []);
+
+  /* the "What's new" pop-up is only for children who have already played */
+  const existingUser =
+    progress.gamesPlayed > 0 || progress.lessonsCompleted > 0 || progress.quizzesCompleted > 0 || progress.stars > 0 || progress.streak > 0;
 
   const streakInfo = getStreakMessage(progress.streak);
   const accuracy = progress.totalAnswers > 0 ? Math.round((progress.correctAnswers / progress.totalAnswers) * 100) : 0;
@@ -487,6 +492,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
           <span className="font-mono text-[10px] text-gray-400">{buildId()}</span>
         </div>
       </div>
+
+      <WhatsNew existingUser={existingUser} />
     </div>
   );
 
