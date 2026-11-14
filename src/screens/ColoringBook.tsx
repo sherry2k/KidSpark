@@ -4,7 +4,8 @@ import { GameBackground } from '../components/Background';
 import Navigation from '../components/Navigation';
 import PageArt from '../components/PageArt';
 import { GameProgress } from '../store/gameStore';
-import { COLORING_PAGES, PALETTE, ColoringPage } from '../data/coloringPages';
+import { COLORING_PAGES, WINTER_PAGE_IDS, PALETTE, ColoringPage } from '../data/coloringPages';
+import { isWinter } from '../components/WinterDecor';
 import { Stroke, saveKeepsake, getKeepsakes } from '../utils/keepsakes';
 import { buzz, speak, stopSpeaking, POP } from '../utils/kidJuice';
 import { playClick, playCorrect, playComplete } from '../utils/sounds';
@@ -25,6 +26,10 @@ import { playClick, playCorrect, playComplete } from '../utils/sounds';
  *    other. It costs almost nothing and feels like magic.
  * 5. The pages are SVG, not edge-detected emoji, so they render identically on
  *    every device and have real regions inside them.
+ * 6. TWO TABS on the picker: "Classic" (all the older pictures) and "Winter"
+ *    (the winter pictures, with NEW ribbons). The Winter tab opens first while
+ *    winter is on. Which picture belongs to which tab is decided by
+ *    WINTER_PAGE_IDS in data/coloringPages.ts.
  */
 
 interface ColoringBookProps {
@@ -36,6 +41,18 @@ interface ColoringBookProps {
 const BRUSHES = [1.6, 3.2, 6, 10];
 const MAX_HISTORY = 40;
 
+/* remembers that the child has opened the Winter tab, so its NEW badge can go away */
+const WINTER_TAB_KEY = 'kidspark_winter_tab_seen';
+const readWinterTabSeen = () => {
+  try { return localStorage.getItem(WINTER_TAB_KEY) === '1'; } catch { return false; }
+};
+const writeWinterTabSeen = () => {
+  try { localStorage.setItem(WINTER_TAB_KEY, '1'); } catch { /* ignore */ }
+};
+
+const CLASSIC_PAGES = COLORING_PAGES.filter((p) => !WINTER_PAGE_IDS.has(p.id));
+const WINTER_PAGES = COLORING_PAGES.filter((p) => WINTER_PAGE_IDS.has(p.id));
+
 interface Snapshot {
   fills: Record<string, string>;
   strokes: Stroke[];
@@ -43,6 +60,8 @@ interface Snapshot {
 
 const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplete }) => {
   const [page, setPage] = useState<ColoringPage | null>(null);
+  const [tab, setTab] = useState<'classic' | 'winter'>(() => (isWinter() ? 'winter' : 'classic'));
+  const [winterTabSeen, setWinterTabSeen] = useState(readWinterTabSeen);
 
   const [fills, setFills] = useState<Record<string, string>>({});
   const [strokes, setStrokes] = useState<Stroke[]>([]);
@@ -62,6 +81,14 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
   const drawing = useRef(false);
 
   useEffect(() => () => stopSpeaking(), []);
+
+  /* opening the Winter tab (including when it opens by itself) clears its NEW badge */
+  useEffect(() => {
+    if (tab === 'winter' && !page && !winterTabSeen) {
+      writeWinterTabSeen();
+      setWinterTabSeen(true);
+    }
+  }, [tab, page, winterTabSeen]);
 
   /* ---------------- picker: show their own coloured versions ------- */
   const myVersions = useMemo(() => {
@@ -237,10 +264,65 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
     setPage(null);
   };
 
+  const switchTab = (t: 'classic' | 'winter') => {
+    if (t === tab) return;
+    playClick();
+    buzz('tick');
+    setTab(t);
+  };
+
   /* ================================================================ */
   /* PICKER                                                           */
   /* ================================================================ */
   if (!page) {
+    const pages = tab === 'winter' ? WINTER_PAGES : CLASSIC_PAGES;
+
+    /* one tab button; spacing is inline because the phone reset removes padding/margin classes */
+    const tabButton = (id: 'classic' | 'winter', label: string, showNew: boolean) => {
+      const on = tab === id;
+      return (
+        <button
+          key={id}
+          onClick={() => switchTab(id)}
+          aria-pressed={on}
+          style={{
+            position: 'relative',
+            flex: '1 1 0',
+            maxWidth: 170,
+            padding: '10px 8px',
+            borderRadius: 18,
+            border: '4px solid #fff',
+            cursor: 'pointer',
+            fontFamily: "'Bubblegum One', cursive",
+            fontWeight: 700,
+            fontSize: 16,
+            color: on ? '#fff' : '#6B5B95',
+            background: on
+              ? id === 'winter'
+                ? 'linear-gradient(135deg,#60A5FA,#8B5CF6)'
+                : 'linear-gradient(135deg,#8B5CF6,#EC4899)'
+              : 'rgba(255,255,255,.85)',
+            boxShadow: on ? '0 5px 0 rgba(76,29,149,.45)' : '0 4px 0 rgba(0,0,0,.10)',
+            transform: on ? 'translateY(0)' : 'translateY(2px)',
+          }}
+        >
+          {label}
+          {showNew && (
+            <span
+              style={{
+                position: 'absolute', top: -9, right: -6,
+                background: 'linear-gradient(90deg,#EF4444,#EC4899)', color: '#fff',
+                fontSize: 10, fontWeight: 800, letterSpacing: 0.5,
+                padding: '2px 7px', borderRadius: 10, border: '2px solid #fff',
+              }}
+            >
+              NEW
+            </span>
+          )}
+        </button>
+      );
+    };
+
     return (
       <GameBackground variant="game">
         <div className="h-full flex flex-col overflow-x-hidden">
@@ -260,9 +342,16 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
               Pick a picture to colour! 🖌️
             </motion.h2>
 
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-w-2xl mx-auto">
-              {COLORING_PAGES.map((p, i) => {
+            {/* two tabs: Classic / Winter */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 16, marginTop: 4 }}>
+              {tabButton('classic', '🎨 Classic', false)}
+              {tabButton('winter', '❄️ Winter', !winterTabSeen)}
+            </div>
+
+            <div key={tab} className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-w-2xl mx-auto">
+              {pages.map((p, i) => {
                 const mine = myVersions[p.id];
+                const isNew = WINTER_PAGE_IDS.has(p.id) && !mine;
 
                 return (
                   <motion.button
@@ -272,12 +361,26 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
                     style={{ boxShadow: '0 6px 0 rgba(139,92,246,0.35), 0 8px 18px rgba(0,0,0,0.08)' }}
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: i * 0.03, ...POP }}
+                    /* capped, so a long list never makes the last pictures wait */
+                    transition={{ delay: Math.min(i, 8) * 0.03, ...POP }}
                     whileTap={{ scale: 0.94, y: 3 }}
                   >
                     {mine && (
                       <span className="absolute top-1 right-1 text-sm bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
                         ✓
+                      </span>
+                    )}
+                    {/* NEW ribbon on the winter pictures until the child has coloured them */}
+                    {isNew && (
+                      <span
+                        style={{
+                          position: 'absolute', top: 4, left: 4, zIndex: 2, pointerEvents: 'none',
+                          background: 'linear-gradient(90deg,#EF4444,#EC4899)', color: '#fff',
+                          fontSize: 10, fontWeight: 800, letterSpacing: 0.5,
+                          padding: '2px 7px', borderRadius: 10, border: '2px solid #fff',
+                        }}
+                      >
+                        NEW
                       </span>
                     )}
                     <div className="flex justify-center">
