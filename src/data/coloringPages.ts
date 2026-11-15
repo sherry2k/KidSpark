@@ -567,7 +567,200 @@ const BASE_PAGES: ColoringPage[] = [
   },
 ];
 
-export const COLORING_PAGES: ColoringPage[] = [...NEW_PAGES, ...BASE_PAGES];
+/* ===================== WINTER PAGES ===================== */
+/* mirror an x coordinate across the middle of the 0-100 box */
+const mx = (x: number) => 100 - x;
+
+/** a point on an arc around (cx, cy); angle 0 = left, 90 = straight up, 180 = right */
+const arcPt = (cx: number, cy: number, r: number, deg: number): [number, number] => {
+  const a = (deg * Math.PI) / 180;
+  return [cx - r * Math.cos(a), cy - r * Math.sin(a)];
+};
+const spoke = (cx: number, cy: number, r1: number, r2: number, deg: number) => {
+  const [x1, y1] = arcPt(cx, cy, r1, deg);
+  const [x2, y2] = arcPt(cx, cy, r2, deg);
+  return `M ${n(x1)} ${n(y1)} L ${n(x2)} ${n(y2)}`;
+};
+
+/** one mitten. side 'L' has its thumb on the right, 'R' is its mirror image */
+const mittenRegions = (side: 'L' | 'R'): Region[] => {
+  const f = (x: number) => (side === 'L' ? x : mx(x));
+  const other = side === 'L' ? 'R' : 'L';
+  const tx = f(11);
+  return [
+    {
+      id: `thumb${side}`,
+      d: ellipse(tx, 52, 6.5, 11),
+      t: `rotate(${side === 'L' ? -22 : 22} ${tx} 52)`,
+      mirror: `thumb${other}`,
+      name: 'a thumb',
+    },
+    {
+      id: `mitten${side}`,
+      d: `M ${f(14)} 72 L ${f(14)} 36 Q ${f(14)} 12 ${f(30)} 12 Q ${f(46)} 12 ${f(46)} 36 L ${f(46)} 72 Z`,
+      mirror: `mitten${other}`,
+      name: 'a mitten',
+    },
+    {
+      id: `cuff${side}`,
+      d: poly([[f(12), 70], [f(48), 70], [f(48), 88], [f(12), 88]]),
+      mirror: `cuff${other}`,
+      name: 'a cuff',
+    },
+    {
+      id: `pattern${side}`,
+      d: starPath(f(30), 40, 11, 4.8, 6),
+      mirror: `pattern${other}`,
+      name: 'a snowflake',
+    },
+  ];
+};
+
+const WINTER_PAGES: ColoringPage[] = [
+  /* ---------------- penguin (front view, symmetric) ---------------- */
+  {
+    id: 'penguin',
+    name: 'Penguin',
+    symmetric: true,
+    regions: [
+      { id: 'flipperL', d: ellipse(20, 58, 7, 19), t: 'rotate(14 20 58)', mirror: 'flipperR', name: 'a flipper' },
+      { id: 'flipperR', d: ellipse(80, 58, 7, 19), t: 'rotate(-14 80 58)', mirror: 'flipperL', name: 'a flipper' },
+      { id: 'footL', d: ellipse(38, 94, 10, 4.5), mirror: 'footR', name: 'a foot' },
+      { id: 'footR', d: ellipse(62, 94, 10, 4.5), mirror: 'footL', name: 'a foot' },
+      { id: 'body', d: ellipse(50, 58, 29, 37), name: 'the penguin' },
+      { id: 'belly', d: ellipse(50, 67, 18, 25), name: 'the tummy' },
+      { id: 'eyeL', d: circle(40, 38, 4.2), mirror: 'eyeR', name: 'an eye' },
+      { id: 'eyeR', d: circle(60, 38, 4.2), mirror: 'eyeL', name: 'an eye' },
+      { id: 'beak', d: poly([[43, 44], [57, 44], [50, 53]]), name: 'the beak' },
+      { id: 'hat', d: 'M 33 27 C 33 4 67 4 67 27 Z', name: 'the hat' },
+      { id: 'hatBrim', d: poly([[31, 25], [69, 25], [69, 31], [31, 31]]), name: 'the hat brim' },
+      { id: 'pompom', d: circle(50, 7, 5.5), name: 'the pom-pom' },
+    ],
+    lines: ['M 38 14 L 38 26', 'M 50 11 L 50 25', 'M 62 14 L 62 26'],
+  },
+
+  /* ---------------- mittens (a pair, symmetric) ---------------- */
+  {
+    id: 'mittens',
+    name: 'Mittens',
+    symmetric: true,
+    regions: [...mittenRegions('L'), ...mittenRegions('R')],
+    lines: [
+      'M 12 75 L 48 75', 'M 12 80 L 48 80',
+      'M 52 75 L 88 75', 'M 52 80 L 88 80',
+    ],
+  },
+
+  /* ---------------- snowflake ---------------- */
+  {
+    id: 'snowflake',
+    name: 'Snowflake',
+    symmetric: true,
+    regions: [
+      ...Array.from({ length: 6 }, (_, i) => ({
+        id: `arm${i}`,
+        d: poly([
+          [50, 4], [53.5, 17], [62, 9], [64, 14], [54.5, 26], [54.5, 37.5],
+          [45.5, 37.5], [45.5, 26], [36, 14], [38, 9], [46.5, 17],
+        ]),
+        t: `rotate(${i * 60} 50 50)`,
+        mirror: i === 0 || i === 3 ? undefined : `arm${(6 - i) % 6}`,
+        name: 'a snowflake arm',
+      })),
+      {
+        id: 'centre',
+        d: poly(
+          Array.from({ length: 6 }, (_, k) => {
+            const a = (k * 60 * Math.PI) / 180;
+            return [50 + 14 * Math.cos(a), 50 + 14 * Math.sin(a)] as [number, number];
+          })
+        ),
+        name: 'the middle',
+      },
+      { id: 'gem', d: circle(50, 50, 5.5), name: 'the sparkle' },
+    ],
+  },
+
+  /* ---------------- igloo ---------------- */
+  {
+    id: 'igloo',
+    name: 'Igloo',
+    symmetric: false,
+    regions: [
+      { id: 'moon', d: circle(84, 16, 8), name: 'the moon' },
+      { id: 'snow', d: ellipse(50, 88, 47, 8), name: 'the snow' },
+      { id: 'blocks1', d: arcBand(40, 30), name: 'the bottom blocks' },
+      { id: 'blocks2', d: arcBand(30, 20), name: 'the middle blocks' },
+      { id: 'blocks3', d: 'M 30 80 A 20 20 0 0 1 70 80 Z', name: 'the top blocks' },
+      { id: 'tunnel', d: 'M 36 88 L 36 72 Q 36 61 50 61 Q 64 61 64 72 L 64 88 Z', name: 'the tunnel' },
+      { id: 'door', d: 'M 42 88 L 42 74 Q 42 67 50 67 Q 58 67 58 74 L 58 88 Z', name: 'the door' },
+    ],
+    lines: [
+      ...[30, 60, 90, 120, 150].map((d) => spoke(50, 80, 30, 40, d)),
+      ...[15, 45, 75, 105, 135, 165].map((d) => spoke(50, 80, 20, 30, d)),
+      starPath(20, 22, 4.5, 1.8, 6),
+      starPath(60, 12, 3.5, 1.4, 6),
+    ],
+  },
+
+  /* ---------------- polar bear (front view, symmetric) ---------------- */
+  {
+    id: 'polarbear',
+    name: 'Polar Bear',
+    symmetric: true,
+    regions: [
+      { id: 'body', d: ellipse(50, 85, 31, 14.5), name: 'the tummy' },
+      { id: 'earL', d: circle(27, 21, 9), mirror: 'earR', name: 'an ear' },
+      { id: 'earR', d: circle(73, 21, 9), mirror: 'earL', name: 'an ear' },
+      { id: 'earInL', d: circle(27, 21, 4.5), mirror: 'earInR', name: 'an ear' },
+      { id: 'earInR', d: circle(73, 21, 4.5), mirror: 'earInL', name: 'an ear' },
+      { id: 'head', d: circle(50, 44, 27), name: 'the head' },
+      { id: 'cheekL', d: circle(31, 52, 4.5), mirror: 'cheekR', name: 'a cheek' },
+      { id: 'cheekR', d: circle(69, 52, 4.5), mirror: 'cheekL', name: 'a cheek' },
+      { id: 'snout', d: ellipse(50, 54, 12.5, 10), name: 'the snout' },
+      { id: 'nose', d: ellipse(50, 49, 5.5, 3.8), name: 'the nose' },
+      { id: 'eyeL', d: circle(39, 38, 3.4), mirror: 'eyeR', name: 'an eye' },
+      { id: 'eyeR', d: circle(61, 38, 3.4), mirror: 'eyeL', name: 'an eye' },
+      { id: 'scarf', d: 'M 26 68 Q 50 82 74 68 L 74 77 Q 50 91 26 77 Z', name: 'the scarf' },
+      { id: 'scarfTail', d: poly([[60, 80], [70, 77], [74, 94], [64, 96]]), name: 'the scarf' },
+    ],
+    lines: ['M 50 53 L 50 59', 'M 43 60 Q 50 65 57 60'],
+  },
+
+  /* ---------------- hot cocoa ---------------- */
+  {
+    id: 'cocoa',
+    name: 'Hot Cocoa',
+    symmetric: false,
+    regions: [
+      {
+        id: 'handle',
+        d: 'M 77 48 Q 98 48 98 64 Q 98 80 75 79 L 75 72 Q 90 72 90 64 Q 90 56 77 56 Z',
+        name: 'the handle',
+      },
+      {
+        id: 'mug',
+        d: 'M 22 40 L 78 40 L 74 86 Q 73 92 66 92 L 34 92 Q 27 92 26 86 Z',
+        name: 'the mug',
+      },
+      { id: 'stripe', d: poly([[25, 74], [75, 74], [74.5, 80], [25.5, 80]]), name: 'the stripe' },
+      { id: 'mugStar', d: starPath(50, 60, 12, 5, 6), name: 'a snowflake' },
+      { id: 'cocoa', d: ellipse(50, 40, 28, 6), name: 'the cocoa' },
+      { id: 'marsh1', d: ellipse(40, 37, 8.5, 6.5), name: 'a marshmallow' },
+      { id: 'marsh2', d: ellipse(59, 36, 8.5, 6.5), name: 'a marshmallow' },
+    ],
+    lines: ['M 40 30 Q 34 24 40 18 Q 46 12 40 6', 'M 58 30 Q 52 24 58 18 Q 64 12 58 6'],
+  },
+];
+
+export const WINTER_PAGE_IDS = new Set(['penguin', 'mittens', 'snowflake', 'igloo', 'polarbear', 'cocoa']);
+
+/**
+ * All pages. The winter pages go at the END, so every older page keeps its place
+ * (and saved pictures keep working). The Coloring Book screen splits them into
+ * two tabs using WINTER_PAGE_IDS.
+ */
+export const COLORING_PAGES: ColoringPage[] = [...NEW_PAGES, ...BASE_PAGES, ...WINTER_PAGES];
 
 export const getPage = (id: string): ColoringPage | undefined =>
   COLORING_PAGES.find((p) => p.id === id);

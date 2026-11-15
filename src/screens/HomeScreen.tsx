@@ -5,9 +5,10 @@ import { gameModes, dailyChallenges } from '../data/gameData';
 import { PlayerProfile, GameProgress } from '../store/gameStore';
 import { playClick } from '../utils/sounds';
 import FeedbackButton, { buildId } from '../components/FeedbackButton';
-import SparkMascot from '../components/SparkMascot';
 import SparkTapButton from '../components/SparkTapButton';
 import { playSparkIntro } from '../utils/sparkVoice';
+import WhatsNew from '../components/WhatsNew';
+import { isWinter, SnowFall, SnowCap, Icicles, SnowDrift, WINTER_BG, DRIFT_PAD } from '../components/WinterDecor';
 
 /**
  * HomeScreen — same screen, without the main-thread tax.
@@ -33,6 +34,13 @@ import { playSparkIntro } from '../utils/sparkVoice';
  * 4. `new Date()` ran five times per render. Once now, memoised.
  *
  * Everything on screen looks the same. Nothing about the layout changed.
+ *
+ * WINTER THEME (see components/WinterDecor.tsx)
+ *
+ * While isWinter() is true the screen gets an icy background, snow caps on the
+ * game cards, icicles on the welcome banner, a few falling snowflakes and the
+ * snowy ground with the snowman. All of it is decoration: it ignores taps, and
+ * with winter off the screen is exactly the same as before.
  */
 
 interface HomeScreenProps {
@@ -128,225 +136,242 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
     };
   }, [progress.dailyChallengesCompleted, progress.lastPlayDate]);
 
+  const winter = useMemo(() => isWinter(), []);
+
+  /* the "What's new" pop-up is only for children who have already played */
+  const existingUser =
+    progress.gamesPlayed > 0 || progress.lessonsCompleted > 0 || progress.quizzesCompleted > 0 || progress.stars > 0 || progress.streak > 0;
+
   const streakInfo = getStreakMessage(progress.streak);
   const accuracy = progress.totalAnswers > 0 ? Math.round((progress.correctAnswers / progress.totalAnswers) * 100) : 0;
 
-  return (
-    <GameBackground variant="home">
-      <div className="h-full flex flex-col overflow-y-auto overflow-x-hidden pb-6">
-        {/* ---------------- top bar ---------------- */}
-        <motion.div className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4 gap-2" {...rise()}>
+  const body = (
+    <div
+      className="h-full flex flex-col overflow-y-auto overflow-x-hidden pb-6"
+      /* in winter the snowy ground is fixed at the bottom, so leave room for it */
+      style={winter ? { paddingBottom: DRIFT_PAD } : undefined}
+    >
+      {/* ---------------- top bar ---------------- */}
+      <motion.div className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4 gap-2" {...rise()}>
+        <motion.button
+          onClick={() => { playClick(); onOpenProfile(); }}
+          className="flex items-center gap-2 bg-white/90 rounded-2xl pl-2 pr-4 py-3 shadow-lg border-4 border-white"
+          style={{ minHeight: 65 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <span className="text-4xl md:text-5xl">{profile.avatar}</span>
+          <div className="text-left">
+            <p className="font-bold text-gray-800 text-sm md:text-base leading-tight" style={{ fontFamily: FONT, fontWeight: 900 }}>
+              {profile.name || 'Little Star'}
+            </p>
+            <p className="text-xs text-gray-500 font-semibold flex items-center gap-1">
+              <span className="ks-pulse inline-block">🔥</span>
+              {progress.streak} day streak
+            </p>
+          </div>
+        </motion.button>
+
+        <div className="flex items-center gap-2 md:gap-3">
           <motion.button
-            onClick={() => { playClick(); onOpenProfile(); }}
-            className="flex items-center gap-2 bg-white/90 rounded-2xl pl-2 pr-4 py-3 shadow-lg border-4 border-white"
-            style={{ minHeight: 65 }}
+            onClick={() => { playClick(); onOpenProgress(); }}
+            className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl px-4 py-3 shadow-lg border-4 border-white"
+            style={{ minHeight: 65, minWidth: 75 }}
             whileTap={{ scale: 0.95 }}
           >
-            <span className="text-4xl md:text-5xl">{profile.avatar}</span>
-            <div className="text-left">
-              <p className="font-bold text-gray-800 text-sm md:text-base leading-tight" style={{ fontFamily: FONT, fontWeight: 900 }}>
-                {profile.name || 'Little Star'}
-              </p>
-              <p className="text-xs text-gray-500 font-semibold flex items-center gap-1">
-                <span className="ks-pulse inline-block">🔥</span>
-                {progress.streak} day streak
-              </p>
-            </div>
+            <span className="text-2xl md:text-3xl ks-wiggle inline-block">🌟</span>
+            <span className="font-black text-white text-lg md:text-xl" style={{ fontFamily: FONT, fontVariantNumeric: 'tabular-nums' }}>
+              {progress.stars}
+            </span>
           </motion.button>
 
-          <div className="flex items-center gap-2 md:gap-3">
-            <motion.button
-              onClick={() => { playClick(); onOpenProgress(); }}
-              className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl px-4 py-3 shadow-lg border-4 border-white"
-              style={{ minHeight: 65, minWidth: 75 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <span className="text-2xl md:text-3xl ks-wiggle inline-block">🌟</span>
-              <span className="font-black text-white text-lg md:text-xl" style={{ fontFamily: FONT, fontVariantNumeric: 'tabular-nums' }}>
-                {progress.stars}
-              </span>
-            </motion.button>
-
-            <motion.button
-              onClick={() => { playClick(); onOpenProgress(); }}
-              className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl px-4 py-3 shadow-lg border-4 border-white"
-              style={{ minHeight: 65, minWidth: 75 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <span className="text-2xl md:text-3xl ks-spin inline-block">🪙</span>
-              <span className="font-black text-white text-lg md:text-xl" style={{ fontFamily: FONT, fontVariantNumeric: 'tabular-nums' }}>
-                {progress.coins}
-              </span>
-            </motion.button>
-
-            <motion.button
-              onClick={() => { playClick(); onOpenSettings(); }}
-              className="flex items-center justify-center bg-gradient-to-r from-blue-400 to-indigo-500 rounded-2xl p-3 shadow-lg border-4 border-white"
-              style={{ minHeight: 65, minWidth: 65 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              <span className="text-3xl md:text-4xl ks-spin-slow inline-block">⚙️</span>
-            </motion.button>
-          </div>
-        </motion.div>
-
-        {/* ---------------- streak banner ---------------- */}
-        <motion.div className="mx-4 md:mx-6 mb-4" {...rise(1)}>
-          <div
-            className={`bg-gradient-to-r ${streakInfo.color} rounded-3xl p-4 md:p-5 text-white border-4 border-white relative overflow-hidden`}
-            /* static shadow — the animated box-shadow loop repainted this every frame */
-            style={{ boxShadow: '0 8px 0 rgba(0,0,0,0.15), 0 12px 25px rgba(0,0,0,0.2)' }}
+          <motion.button
+            onClick={() => { playClick(); onOpenProgress(); }}
+            className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl px-4 py-3 shadow-lg border-4 border-white"
+            style={{ minHeight: 65, minWidth: 75 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <div className="absolute top-2 right-2 text-yellow-200 text-2xl ks-twinkle">✨</div>
-            <div className="absolute bottom-2 left-2 text-yellow-200 text-xl ks-twinkle ks-d3">✨</div>
+            <span className="text-2xl md:text-3xl ks-spin inline-block">🪙</span>
+            <span className="font-black text-white text-lg md:text-xl" style={{ fontFamily: FONT, fontVariantNumeric: 'tabular-nums' }}>
+              {progress.coins}
+            </span>
+          </motion.button>
 
-            <div className="flex items-center gap-4">
-              <div className="text-5xl md:text-6xl ks-bob-tilt">{streakInfo.emoji}</div>
-              <div className="flex-1">
-                <h3 className="text-xl md:text-2xl font-black" style={{ fontFamily: FONT, textShadow: '2px 2px 0 rgba(0,0,0,0.2)' }}>
-                  {progress.streak === 0 ? 'Welcome!' : `Day ${progress.streak} Streak!`}
-                </h3>
-                <p className="text-sm md:text-base opacity-95 font-semibold">{streakInfo.message}</p>
-                {isNewDay && progress.streak > 0 && (
-                  <p className="text-xs md:text-sm mt-1 bg-white/20 rounded-full px-3 py-1 inline-block">
-                    🎁 Play today to keep your streak!
-                  </p>
-                )}
-              </div>
+          <motion.button
+            onClick={() => { playClick(); onOpenSettings(); }}
+            className="flex items-center justify-center bg-gradient-to-r from-blue-400 to-indigo-500 rounded-2xl p-3 shadow-lg border-4 border-white"
+            style={{ minHeight: 65, minWidth: 65 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <span className="text-3xl md:text-4xl ks-spin-slow inline-block">⚙️</span>
+          </motion.button>
+        </div>
+      </motion.div>
+
+      {/* ---------------- streak banner ---------------- */}
+      <motion.div className="mx-4 md:mx-6 mb-4" {...rise(1)}>
+        <div
+          className={`bg-gradient-to-r ${streakInfo.color} rounded-3xl p-4 md:p-5 text-white border-4 border-white relative overflow-hidden`}
+          /* static shadow — the animated box-shadow loop repainted this every frame */
+          style={{ boxShadow: '0 8px 0 rgba(0,0,0,0.15), 0 12px 25px rgba(0,0,0,0.2)' }}
+        >
+          <div className="absolute top-2 right-2 text-yellow-200 text-2xl ks-twinkle">✨</div>
+          <div className="absolute bottom-2 left-2 text-yellow-200 text-xl ks-twinkle ks-d3">✨</div>
+
+          <div className="flex items-center gap-4">
+            <div className="text-5xl md:text-6xl ks-bob-tilt">{streakInfo.emoji}</div>
+            <div className="flex-1">
+              <h3 className="text-xl md:text-2xl font-black" style={{ fontFamily: FONT, textShadow: '2px 2px 0 rgba(0,0,0,0.2)' }}>
+                {progress.streak === 0 ? 'Welcome!' : `Day ${progress.streak} Streak!`}
+              </h3>
+              <p className="text-sm md:text-base opacity-95 font-semibold">{streakInfo.message}</p>
+              {isNewDay && progress.streak > 0 && (
+                <p className="text-xs md:text-sm mt-1 bg-white/20 rounded-full px-3 py-1 inline-block">
+                  🎁 Play today to keep your streak!
+                </p>
+              )}
             </div>
           </div>
-        </motion.div>
+        </div>
+      </motion.div>
 
-{/* ---------------- welcome ---------------- */}
-<motion.div className="mx-4 md:mx-6 mb-4 relative" {...rise(2)}>
-  <div className="bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 rounded-3xl px-4 py-5 md:p-6 text-white shadow-xl relative overflow-hidden flex items-center">
-    <div className="absolute -top-4 -right-4 text-7xl opacity-20 rotate-12 pointer-events-none">🎓</div>
+      {/* ---------------- welcome ---------------- */}
+      <motion.div className="mx-4 md:mx-6 mb-4 relative" {...rise(2)}>
+        <div className="bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 rounded-3xl px-4 py-5 md:p-6 text-white shadow-xl relative overflow-hidden flex items-center">
+          <div className="absolute -top-4 -right-4 text-7xl opacity-20 rotate-12 pointer-events-none">🎓</div>
 
-    <div className="relative z-10 w-full pr-[80px] md:pr-28 text-center">
-      <h2 className="text-[17px] md:text-2xl font-black mb-2" style={{ fontFamily: FONT, textShadow: '2px 2px 0 rgba(0,0,0,0.2)' }}>
-        Welcome back, {profile.name || 'Little Star'}! 🎉
-      </h2>
-      <p className="text-white/90 text-sm md:text-base font-semibold" style={{ textShadow: '1px 1px 0 rgba(0,0,0,0.2)' }}>
-        Ready to learn and play today?
-      </p>
-    </div>
-  </div>
+          <div className="relative z-10 w-full pr-[80px] md:pr-28 text-center">
+            <h2 className="text-[17px] md:text-2xl font-black mb-2" style={{ fontFamily: FONT, textShadow: '2px 2px 0 rgba(0,0,0,0.2)' }}>
+              Welcome back, {profile.name || 'Little Star'}! 🎉
+            </h2>
+            <p className="text-white/90 text-sm md:text-base font-semibold" style={{ textShadow: '1px 1px 0 rgba(0,0,0,0.2)' }}>
+              Ready to learn and play today?
+            </p>
+          </div>
+        </div>
 
-  {/* Spark sits on top of the banner, so he is never clipped */}
-  <div className="absolute right-3 md:right-5 bottom-1 z-20">
-  <SparkTapButton className="w-[68px] md:w-24" />
-</div>
-</motion.div>
+        {/* winter: icicles hang from the top edge of the banner */}
+        {winter && <Icicles seed={2} inset={16} />}
 
-        {/* ---------------- daily challenge ---------------- */}
-        <motion.div className="mx-4 md:mx-6 mb-4" {...rise(3)}>
-          <motion.button
-            onClick={() => { if (!challengeCompleted) { playSparkIntro(todayChallenge.gameMode); onSelectMode(todayChallenge.gameMode); } }}
-            className="w-full text-left"
-            whileTap={!challengeCompleted ? { scale: 0.98 } : {}}
-            disabled={challengeCompleted}
+        {/* Spark sits on top of the banner, so he is never clipped */}
+        <div className="absolute right-3 md:right-5 bottom-1 z-20">
+          <SparkTapButton className="w-[68px] md:w-24" />
+        </div>
+      </motion.div>
+
+      {/* ---------------- daily challenge ---------------- */}
+      <motion.div className="mx-4 md:mx-6 mb-4" {...rise(3)}>
+        <motion.button
+          onClick={() => { if (!challengeCompleted) { playSparkIntro(todayChallenge.gameMode); onSelectMode(todayChallenge.gameMode); } }}
+          className="w-full text-left"
+          whileTap={!challengeCompleted ? { scale: 0.98 } : {}}
+          disabled={challengeCompleted}
+        >
+          <div
+            className={`rounded-2xl p-4 border-2 relative overflow-hidden ${
+              challengeCompleted
+                ? 'bg-gradient-to-r from-green-100 to-emerald-100 border-green-300'
+                : 'bg-gradient-to-r from-yellow-400 to-orange-500 border-orange-300'
+            }`}
+            style={
+              challengeCompleted
+                ? { boxShadow: '0 4px 0 #059669, 0 6px 15px rgba(0,0,0,0.1)' }
+                : { boxShadow: '0 6px 0 #C2410C, 0 8px 20px rgba(0,0,0,0.15)' }
+            }
           >
-            <div
-              className={`rounded-2xl p-4 border-2 relative overflow-hidden ${
-                challengeCompleted
-                  ? 'bg-gradient-to-r from-green-100 to-emerald-100 border-green-300'
-                  : 'bg-gradient-to-r from-yellow-400 to-orange-500 border-orange-300'
-              }`}
-              style={
-                challengeCompleted
-                  ? { boxShadow: '0 4px 0 #059669, 0 6px 15px rgba(0,0,0,0.1)' }
-                  : { boxShadow: '0 6px 0 #C2410C, 0 8px 20px rgba(0,0,0,0.15)' }
-              }
-            >
-              {!challengeCompleted && (
-                <>
-                  <div className="absolute top-2 right-2 text-yellow-200 text-xl opacity-80 ks-twinkle">✨</div>
-                  <div className="absolute bottom-2 left-16 text-yellow-200 text-sm opacity-60 ks-twinkle ks-d3">⭐</div>
-                </>
-              )}
+            {!challengeCompleted && (
+              <>
+                <div className="absolute top-2 right-2 text-yellow-200 text-xl opacity-80 ks-twinkle">✨</div>
+                <div className="absolute bottom-2 left-16 text-yellow-200 text-sm opacity-60 ks-twinkle ks-d3">⭐</div>
+              </>
+            )}
 
-              <div className="flex items-center justify-between relative z-10">
-                <div className="flex items-center gap-3">
-                  <div className={`text-4xl rounded-2xl p-2 ${challengeCompleted ? 'bg-green-200' : 'bg-white/20'} ${challengeCompleted ? '' : 'ks-bob'}`}>
-                    {challengeCompleted ? '✅' : todayChallenge.emoji}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1 mb-0.5">
-                      <span
-                        className={`text-xs font-black uppercase tracking-wide ${challengeCompleted ? 'text-green-600' : 'text-white/80'}`}
-                        style={{ fontFamily: FONT }}
-                      >
-                        🎯 Daily Challenge
-                      </span>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-bold ${
-                          challengeCompleted ? 'bg-green-200 text-green-700' : 'bg-white/20 text-white'
-                        }`}
-                      >
-                        {dayLabel}
-                      </span>
-                    </div>
-                    <p
-                      className={`font-black text-sm md:text-base leading-tight ${challengeCompleted ? 'text-green-800' : 'text-white'}`}
-                      style={{ fontFamily: FONT, textShadow: challengeCompleted ? 'none' : '1px 1px 0 rgba(0,0,0,0.2)' }}
-                    >
-                      {todayChallenge.title}
-                    </p>
-                    {todayChallenge.description && (
-                      <p className={`text-xs mt-0.5 ${challengeCompleted ? 'text-green-600' : 'text-white/80'}`}>
-                        {challengeCompleted ? '🎉 Completed today!' : todayChallenge.description}
-                      </p>
-                    )}
-                  </div>
+            <div className="flex items-center justify-between relative z-10">
+              <div className="flex items-center gap-3">
+                <div className={`text-4xl rounded-2xl p-2 ${challengeCompleted ? 'bg-green-200' : 'bg-white/20'} ${challengeCompleted ? '' : 'ks-bob'}`}>
+                  {challengeCompleted ? '✅' : todayChallenge.emoji}
                 </div>
-
-                <div className="flex flex-col items-center gap-1 ml-2">
-                  <div
-                    className={`flex items-center gap-1 rounded-2xl px-3 py-2 border-2 ${
-                      challengeCompleted ? 'bg-green-200 border-green-300' : 'bg-white border-white/50 ks-pulse'
-                    }`}
-                  >
-                    <span className="text-lg">⭐</span>
+                <div>
+                  <div className="flex items-center gap-1 mb-0.5">
                     <span
-                      className={`font-black text-base ${challengeCompleted ? 'text-green-700' : 'text-yellow-600'}`}
-                      style={{ fontFamily: FONT, fontVariantNumeric: 'tabular-nums' }}
+                      className={`text-xs font-black uppercase tracking-wide ${challengeCompleted ? 'text-green-600' : 'text-white/80'}`}
+                      style={{ fontFamily: FONT }}
                     >
-                      +{todayChallenge.reward}
+                      {winter ? '⛄' : '🎯'} Daily Challenge
+                    </span>
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                        challengeCompleted ? 'bg-green-200 text-green-700' : 'bg-white/20 text-white'
+                      }`}
+                    >
+                      {dayLabel}
                     </span>
                   </div>
-                  {!challengeCompleted && <span className="text-white/70 text-xs font-semibold">Tap to play!</span>}
+                  <p
+                    className={`font-black text-sm md:text-base leading-tight ${challengeCompleted ? 'text-green-800' : 'text-white'}`}
+                    style={{ fontFamily: FONT, textShadow: challengeCompleted ? 'none' : '1px 1px 0 rgba(0,0,0,0.2)' }}
+                  >
+                    {todayChallenge.title}
+                  </p>
+                  {todayChallenge.description && (
+                    <p className={`text-xs mt-0.5 ${challengeCompleted ? 'text-green-600' : 'text-white/80'}`}>
+                      {challengeCompleted ? '🎉 Completed today!' : todayChallenge.description}
+                    </p>
+                  )}
                 </div>
               </div>
+
+              <div className="flex flex-col items-center gap-1 ml-2">
+                <div
+                  className={`flex items-center gap-1 rounded-2xl px-3 py-2 border-2 ${
+                    challengeCompleted ? 'bg-green-200 border-green-300' : 'bg-white border-white/50 ks-pulse'
+                  }`}
+                >
+                  <span className="text-lg">⭐</span>
+                  <span
+                    className={`font-black text-base ${challengeCompleted ? 'text-green-700' : 'text-yellow-600'}`}
+                    style={{ fontFamily: FONT, fontVariantNumeric: 'tabular-nums' }}
+                  >
+                    +{todayChallenge.reward}
+                  </span>
+                </div>
+                {!challengeCompleted && <span className="text-white/70 text-xs font-semibold">Tap to play!</span>}
+              </div>
             </div>
-          </motion.button>
-        </motion.div>
+          </div>
+        </motion.button>
+      </motion.div>
 
-        {/* ---------------- game grid ---------------- */}
-        <div className="px-4 md:px-6 mb-4">
-          <h3
-            className="text-xl md:text-2xl font-black text-center text-gray-800 mb-4 flex items-center justify-center gap-2"
-            style={{ fontFamily: FONT }}
-          >
-            🎮 Choose Your Game!
-          </h3>
+      {/* ---------------- game grid ---------------- */}
+      <div className="px-4 md:px-6 mb-4">
+        <h3
+          className="text-xl md:text-2xl font-black text-center text-gray-800 mb-4 flex items-center justify-center gap-2"
+          /* winter: a little extra room so the snow caps do not touch the heading */
+          style={{ fontFamily: FONT, ...(winter ? { marginBottom: 20 } : {}) }}
+        >
+          {winter ? '❄️ Choose Your Game! ❄️' : '🎮 Choose Your Game!'}
+        </h3>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-w-4xl mx-auto">
-            {orderedModes.map((mode, index) => {
-              const style = GAME_MODE_STYLES[mode.id] || {
-                gradient: 'from-gray-400 to-gray-500',
-                shadow: '#374151',
-                difficulty: 'Fun',
-                stars: '⭐',
-              };
-              /* only the first six sparkle — beyond that it's noise nobody sees at once */
-              const sparkles = index < 6;
+        <div
+          className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-w-4xl mx-auto"
+          style={winter ? { rowGap: 20 } : undefined}
+        >
+          {orderedModes.map((mode, index) => {
+            const style = GAME_MODE_STYLES[mode.id] || {
+              gradient: 'from-gray-400 to-gray-500',
+              shadow: '#374151',
+              difficulty: 'Fun',
+              stars: '⭐',
+            };
+            /* only the first six sparkle — beyond that it's noise nobody sees at once */
+            const sparkles = index < 6;
 
-              return (
+            return (
+              /* wrapper so the snow cap can sit on the card edge without being clipped */
+              <div key={mode.id} style={{ position: 'relative' }}>
                 <motion.button
-                  key={mode.id}
                   onClick={() => { playClick(); playSparkIntro(mode.id); onSelectMode(mode.id); }}
                   className={`bg-gradient-to-br ${style.gradient} rounded-3xl p-4 md:p-5 text-white border-4 border-white relative overflow-hidden`}
-                  style={{ boxShadow: `0 8px 0 ${style.shadow}, 0 12px 25px rgba(0,0,0,0.2)`, minHeight: 160 }}
+                  style={{ boxShadow: `0 8px 0 ${style.shadow}, 0 12px 25px rgba(0,0,0,0.2)`, minHeight: 160, width: '100%', height: '100%' }}
                   initial={{ y: 16, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   /* capped: the last card lands at ~0.25s no matter how many games you add */
@@ -383,90 +408,107 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                     <span className="text-xs md:text-sm text-white/90 font-semibold">{style.difficulty}</span>
                   </div>
                 </motion.button>
-              );
-            })}
-          </div>
-        </div>
 
-        {/* ---------------- below the fold ---------------- */}
-        {/* content-visibility lets the browser skip this work until it scrolls in */}
-        <div className="ks-lazy-section">
-          <div className="px-4 md:px-6 mb-4">
-            <h3 className="text-lg md:text-xl font-black text-gray-700 mb-3" style={{ fontFamily: FONT }}>
-              📊 Your Journey
-            </h3>
-            <div className="grid grid-cols-3 gap-3">
-              <motion.button
-                onClick={() => { playClick(); onOpenProgress(); }}
-                className="bg-gradient-to-br from-teal-400 to-cyan-500 rounded-2xl p-4 text-center border-4 border-white text-white"
-                style={{ boxShadow: '0 6px 0 #0F766E, 0 8px 20px rgba(0,0,0,0.15)' }}
-                whileTap={{ scale: 0.95, y: 4 }}
-              >
-                <span className="text-3xl block mb-1">📈</span>
-                <span className="text-xs md:text-sm font-black" style={{ fontFamily: FONT }}>Progress</span>
-              </motion.button>
-
-              <motion.button
-                onClick={() => { playClick(); onOpenAchievements(); }}
-                className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-4 text-center border-4 border-white text-white relative"
-                style={{ boxShadow: '0 6px 0 #C2410C, 0 8px 20px rgba(0,0,0,0.15)' }}
-                whileTap={{ scale: 0.95, y: 4 }}
-              >
-                <span className="text-3xl block mb-1">🏆</span>
-                <span className="text-xs md:text-sm font-black" style={{ fontFamily: FONT }}>Badges</span>
-                {progress.earnedBadges.length > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold border-2 border-white">
-                    {progress.earnedBadges.length}
-                  </span>
-                )}
-              </motion.button>
-
-              <motion.button
-                onClick={() => { playClick(); onOpenProfile(); }}
-                className="bg-gradient-to-br from-pink-400 to-rose-500 rounded-2xl p-4 text-center border-4 border-white text-white"
-                style={{ boxShadow: '0 6px 0 #BE185D, 0 8px 20px rgba(0,0,0,0.15)' }}
-                whileTap={{ scale: 0.95, y: 4 }}
-              >
-                <span className="text-3xl block mb-1">👤</span>
-                <span className="text-xs md:text-sm font-black" style={{ fontFamily: FONT }}>Profile</span>
-              </motion.button>
-            </div>
-          </div>
-
-          <div className="mx-4 md:mx-6 mb-4">
-            <div className="bg-white/80 rounded-2xl p-4 border-4 border-white">
-              <div className="grid grid-cols-4 gap-3 text-center" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                {[
-                  { v: progress.lessonsCompleted, label: 'Lessons', c: 'text-purple-600' },
-                  { v: progress.quizzesCompleted, label: 'Quizzes', c: 'text-green-600' },
-                  { v: progress.gamesPlayed, label: 'Games', c: 'text-blue-600' },
-                  { v: `${accuracy}%`, label: 'Accuracy', c: 'text-orange-600' },
-                ].map((s) => (
-                  <div key={s.label}>
-                    <p className={`text-2xl font-black ${s.c}`} style={{ fontFamily: FONT }}>{s.v}</p>
-                    <p className="text-xs text-gray-500 font-semibold">{s.label}</p>
-                  </div>
-                ))}
+                {winter && <SnowCap seed={index + 1} />}
               </div>
-            </div>
-          </div>
-
-          <div className="mx-4 md:mx-6 mb-4">
-            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-4 text-white border-4 border-white text-center">
-              <p className="text-sm md:text-base font-black ks-bob" style={{ fontFamily: FONT }}>
-                💡 Play &amp; Learn daily to keep your streak growing! 🔥
-              </p>
-              <p className="text-xs text-white/80 mt-1">New games are coming soon! ✨</p>
-            </div>
-          </div>
-                    <div className="mx-4 md:mx-6 mb-24 flex items-center justify-center gap-3">
-            <FeedbackButton />
-            <span className="font-mono text-[10px] text-gray-400">{buildId()}</span>
-          </div>
+            );
+          })}
         </div>
       </div>
-    </GameBackground>
+
+      {/* ---------------- below the fold ---------------- */}
+      {/* content-visibility lets the browser skip this work until it scrolls in */}
+      <div className="ks-lazy-section">
+        <div className="px-4 md:px-6 mb-4">
+          <h3 className="text-lg md:text-xl font-black text-gray-700 mb-3" style={{ fontFamily: FONT }}>
+            📊 Your Journey
+          </h3>
+          <div className="grid grid-cols-3 gap-3">
+            <motion.button
+              onClick={() => { playClick(); onOpenProgress(); }}
+              className="bg-gradient-to-br from-teal-400 to-cyan-500 rounded-2xl p-4 text-center border-4 border-white text-white"
+              style={{ boxShadow: '0 6px 0 #0F766E, 0 8px 20px rgba(0,0,0,0.15)' }}
+              whileTap={{ scale: 0.95, y: 4 }}
+            >
+              <span className="text-3xl block mb-1">📈</span>
+              <span className="text-xs md:text-sm font-black" style={{ fontFamily: FONT }}>Progress</span>
+            </motion.button>
+
+            <motion.button
+              onClick={() => { playClick(); onOpenAchievements(); }}
+              className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-4 text-center border-4 border-white text-white relative"
+              style={{ boxShadow: '0 6px 0 #C2410C, 0 8px 20px rgba(0,0,0,0.15)' }}
+              whileTap={{ scale: 0.95, y: 4 }}
+            >
+              <span className="text-3xl block mb-1">🏆</span>
+              <span className="text-xs md:text-sm font-black" style={{ fontFamily: FONT }}>Badges</span>
+              {progress.earnedBadges.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold border-2 border-white">
+                  {progress.earnedBadges.length}
+                </span>
+              )}
+            </motion.button>
+
+            <motion.button
+              onClick={() => { playClick(); onOpenProfile(); }}
+              className="bg-gradient-to-br from-pink-400 to-rose-500 rounded-2xl p-4 text-center border-4 border-white text-white"
+              style={{ boxShadow: '0 6px 0 #BE185D, 0 8px 20px rgba(0,0,0,0.15)' }}
+              whileTap={{ scale: 0.95, y: 4 }}
+            >
+              <span className="text-3xl block mb-1">👤</span>
+              <span className="text-xs md:text-sm font-black" style={{ fontFamily: FONT }}>Profile</span>
+            </motion.button>
+          </div>
+        </div>
+
+        <div className="mx-4 md:mx-6 mb-4">
+          <div className="bg-white/80 rounded-2xl p-4 border-4 border-white">
+            <div className="grid grid-cols-4 gap-3 text-center" style={{ fontVariantNumeric: 'tabular-nums' }}>
+              {[
+                { v: progress.lessonsCompleted, label: 'Lessons', c: 'text-purple-600' },
+                { v: progress.quizzesCompleted, label: 'Quizzes', c: 'text-green-600' },
+                { v: progress.gamesPlayed, label: 'Games', c: 'text-blue-600' },
+                { v: `${accuracy}%`, label: 'Accuracy', c: 'text-orange-600' },
+              ].map((s) => (
+                <div key={s.label}>
+                  <p className={`text-2xl font-black ${s.c}`} style={{ fontFamily: FONT }}>{s.v}</p>
+                  <p className="text-xs text-gray-500 font-semibold">{s.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mx-4 md:mx-6 mb-4">
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-4 text-white border-4 border-white text-center">
+            <p className="text-sm md:text-base font-black ks-bob" style={{ fontFamily: FONT }}>
+              💡 Play &amp; Learn daily to keep your streak growing! 🔥
+            </p>
+            <p className="text-xs text-white/80 mt-1">New games are coming soon! ✨</p>
+          </div>
+        </div>
+        <div className="mx-4 md:mx-6 mb-24 flex items-center justify-center gap-3">
+          <FeedbackButton />
+          <span className="font-mono text-[10px] text-gray-400">{buildId()}</span>
+        </div>
+      </div>
+
+      <WhatsNew existingUser={existingUser} />
+    </div>
   );
+
+  /* winter: own icy background + falling snow + snowy ground; otherwise the normal background */
+  if (winter) {
+    return (
+      <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', background: WINTER_BG }}>
+        {body}
+        <SnowFall count={18} />
+        <SnowDrift />
+      </div>
+    );
+  }
+
+  return <GameBackground variant="home">{body}</GameBackground>;
 };
 
 export default HomeScreen;

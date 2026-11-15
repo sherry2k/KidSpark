@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { GameBackground } from '../components/Background';
 import Navigation from '../components/Navigation';
 import PageArt from '../components/PageArt';
+import ItemIcon from '../components/mechanics/ItemIcon';
 import { GameProgress } from '../store/gameStore';
-import { COLORING_PAGES, PALETTE, ColoringPage } from '../data/coloringPages';
+import { COLORING_PAGES, WINTER_PAGE_IDS, PALETTE, ColoringPage } from '../data/coloringPages';
+import { isWinter } from '../components/WinterDecor';
 import { Stroke, saveKeepsake, getKeepsakes } from '../utils/keepsakes';
 import { buzz, speak, stopSpeaking, POP } from '../utils/kidJuice';
 import { playClick, playCorrect, playComplete } from '../utils/sounds';
@@ -25,6 +27,14 @@ import { playClick, playCorrect, playComplete } from '../utils/sounds';
  *    other. It costs almost nothing and feels like magic.
  * 5. The pages are SVG, not edge-detected emoji, so they render identically on
  *    every device and have real regions inside them.
+ * 6. TWO TABS on the picker: "Classic" (all the older pictures) and "Winter"
+ *    (the winter pictures, with NEW ribbons). The Winter tab opens first while
+ *    winter is on. Which picture belongs to which tab is decided by
+ *    WINTER_PAGE_IDS in data/coloringPages.ts.
+ * 7. THE EDITOR USES THE CREATIVE STUDIO LAYOUT: a slim action bar on top
+ *    (Undo, Start again, Save), one row of tools, the picture in the middle
+ *    taking all the free room, and a compact colour palette at the bottom
+ *    (the same small swatches as Creative Studio). Everything fits on one screen.
  */
 
 interface ColoringBookProps {
@@ -36,6 +46,18 @@ interface ColoringBookProps {
 const BRUSHES = [1.6, 3.2, 6, 10];
 const MAX_HISTORY = 40;
 
+/* remembers that the child has opened the Winter tab, so its NEW badge can go away */
+const WINTER_TAB_KEY = 'kidspark_winter_tab_seen';
+const readWinterTabSeen = () => {
+  try { return localStorage.getItem(WINTER_TAB_KEY) === '1'; } catch { return false; }
+};
+const writeWinterTabSeen = () => {
+  try { localStorage.setItem(WINTER_TAB_KEY, '1'); } catch { /* ignore */ }
+};
+
+const CLASSIC_PAGES = COLORING_PAGES.filter((p) => !WINTER_PAGE_IDS.has(p.id));
+const WINTER_PAGES = COLORING_PAGES.filter((p) => WINTER_PAGE_IDS.has(p.id));
+
 interface Snapshot {
   fills: Record<string, string>;
   strokes: Stroke[];
@@ -43,6 +65,8 @@ interface Snapshot {
 
 const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplete }) => {
   const [page, setPage] = useState<ColoringPage | null>(null);
+  const [tab, setTab] = useState<'classic' | 'winter'>(() => (isWinter() ? 'winter' : 'classic'));
+  const [winterTabSeen, setWinterTabSeen] = useState(readWinterTabSeen);
 
   const [fills, setFills] = useState<Record<string, string>>({});
   const [strokes, setStrokes] = useState<Stroke[]>([]);
@@ -59,9 +83,37 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
   const [showOff, setShowOff] = useState(false);
 
   const svgRef = useRef<SVGSVGElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const drawing = useRef(false);
 
+  const [box, setBox] = useState({ w: 0, h: 0 });
+  const [confirmClear, setConfirmClear] = useState(false);
+
   useEffect(() => () => stopSpeaking(), []);
+
+  /* the picture takes whatever room the middle of the screen has: measure it */
+  useEffect(() => {
+    if (!page) return;
+    const el = wrapRef.current;
+    if (!el) return;
+    const measure = () => setBox({ w: el.clientWidth, h: el.clientHeight });
+    measure();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    ro?.observe(el);
+    window.addEventListener('resize', measure);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, [page]);
+
+  /* opening the Winter tab (including when it opens by itself) clears its NEW badge */
+  useEffect(() => {
+    if (tab === 'winter' && !page && !winterTabSeen) {
+      writeWinterTabSeen();
+      setWinterTabSeen(true);
+    }
+  }, [tab, page, winterTabSeen]);
 
   /* ---------------- picker: show their own coloured versions ------- */
   const myVersions = useMemo(() => {
@@ -94,6 +146,7 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
     push();
     setFills({});
     setStrokes([]);
+    setConfirmClear(false);
     playClick();
     buzz('soft');
     speak('All clean! Start again.');
@@ -237,10 +290,65 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
     setPage(null);
   };
 
+  const switchTab = (t: 'classic' | 'winter') => {
+    if (t === tab) return;
+    playClick();
+    buzz('tick');
+    setTab(t);
+  };
+
   /* ================================================================ */
   /* PICKER                                                           */
   /* ================================================================ */
   if (!page) {
+    const pages = tab === 'winter' ? WINTER_PAGES : CLASSIC_PAGES;
+
+    /* one tab button; spacing is inline because the phone reset removes padding/margin classes */
+    const tabButton = (id: 'classic' | 'winter', label: string, showNew: boolean) => {
+      const on = tab === id;
+      return (
+        <button
+          key={id}
+          onClick={() => switchTab(id)}
+          aria-pressed={on}
+          style={{
+            position: 'relative',
+            flex: '1 1 0',
+            maxWidth: 170,
+            padding: '10px 8px',
+            borderRadius: 18,
+            border: '4px solid #fff',
+            cursor: 'pointer',
+            fontFamily: "'Bubblegum One', cursive",
+            fontWeight: 700,
+            fontSize: 16,
+            color: on ? '#fff' : '#6B5B95',
+            background: on
+              ? id === 'winter'
+                ? 'linear-gradient(135deg,#60A5FA,#8B5CF6)'
+                : 'linear-gradient(135deg,#8B5CF6,#EC4899)'
+              : 'rgba(255,255,255,.85)',
+            boxShadow: on ? '0 5px 0 rgba(76,29,149,.45)' : '0 4px 0 rgba(0,0,0,.10)',
+            transform: on ? 'translateY(0)' : 'translateY(2px)',
+          }}
+        >
+          {label}
+          {showNew && (
+            <span
+              style={{
+                position: 'absolute', top: -9, right: -6,
+                background: 'linear-gradient(90deg,#EF4444,#EC4899)', color: '#fff',
+                fontSize: 10, fontWeight: 800, letterSpacing: 0.5,
+                padding: '2px 7px', borderRadius: 10, border: '2px solid #fff',
+              }}
+            >
+              NEW
+            </span>
+          )}
+        </button>
+      );
+    };
+
     return (
       <GameBackground variant="game">
         <div className="h-full flex flex-col overflow-x-hidden">
@@ -260,9 +368,16 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
               Pick a picture to colour! 🖌️
             </motion.h2>
 
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-w-2xl mx-auto">
-              {COLORING_PAGES.map((p, i) => {
+            {/* two tabs: Classic / Winter */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 16, marginTop: 4 }}>
+              {tabButton('classic', '🎨 Classic', false)}
+              {tabButton('winter', '❄️ Winter', !winterTabSeen)}
+            </div>
+
+            <div key={tab} className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-w-2xl mx-auto">
+              {pages.map((p, i) => {
                 const mine = myVersions[p.id];
+                const isNew = WINTER_PAGE_IDS.has(p.id) && !mine;
 
                 return (
                   <motion.button
@@ -272,12 +387,26 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
                     style={{ boxShadow: '0 6px 0 rgba(139,92,246,0.35), 0 8px 18px rgba(0,0,0,0.08)' }}
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: i * 0.03, ...POP }}
+                    /* capped, so a long list never makes the last pictures wait */
+                    transition={{ delay: Math.min(i, 8) * 0.03, ...POP }}
                     whileTap={{ scale: 0.94, y: 3 }}
                   >
                     {mine && (
                       <span className="absolute top-1 right-1 text-sm bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
                         ✓
+                      </span>
+                    )}
+                    {/* NEW ribbon on the winter pictures until the child has coloured them */}
+                    {isNew && (
+                      <span
+                        style={{
+                          position: 'absolute', top: 2, left: 2, zIndex: 2, pointerEvents: 'none',
+                          background: 'linear-gradient(90deg,#EF4444,#EC4899)', color: '#fff',
+                          fontSize: 9, fontWeight: 800, letterSpacing: 0.4, lineHeight: 1.2,
+                          padding: '1px 5px', borderRadius: 8, border: '1.5px solid #fff',
+                        }}
+                      >
+                        NEW
                       </span>
                     )}
                     <div className="flex justify-center">
@@ -305,200 +434,295 @@ const ColoringBook: React.FC<ColoringBookProps> = ({ progress, onBack, onComplet
   }
 
   /* ================================================================ */
-  /* EDITOR                                                           */
+  /* EDITOR  (same layout as Creative Studio)                         */
+  /* Spacing is written as inline styles on purpose: the phone reset  */
+  /* in index.css removes Tailwind padding/margin classes on phones.  */
   /* ================================================================ */
-  const canvasSize = typeof window !== 'undefined' ? Math.min(window.innerWidth - 40, 360) : 320;
+  /* the square picture: as big as the middle area allows, never tiny, never huge */
+  const fallback = typeof window !== 'undefined' ? Math.min(window.innerWidth - 40, 320) : 320;
+  const canvasSize = box.w && box.h ? Math.min(560, Math.max(150, Math.min(box.w, box.h) - 8)) : fallback;
+
+  const TOOLS: { id: 'fill' | 'brush' | 'eraser'; icon: string; label: string; color: string; on: boolean }[] = [
+    { id: 'fill', icon: '🪣', label: 'Fill', color: '#2CB5AF', on: tool === 'fill' && !eraser },
+    { id: 'brush', icon: '🖌️', label: 'Draw', color: '#7B2CBF', on: tool === 'brush' && !eraser },
+    { id: 'eraser', icon: '🧽', label: 'Rub out', color: '#F0522B', on: eraser },
+  ];
+  const canUndo = past.length > 0;
+  const canClear = filledCount > 0 || strokes.length > 0;
+  const toolCount = TOOLS.length + (page.symmetric ? 1 : 0) + 1; // + Mirror (if any) + Clear
+
+  const SIDE = 12; // the same side gap for every bar and for the picture
+  const tileBase: React.CSSProperties = { padding: '6px 0', minWidth: 0 };
+  const smallBtn: React.CSSProperties = { padding: '8px 12px' };
 
   return (
     <GameBackground variant="game">
-      <div className="h-full flex flex-col overflow-x-hidden">
+      <div className="h-full flex flex-col overflow-x-hidden overflow-y-auto">
         <Navigation title={`🎨 ${page.name}`} onBack={leavePage} stars={progress.stars} />
 
-        <div className="flex-1 overflow-y-auto px-3 pb-4">
-          <div className="max-w-md mx-auto">
-            {/* progress */}
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="bg-white/95 border-4 border-white rounded-full px-4 py-1.5 flex items-center gap-2">
-                <span className="text-sm font-bold text-gray-600 tabular-nums" style={{ fontFamily: "'Bubblegum One', cursive" }}>
-                  {filledCount} / {total} coloured
-                </span>
-              </div>
-              {page.symmetric && (
-                <motion.button
-                  onClick={() => { setMirror((m) => !m); playClick(); buzz('tick'); speak(mirror ? 'Mirror off' : 'Mirror on!'); }}
-                  className={`rounded-full px-3 py-1.5 text-xs font-bold border-4 border-white ${
-                    mirror ? 'bg-purple-500 text-white' : 'bg-white text-gray-500'
-                  }`}
-                  style={{ fontFamily: "'Bubblegum One', cursive" }}
-                  whileTap={{ scale: 0.92 }}
-                >
-                  🪞 Mirror {mirror ? 'on' : 'off'}
-                </motion.button>
-              )}
-            </div>
-
-            {/* canvas */}
-            <div
-              className="bg-white rounded-3xl border-4 border-white mx-auto flex items-center justify-center relative"
-              style={{ boxShadow: '0 8px 0 rgba(0,0,0,.10)', width: canvasSize + 16, height: canvasSize + 16 }}
+        {/* action bar */}
+        <div className="shrink-0" style={{ padding: `0 ${SIDE}px` }}>
+          <div
+            className="bg-white/95 rounded-2xl border-4 border-white flex items-center gap-2"
+            style={{ boxShadow: '0 4px 0 rgba(0,0,0,.10)', padding: 8 }}
+          >
+            <motion.button
+              onClick={undo}
+              disabled={!canUndo}
+              className="rounded-xl font-bold text-white disabled:opacity-35 flex items-center gap-1"
+              style={{ ...smallBtn, background: 'linear-gradient(135deg,#38BDF8,#0EA5E9)', boxShadow: '0 4px 0 #0369A1', fontFamily: "'Bubblegum One', cursive" }}
+              whileTap={{ scale: 0.93, y: 2 }}
             >
-              <PageArt
-                page={page}
-                fills={fills}
-                strokes={strokes}
-                size={canvasSize}
-                svgRef={svgRef}
-                onRegionTap={tool === 'fill' ? tapRegion : undefined}
-                brushHandlers={
-                  tool === 'brush'
-                    ? { onPointerDown: brushDown, onPointerMove: brushMove, onPointerUp: brushUp }
-                    : undefined
-                }
-              />
+              <span className="text-lg">↩️</span>
+              <span className="text-sm">Undo</span>
+            </motion.button>
 
-              <AnimatePresence>
-                {complete && (
-                  <motion.div
-                    className="absolute -top-3 -right-3 text-4xl pointer-events-none"
-                    initial={{ scale: 0, rotate: -40 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={POP}
-                  >
-                    🌟
-                  </motion.div>
-                )}
-              </AnimatePresence>
+            {/* how much is coloured */}
+            <div className="flex-1 text-center">
+              <span className="text-sm font-bold text-gray-600 tabular-nums" style={{ fontFamily: "'Bubblegum One', cursive" }}>
+                {filledCount}/{total} 🎨
+              </span>
             </div>
 
-            {/* save */}
-            <div className="flex gap-2 justify-center mt-3">
+            <motion.button
+              onClick={save}
+              disabled={filledCount === 0}
+              className="rounded-xl font-bold text-white disabled:opacity-40 flex items-center gap-1"
+              style={{
+                ...smallBtn,
+                background: saved ? 'linear-gradient(135deg,#22C55E,#0E9F6E)' : 'linear-gradient(135deg,#8B5CF6,#6366F1)',
+                boxShadow: saved ? '0 4px 0 #047857' : '0 4px 0 #4C1D95',
+                fontFamily: "'Bubblegum One', cursive",
+              }}
+              whileTap={{ scale: 0.93, y: 2 }}
+              animate={complete && !saved ? { scale: [1, 1.06, 1] } : {}}
+              transition={{ duration: 1.2, repeat: complete && !saved ? Infinity : 0 }}
+            >
+              <span className="text-lg">{saved ? '✅' : '💾'}</span>
+              <span className="text-sm">{saved ? 'Saved' : 'Save'}</span>
+            </motion.button>
+
+            {saved && (
               <motion.button
-                onClick={save}
-                disabled={filledCount === 0}
-                className="rounded-2xl px-6 py-3.5 text-white font-bold border-4 border-white disabled:opacity-40"
-                style={{
-                  background: saved
-                    ? 'linear-gradient(135deg,#22C55E,#0E9F6E)'
-                    : 'linear-gradient(135deg,#8B5CF6,#6366F1)',
-                  boxShadow: saved ? '0 5px 0 #047857' : '0 5px 0 #4C1D95',
-                  fontFamily: "'Bubblegum One', cursive",
-                }}
-                whileTap={{ scale: 0.95, y: 3 }}
-                animate={complete && !saved ? { scale: [1, 1.06, 1] } : {}}
-                transition={{ duration: 1.2, repeat: complete && !saved ? Infinity : 0 }}
+                onClick={() => { playClick(); setShowOff(true); }}
+                className="rounded-xl font-bold text-white flex items-center gap-1"
+                style={{ ...smallBtn, background: 'linear-gradient(135deg,#FB923C,#EA580C)', boxShadow: '0 4px 0 #C2410C', fontFamily: "'Bubblegum One', cursive" }}
+                whileTap={{ scale: 0.93, y: 2 }}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                aria-label="Show a grown-up"
               >
-                {saved ? '✅ Saved!' : '💾 Save it'}
+                <span className="text-lg">👨‍👩‍👧</span>
               </motion.button>
+            )}
+          </div>
+        </div>
 
-              {saved && (
-                <motion.button
-                  onClick={() => { playClick(); setShowOff(true); }}
-                  className="rounded-2xl px-5 py-3.5 bg-white text-gray-700 font-bold border-4 border-white"
-                  style={{ boxShadow: '0 5px 0 rgba(0,0,0,.12)', fontFamily: "'Bubblegum One', cursive" }}
-                  whileTap={{ scale: 0.95, y: 3 }}
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                >
-                  👨‍👩‍👧 Show!
-                </motion.button>
-              )}
-            </div>
+        {/* tools: Fill, Draw, Rub out, Mirror (symmetrical pictures only), Clear */}
+        <div className="shrink-0" style={{ padding: `0 ${SIDE}px`, marginTop: 8 }}>
+          <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${toolCount}, minmax(0, 1fr))` }}>
+            {TOOLS.map((t) => (
+              <motion.button
+                key={t.id}
+                onClick={() => {
+                  playClick();
+                  buzz('tick');
+                  if (t.id === 'eraser') setEraser((e) => !e);
+                  else {
+                    setTool(t.id);
+                    setEraser(false);
+                  }
+                }}
+                className="rounded-2xl flex flex-col items-center border-4 border-white"
+                style={{
+                  ...tileBase,
+                  background: t.on ? t.color : 'rgba(255,255,255,.95)',
+                  color: t.on ? '#fff' : '#5B6079',
+                  boxShadow: t.on ? '0 4px 0 rgba(0,0,0,.25)' : '0 3px 0 rgba(0,0,0,.10)',
+                }}
+                whileTap={{ scale: 0.92, y: 2 }}
+              >
+                <ItemIcon icon={t.icon} size={20} label={t.label} />
+                <span className="text-[9px] font-bold mt-0.5 leading-none" style={{ fontFamily: "'Bubblegum One', cursive" }}>
+                  {t.label}
+                </span>
+              </motion.button>
+            ))}
 
-            {/* toolbar */}
-            <div className="bg-white/95 rounded-3xl p-3 mt-3 border-4 border-white" style={{ boxShadow: '0 6px 0 rgba(0,0,0,.10)' }}>
-              {/* tools */}
-              <div className="grid grid-cols-4 gap-2 mb-3">
-                {[
-                  { id: 'fill', label: 'Fill', icon: '🪣', on: tool === 'fill' && !eraser },
-                  { id: 'brush', label: 'Draw', icon: '🖌️', on: tool === 'brush' && !eraser },
-                  { id: 'eraser', label: 'Rub out', icon: '🧽', on: eraser },
-                  { id: 'undo', label: 'Undo', icon: '↩️', on: false },
-                ].map((b) => (
+            {page.symmetric && (
+              <motion.button
+                onClick={() => { setMirror((m) => !m); playClick(); buzz('tick'); speak(mirror ? 'Mirror off' : 'Mirror on!'); }}
+                className="rounded-2xl flex flex-col items-center border-4 border-white"
+                style={{
+                  ...tileBase,
+                  background: mirror ? '#8B5CF6' : 'rgba(255,255,255,.95)',
+                  color: mirror ? '#fff' : '#5B6079',
+                  boxShadow: mirror ? '0 4px 0 rgba(0,0,0,.25)' : '0 3px 0 rgba(0,0,0,.10)',
+                }}
+                whileTap={{ scale: 0.92, y: 2 }}
+                aria-pressed={mirror}
+              >
+                <ItemIcon icon="🪞" size={20} label="Mirror" />
+                <span className="text-[9px] font-bold mt-0.5 leading-none" style={{ fontFamily: "'Bubblegum One', cursive" }}>
+                  Mirror {mirror ? 'on' : 'off'}
+                </span>
+              </motion.button>
+            )}
+
+            {/* clear: same look as the other tools, asks before wiping */}
+            <motion.button
+              onClick={() => { if (!canClear) return; playClick(); setConfirmClear(true); }}
+              disabled={!canClear}
+              className="rounded-2xl flex flex-col items-center border-4 border-white disabled:opacity-40"
+              style={{
+                ...tileBase,
+                background: 'rgba(255,255,255,.95)',
+                color: '#5B6079',
+                boxShadow: '0 3px 0 rgba(0,0,0,.10)',
+              }}
+              whileTap={{ scale: 0.92, y: 2 }}
+              aria-label="Start this picture again"
+            >
+              <ItemIcon icon="🗑️" size={20} label="Clear" />
+              <span className="text-[9px] font-bold mt-0.5 leading-none" style={{ fontFamily: "'Bubblegum One', cursive" }}>
+                Clear
+              </span>
+            </motion.button>
+          </div>
+        </div>
+
+        {/* the picture — in the middle, as big as the free room allows, with the same gap all round */}
+        <div
+          ref={wrapRef}
+          className="flex-1 bg-white rounded-3xl border-4 border-white relative overflow-hidden flex items-center justify-center"
+          style={{ boxShadow: '0 6px 0 rgba(0,0,0,.10)', minHeight: 240, margin: `10px ${SIDE}px` }}
+        >
+          <PageArt
+            page={page}
+            fills={fills}
+            strokes={strokes}
+            size={canvasSize}
+            svgRef={svgRef}
+            onRegionTap={tool === 'fill' ? tapRegion : undefined}
+            brushHandlers={
+              tool === 'brush'
+                ? { onPointerDown: brushDown, onPointerMove: brushMove, onPointerUp: brushUp }
+                : undefined
+            }
+          />
+
+          <AnimatePresence>
+            {complete && (
+              <motion.div
+                className="absolute top-2 right-2 text-4xl pointer-events-none"
+                initial={{ scale: 0, rotate: -40 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={POP}
+              >
+                🌟
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* bottom panel: brush sizes (Draw only) + the small colour swatches, like Creative Studio */}
+        <div className="shrink-0" style={{ padding: `0 ${SIDE}px 8px` }}>
+          <div className="bg-white/95 rounded-3xl border-4 border-white" style={{ boxShadow: '0 6px 0 rgba(0,0,0,.10)', padding: 8 }}>
+            {tool === 'brush' && (
+              <div className="flex items-center justify-center gap-2" style={{ marginBottom: 6 }}>
+                {BRUSHES.map((w) => (
                   <motion.button
-                    key={b.id}
-                    onClick={() => {
-                      if (b.id === 'undo') return undo();
-                      playClick();
-                      buzz('tick');
-                      if (b.id === 'eraser') setEraser((e) => !e);
-                      else {
-                        setTool(b.id as 'fill' | 'brush');
-                        setEraser(false);
-                      }
-                    }}
-                    disabled={b.id === 'undo' && past.length === 0}
-                    className={`rounded-2xl py-2.5 flex flex-col items-center border-4 disabled:opacity-35 ${
-                      b.on ? 'bg-purple-500 text-white border-white' : 'bg-gray-50 text-gray-600 border-white'
+                    key={w}
+                    onClick={() => { setBrushW(w); playClick(); buzz('tick'); }}
+                    className={`rounded-2xl flex items-center justify-center border-4 ${
+                      brushW === w ? 'bg-purple-100 border-purple-400' : 'bg-gray-50 border-white'
                     }`}
-                    style={{ boxShadow: '0 4px 0 rgba(0,0,0,.12)' }}
-                    whileTap={{ scale: 0.93, y: 2 }}
+                    style={{ width: 54, height: 38, boxShadow: '0 3px 0 rgba(0,0,0,.10)' }}
+                    whileTap={{ scale: 0.92 }}
+                    aria-label={`brush size ${w}`}
                   >
-                    <span className="text-xl">{b.icon}</span>
-                    <span className="text-[10px] font-bold mt-0.5" style={{ fontFamily: "'Bubblegum One', cursive" }}>
-                      {b.label}
-                    </span>
+                    <span
+                      className="rounded-full block"
+                      style={{ width: Math.min(w * 2.4, 26), height: Math.min(w * 2.4, 26), background: eraser ? '#C7CCDA' : color, border: '1px solid rgba(0,0,0,.18)' }}
+                    />
                   </motion.button>
                 ))}
               </div>
+            )}
 
-              {/* colours — two rows, bigger targets, white has a ring */}
-              <div className="grid grid-cols-7 gap-1.5 mb-3">
-                {PALETTE.map((s) => (
-                  <motion.button
-                    key={s.color}
-                    onClick={() => { setColor(s.color); setEraser(false); playClick(); buzz('tick'); speak(s.name); }}
-                    className="rounded-full aspect-square"
-                    style={{
-                      background: s.color,
-                      border: color === s.color && !eraser ? '3px solid #FFFFFF' : '3px solid #D8DCE8',
-                      boxShadow: color === s.color && !eraser
-                        ? '0 0 0 3px #1B1B1F, 0 3px 0 rgba(0,0,0,.12)'
-                        : '0 3px 0 rgba(0,0,0,.12)',
-                    }}
-                    whileTap={{ scale: 0.85 }}
-                    aria-label={s.name}
-                  />
-                ))}
-              </div>
-
-              {/* brush sizes — dots only, no letters (half your users can't read) */}
-              {tool === 'brush' && (
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  {BRUSHES.map((w) => (
-                    <motion.button
-                      key={w}
-                      onClick={() => { setBrushW(w); playClick(); }}
-                      className={`rounded-2xl flex items-center justify-center border-4 ${
-                        brushW === w ? 'bg-purple-100 border-purple-400' : 'bg-gray-50 border-white'
-                      }`}
-                      style={{ width: 52, height: 44, boxShadow: '0 4px 0 rgba(0,0,0,.10)' }}
-                      whileTap={{ scale: 0.92 }}
-                      aria-label={`brush size ${w}`}
-                    >
-                      <span
-                        className="rounded-full block"
-                        style={{ width: w * 2.4, height: w * 2.4, background: eraser ? '#9AA0A6' : color, border: '1px solid rgba(0,0,0,.15)' }}
-                      />
-                    </motion.button>
-                  ))}
-                </div>
-              )}
-
-              {/* clear — small, tucked away, and confirmed */}
-              <button
-                onClick={clearAll}
-                className="w-full rounded-2xl py-2 text-xs font-bold text-red-500 bg-red-50 border-2 border-red-200"
-                style={{ fontFamily: "'Bubblegum One', cursive" }}
-              >
-                🗑️ Start this picture again
-              </button>
+            {/* colours: same small swatches as Creative Studio (seven across) */}
+            <div className="grid grid-cols-7 gap-1">
+              {PALETTE.map((s) => (
+                <motion.button
+                  key={s.color}
+                  onClick={() => { setColor(s.color); setEraser(false); playClick(); buzz('tick'); speak(s.name); }}
+                  className="rounded-xl w-full"
+                  style={{
+                    height: 30,
+                    background: s.color,
+                    border: color === s.color && !eraser ? '2px solid #FFFFFF' : '2px solid #D8DCE8',
+                    boxShadow: color === s.color && !eraser
+                      ? '0 0 0 2px #1B1B1F, 0 2px 0 rgba(0,0,0,.12)'
+                      : '0 2px 0 rgba(0,0,0,.12)',
+                  }}
+                  whileTap={{ scale: 0.88 }}
+                  aria-label={s.name}
+                />
+              ))}
             </div>
-
-            <p className="text-center text-xs text-gray-500 font-semibold mt-3">
-              {tool === 'fill' ? '👆 Tap a part to fill it with colour' : '👆 Draw — it stays inside the lines!'}
-            </p>
           </div>
+
+          <p className="text-center text-[11px] leading-tight text-gray-500 font-semibold" style={{ marginTop: 4 }}>
+            {eraser
+              ? '👆 Tap a part to take its colour off'
+              : tool === 'fill'
+              ? '👆 Tap a part to fill it with colour'
+              : '👆 Draw — it stays inside the lines!'}
+          </p>
         </div>
+
+        {/* in-app confirm — browser confirm() is blocked in some webviews */}
+        <AnimatePresence>
+          {confirmClear && (
+            <motion.div
+              className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setConfirmClear(false)}
+            >
+              <motion.div
+                className="bg-white rounded-3xl p-6 text-center border-4 border-white max-w-xs w-full"
+                initial={{ scale: 0.6 }}
+                animate={{ scale: 1 }}
+                transition={POP}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              >
+                <p className="text-5xl mb-2">🗑️</p>
+                <p className="font-bold text-gray-800 text-lg" style={{ fontFamily: "'Bubblegum One', cursive" }}>
+                  Start this picture again?
+                </p>
+                <p className="text-sm text-gray-500 mt-1">All the colours will go.</p>
+                <div className="flex gap-2 mt-5">
+                  <button
+                    onClick={() => { playClick(); setConfirmClear(false); }}
+                    className="flex-1 rounded-2xl py-3 bg-gray-100 text-gray-700 font-bold border-4 border-white"
+                    style={{ boxShadow: '0 4px 0 rgba(0,0,0,.12)', fontFamily: "'Bubblegum One', cursive" }}
+                  >
+                    Keep it
+                  </button>
+                  <button
+                    onClick={clearAll}
+                    className="flex-1 rounded-2xl py-3 text-white font-bold border-4 border-white"
+                    style={{ background: 'linear-gradient(135deg,#F87171,#DC2626)', boxShadow: '0 4px 0 #991B1B', fontFamily: "'Bubblegum One', cursive" }}
+                  >
+                    Start again
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* show a grown-up */}
         <AnimatePresence>
