@@ -2,6 +2,7 @@
 // NEW LEARN CATEGORIES (batch 1)
 // Days, Months, Seasons, Opposites, Feelings, Weather, Clothes,
 // Sea Animals, Insects, Food & Drinks
+// + Winter (shown only while the winter theme is on)
 // ============================================================
 //
 // Same shape as the other Learn data in gameData.ts (LearnItem).
@@ -9,6 +10,7 @@
 // Android phones. Where there is no good picture, the item is left out.
 
 import type { LearnItem, LearnCategory } from './gameData';
+import { isWinter } from '../components/WinterDecor';
 
 /** A Learn category that can be flagged NEW on the Learn screen. */
 export type NewableLearnCategory = LearnCategory & { isNew?: boolean };
@@ -176,8 +178,28 @@ export const foodData: LearnItem[] = make('food', [
   ['Tea', '🍵', 'Tea is a warm drink.'],
 ]);
 
+// ---------- Winter (only shown while the winter theme is on: 15 Nov - 15 Feb, or ?winter=1) ----------
+export const winterData: LearnItem[] = make('winter', [
+  ['Snowflake', '❄️', 'Every snowflake has six sides!'],
+  ['Snowman', '⛄', 'We roll big snowballs to build a snowman!'],
+  ['Snow Cloud', '🌨️', 'Snow falls from very cold clouds.'],
+  ['Snowy Mountain', '🏔️', 'It is so cold on top of tall mountains that snow stays there!'],
+  ['Sled', '🛷', 'A sled slides down snowy hills!'],
+  ['Skis', '🎿', 'Skis help people glide over the snow!'],
+  ['Penguin', '🐧', 'Penguins huddle together to stay warm!'],
+  ['Hot Cocoa', '☕', 'Hot cocoa is a warm, yummy drink for cold days!'],
+  ['Mittens', '🧤', 'Mittens keep all our fingers warm together!'],
+  ['Winter Coat', '🧥', 'A warm coat keeps the cold outside!'],
+  ['Snow Boots', '👢', 'Snow boots keep our feet dry and warm!'],
+  ['Warm Scarf', '🧣', 'A scarf wraps around our neck to keep us cosy!'],
+]);
+
 // ---------- Category cards (match the shape of learnCategories in gameData.ts) ----------
 export const extraLearnCategories: LearnCategory[] = [
+  // Winter comes first while the winter theme is on; outside winter it is not in the list at all.
+  ...(isWinter()
+    ? [{ id: 'winter', name: 'Winter', emoji: '⛄', color: '#38bdf8', gradient: 'from-sky-400 to-indigo-500', items: winterData }]
+    : []),
   { id: 'days', name: 'Days', emoji: '📅', color: '#6366f1', gradient: 'from-indigo-400 to-blue-500', items: daysData },
   { id: 'months', name: 'Months', emoji: '🗓️', color: '#ec4899', gradient: 'from-pink-400 to-rose-500', items: monthsData },
   { id: 'seasons', name: 'Seasons', emoji: '🍁', color: '#f97316', gradient: 'from-orange-400 to-amber-500', items: seasonsData },
