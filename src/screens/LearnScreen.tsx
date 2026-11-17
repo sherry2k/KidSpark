@@ -35,6 +35,7 @@ const CATEGORY_STYLES: Record<string, { gradient: string; shadow: string }> = {
   'sea': { gradient: 'from-cyan-500 to-blue-600', shadow: '#0E7490' },
   'insects': { gradient: 'from-lime-500 to-green-600', shadow: '#3F6212' },
   'food': { gradient: 'from-red-500 to-orange-500', shadow: '#B91C1C' },
+  'winter': { gradient: 'from-sky-400 to-indigo-500', shadow: '#3730A3' },
 };
 
 /* ---- which NEW categories this child has already opened (per device) ---- */
