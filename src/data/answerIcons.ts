@@ -286,6 +286,24 @@ add('tea', { icon: '🍵' });
 add('water', { icon: '💧' });
 add('honey', { icon: '🍯' });
 
+/* ================================================================== */
+/* ADDED IN 1.4 — winter quiz questions.                               */
+/* Every emoji is Unicode 11 or older, like the rest of this file.     */
+/* ================================================================== */
+add('snowman', { icon: '⛄' });
+add('snowflake|snowflakes', { icon: '❄️' });
+add('sled|sledge|toboggan', { icon: '🛷' });
+add('skis|ski', { icon: '🎿' });
+add('snowboard', { icon: '🏂' });
+add('ice skates|skates', { icon: '⛸️' });
+add('hot cocoa|cocoa|hot chocolate', { icon: '☕' });
+add('soup', { icon: '🍲' });
+add('sandals|sandal', { icon: '👡' });
+add('mittens|mitten', { icon: '🧤' });
+add('snowy mountain|mountain', { icon: '🏔️' });
+add('snow cloud', { icon: '🌨️' });
+add('fire|campfire', { icon: '🔥' });
+
 const NUMBER_WORDS: Record<string, string> = {
   zero: '0', one: '1', two: '2', three: '3', four: '4', five: '5',
   six: '6', seven: '7', eight: '8', nine: '9', ten: '10',
@@ -351,6 +369,8 @@ export const CATEGORY_LABEL: Record<string, { label: string; icon: string }> = {
   feelings: { label: 'Feelings', icon: '😊' },
   opposites: { label: 'Opposites', icon: '↔️' },
   time: { label: 'Days & seasons', icon: '📅' },
+  // added in 1.4
+  winter: { label: 'Winter', icon: '⛄' },
 };
 
 export const categoryOf = (c?: string) =>

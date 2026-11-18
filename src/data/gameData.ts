@@ -2,6 +2,8 @@
 // GAME DATA - All content for the educational game
 // ============================================================
 
+import { winterQuizQuestions } from './winterQuiz';
+
 export interface LearnItem {
   id: string;
   name: string;
@@ -381,6 +383,10 @@ export const quizQuestions: QuizQuestion[] = [
   { question: 'What sound does a cow make?', emoji: '🐄', options: ['Woof', 'Neigh', 'Moo', 'Baa'], correct: 2, category: 'sounds' },
   { question: 'What sound does a lion make?', emoji: '🦁', options: ['Meow', 'Bark', 'Roar', 'Hiss'], correct: 2, category: 'sounds' },
 ];
+
+// Winter questions are added only while the winter theme is on
+// (winterQuizQuestions is an empty list the rest of the year).
+quizQuestions.push(...winterQuizQuestions);
 
 
 // MEMORY GAME SETS
