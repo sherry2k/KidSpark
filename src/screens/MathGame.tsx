@@ -66,13 +66,15 @@ interface ExtraGame {
   diff: number;
   grad: string;
   shadow: string;
+  /** shows the red NEW ribbon — set to false after a few weeks */
+  isNew?: boolean;
 }
 
 const EXTRA_GAMES: ExtraGame[] = [
   { id: 'missing', icon: '🔢', title: 'Missing Numbers', sub: 'Find the missing number', diff: 2, grad: 'from-emerald-400 to-teal-500', shadow: '#0F766E' },
   { id: 'skip', icon: '🐸', title: 'Skip Counting', sub: 'Count by 2s, 5s, 10s', diff: 2, grad: 'from-lime-400 to-green-500', shadow: '#15803D' },
   { id: 'bonds', icon: '🤝', title: 'Number Bonds', sub: 'Pairs that make 10', diff: 2, grad: 'from-pink-400 to-rose-500', shadow: '#BE123C' },
-  { id: 'clock', icon: '🕐', title: 'What time is it?', sub: 'Read the clock!', diff: 1, grad: 'from-cyan-400 to-sky-600', shadow: '#0369A1' },
+  { id: 'clock', icon: '🕐', title: 'What time is it?', sub: 'Read the clock!', diff: 1, grad: 'from-cyan-400 to-sky-600', shadow: '#0369A1', isNew: true },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -425,13 +427,21 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
                   <motion.button
                     key={g.id}
                     onClick={() => { playClick(); buzz('tick'); setExtraOpen(g.id); }}
-                    className={`rounded-3xl p-4 text-white border-4 border-white bg-gradient-to-br ${g.grad}`}
+                    className={`relative overflow-hidden rounded-3xl p-4 text-white border-4 border-white bg-gradient-to-br ${g.grad}`}
                     style={{ boxShadow: `0 8px 0 ${g.shadow}, 0 12px 22px rgba(0,0,0,.18)`, minHeight: 150 }}
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: n * 0.06, ...POP }}
                     whileTap={{ scale: 0.94, y: 4 }}
                   >
+                    {g.isNew && (
+                      <div
+                        className="absolute text-center text-white font-bold bg-gradient-to-r from-red-500 to-pink-500 shadow-md"
+                        style={{ top: 14, right: -30, width: 100, transform: 'rotate(40deg)', fontSize: 13, letterSpacing: '1px', padding: '2px 0', borderTop: '2px solid #fff', borderBottom: '2px solid #fff' }}
+                      >
+                        NEW
+                      </div>
+                    )}
                     <motion.div
                       className="flex justify-center mb-2"
                       animate={{ y: [0, -5, 0] }}
