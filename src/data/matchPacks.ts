@@ -1,5 +1,5 @@
 /**
- * matchPacks.ts — Match, as eight sorting games instead of one.
+ * matchPacks.ts — Match, as seven sorting games instead of one.
  *
  * The old Match had exactly one set of items (fruit / vegetable / animal /
  * vehicle), and "Again" didn't even reshuffle them, so the second play was
@@ -7,6 +7,9 @@
  *
  * Bin count doubles as the difficulty dial: two bins for the youngest, four
  * for the oldest, no separate settings needed.
+ *
+ * EMOJI RULE: every emoji here is Unicode 11 or older, so it shows on older
+ * Android phones too (newer ones like 🫐 🪙 🪟 🪥 🩹 🧊 show as empty boxes there).
  */
 
 export interface Bin {
@@ -106,32 +109,33 @@ export const MATCH_PACKS: MatchPack[] = [
       { icon: '🐜', name: 'an ant', bin: 'small' },
       { icon: '🐞', name: 'a ladybird', bin: 'small' },
       { icon: '🔑', name: 'a key', bin: 'small' },
-      { icon: '🫐', name: 'a blueberry', bin: 'small' },
+      { icon: '🍒', name: 'cherries', bin: 'small' },
       { icon: '🐁', name: 'a mouse', bin: 'small' },
     ],
   },
 
+  /* NEW — replaces "Hot or Cold?" (kept the 2-bin, easiest level) */
   {
-    id: 'hotcold',
-    title: 'Hot or Cold?',
-    question: 'Is it hot, or is it cold?',
-    icon: '🌡️',
-    learned: 'Hot and cold · everyday safety · opposites',
+    id: 'sinkfloat',
+    title: 'Sink or Float?',
+    question: 'Does it sink, or does it float?',
+    icon: '🌊',
+    learned: 'Sinking and floating · predicting · early science',
     bins: [
-      { id: 'hot', label: 'Hot', icon: '🔥', color: '#F0522B' },
-      { id: 'cold', label: 'Cold', icon: '❄️', color: '#2CB5AF' },
+      { id: 'float', label: 'Floats', icon: '🌊', color: '#2CB5AF' },
+      { id: 'sink', label: 'Sinks', icon: '⬇️', color: '#4C4A8F' },
     ],
     items: [
-      { icon: '🔥', name: 'a fire', bin: 'hot' },
-      { icon: '☕', name: 'a hot drink', bin: 'hot' },
-      { icon: '🌋', name: 'a volcano', bin: 'hot' },
-      { icon: '🍲', name: 'hot soup', bin: 'hot' },
-      { icon: '🏜️', name: 'the desert', bin: 'hot' },
-      { icon: '❄️', name: 'a snowflake', bin: 'cold' },
-      { icon: '🍦', name: 'ice cream', bin: 'cold' },
-      { icon: '⛄', name: 'a snowman', bin: 'cold' },
-      { icon: '🧊', name: 'an ice cube', bin: 'cold' },
-      { icon: '🐧', name: 'a penguin', bin: 'cold' },
+      { icon: '🦆', name: 'a duck', bin: 'float' },
+      { icon: '🛶', name: 'a canoe', bin: 'float' },
+      { icon: '🚢', name: 'a ship', bin: 'float' },
+      { icon: '🍃', name: 'a leaf', bin: 'float' },
+      { icon: '🏀', name: 'a ball', bin: 'float' },
+      { icon: '🔑', name: 'a key', bin: 'sink' },
+      { icon: '⚓', name: 'an anchor', bin: 'sink' },
+      { icon: '🔨', name: 'a hammer', bin: 'sink' },
+      { icon: '🥄', name: 'a spoon', bin: 'sink' },
+      { icon: '🧲', name: 'a magnet', bin: 'sink' },
     ],
   },
 
@@ -183,62 +187,66 @@ export const MATCH_PACKS: MatchPack[] = [
       { icon: '🥬', name: 'old lettuce', bin: 'food' },
       { icon: '🍞', name: 'stale bread', bin: 'food' },
       { icon: '🧦', name: 'an odd sock', bin: 'bin' },
-      { icon: '🪥', name: 'an old toothbrush', bin: 'bin' },
+      { icon: '🧻', name: 'a used tissue', bin: 'bin' },
       { icon: '🎈', name: 'a popped balloon', bin: 'bin' },
-      { icon: '🩹', name: 'a used plaster', bin: 'bin' },
+      { icon: '🖍️', name: 'a broken crayon', bin: 'bin' },
     ],
   },
 
+  /* NEW — replaces "Shape Sort" (kept the 3-bin, middle level) */
   {
-    id: 'colours',
-    title: 'Colour Sort',
-    question: 'What colour is it?',
-    icon: '🎨',
-    learned: 'Colour names · sorting by one property · looking closely',
+    id: 'rooms',
+    title: 'Rooms at Home',
+    question: 'Which room is it for?',
+    icon: '🏠',
+    learned: 'Rooms of the house · what things are used for · everyday vocabulary',
     bins: [
-      { id: 'red', label: 'Red', icon: '🔴', color: '#E5383B' },
-      { id: 'yellow', label: 'Yellow', icon: '🟡', color: '#F0A017' },
-      { id: 'green', label: 'Green', icon: '🟢', color: '#57CC5B' },
-      { id: 'blue', label: 'Blue', icon: '🔵', color: '#2C7BE5' },
+      { id: 'kitchen', label: 'Kitchen', icon: '🍳', color: '#F0A017' },
+      { id: 'bathroom', label: 'Bathroom', icon: '🛁', color: '#2C7BE5' },
+      { id: 'bedroom', label: 'Bedroom', icon: '🛏️', color: '#7B2CBF' },
     ],
     items: [
-      { icon: '🍓', name: 'a strawberry', bin: 'red' },
-      { icon: '🌹', name: 'a rose', bin: 'red' },
-      { icon: '🍒', name: 'cherries', bin: 'red' },
-      { icon: '🍌', name: 'a banana', bin: 'yellow' },
-      { icon: '🌻', name: 'a sunflower', bin: 'yellow' },
-      { icon: '🧀', name: 'cheese', bin: 'yellow' },
-      { icon: '🥦', name: 'broccoli', bin: 'green' },
-      { icon: '🐸', name: 'a frog', bin: 'green' },
-      { icon: '🌿', name: 'a leaf', bin: 'green' },
-      { icon: '🫐', name: 'blueberries', bin: 'blue' },
-      { icon: '🐳', name: 'a whale', bin: 'blue' },
-      { icon: '💙', name: 'a blue heart', bin: 'blue' },
+      { icon: '🥣', name: 'a bowl', bin: 'kitchen' },
+      { icon: '🍴', name: 'a fork and knife', bin: 'kitchen' },
+      { icon: '🍽️', name: 'a plate', bin: 'kitchen' },
+      { icon: '🥄', name: 'a spoon', bin: 'kitchen' },
+      { icon: '🚿', name: 'a shower', bin: 'bathroom' },
+      { icon: '🧼', name: 'soap', bin: 'bathroom' },
+      { icon: '🚽', name: 'a toilet', bin: 'bathroom' },
+      { icon: '🧻', name: 'toilet paper', bin: 'bathroom' },
+      { icon: '🛏️', name: 'a bed', bin: 'bedroom' },
+      { icon: '🧸', name: 'a teddy bear', bin: 'bedroom' },
+      { icon: '⏰', name: 'an alarm clock', bin: 'bedroom' },
+      { icon: '🧦', name: 'socks', bin: 'bedroom' },
     ],
   },
 
+  /* NEW — replaces "Colour Sort" (kept the 4-bin, hardest level) */
   {
-    id: 'shapes',
-    title: 'Shape Sort',
-    question: 'What shape is it?',
-    icon: '🔷',
-    learned: 'Shape names · seeing shapes in real objects · geometry',
+    id: 'helpers',
+    title: 'Who Helps Us?',
+    question: 'Who uses it?',
+    icon: '🦸',
+    learned: 'Community helpers · linking tools to jobs · early social studies',
     bins: [
-      { id: 'round', label: 'Round', icon: '⭕', color: '#F0522B' },
-      { id: 'square', label: 'Square', icon: '⬜', color: '#7B2CBF' },
-      { id: 'triangle', label: 'Triangle', icon: '🔺', color: '#2CB5AF' },
+      { id: 'doctor', label: 'Doctor', icon: '👩‍⚕️', color: '#2CB5AF' },
+      { id: 'fire', label: 'Firefighter', icon: '👨‍🚒', color: '#E5383B' },
+      { id: 'police', label: 'Police', icon: '👮', color: '#2C7BE5' },
+      { id: 'chef', label: 'Chef', icon: '👨‍🍳', color: '#F0A017' },
     ],
     items: [
-      { icon: '⚽', name: 'a football', bin: 'round' },
-      { icon: '🍪', name: 'a cookie', bin: 'round' },
-      { icon: '🕐', name: 'a clock', bin: 'round' },
-      { icon: '🪙', name: 'a coin', bin: 'round' },
-      { icon: '🎁', name: 'a present', bin: 'square' },
-      { icon: '🪟', name: 'a window', bin: 'square' },
-      { icon: '📺', name: 'a television', bin: 'square' },
-      { icon: '🍕', name: 'a pizza slice', bin: 'triangle' },
-      { icon: '⛺', name: 'a tent', bin: 'triangle' },
-      { icon: '🏔️', name: 'a mountain', bin: 'triangle' },
+      { icon: '🩺', name: 'a stethoscope', bin: 'doctor' },
+      { icon: '🚑', name: 'an ambulance', bin: 'doctor' },
+      { icon: '💊', name: 'medicine', bin: 'doctor' },
+      { icon: '🚒', name: 'a fire truck', bin: 'fire' },
+      { icon: '🧯', name: 'a fire extinguisher', bin: 'fire' },
+      { icon: '🔥', name: 'a fire to put out', bin: 'fire' },
+      { icon: '🚓', name: 'a police car', bin: 'police' },
+      { icon: '🚨', name: 'a police siren', bin: 'police' },
+      { icon: '🧢', name: 'a police cap', bin: 'police' },
+      { icon: '🍳', name: 'a frying pan', bin: 'chef' },
+      { icon: '🥘', name: 'a cooking pot', bin: 'chef' },
+      { icon: '🍰', name: 'a cake', bin: 'chef' },
     ],
   },
 ];
