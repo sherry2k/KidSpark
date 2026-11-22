@@ -7,6 +7,7 @@ import MissingNumbers from './MissingNumbers';
 import SkipCounting from './SkipCounting';
 import NumberBonds from './NumberBonds';
 import ClockTime from './ClockTime';
+import NumberOrder from './NumberOrder';
 import ItemIcon from '../components/mechanics/ItemIcon';
 import { GameProgress, PlayerProfile } from '../store/gameStore';
 import { MATH_MODES, MathMode, ModeId, Band, Question, frameSize, maxFor } from '../data/mathModes';
@@ -56,7 +57,7 @@ const numStyle = (size: string): React.CSSProperties => ({
 /* The stand-alone games that sit after the four MATH_MODES cards      */
 /* ------------------------------------------------------------------ */
 
-type ExtraId = 'missing' | 'skip' | 'bonds' | 'clock';
+type ExtraId = 'missing' | 'skip' | 'bonds' | 'clock' | 'order';
 
 interface ExtraGame {
   id: ExtraId;
@@ -75,6 +76,7 @@ const EXTRA_GAMES: ExtraGame[] = [
   { id: 'skip', icon: '🐸', title: 'Skip Counting', sub: 'Count by 2s, 5s, 10s', diff: 2, grad: 'from-lime-400 to-green-500', shadow: '#15803D' },
   { id: 'bonds', icon: '🤝', title: 'Number Bonds', sub: 'Pairs that make 10', diff: 2, grad: 'from-pink-400 to-rose-500', shadow: '#BE123C' },
   { id: 'clock', icon: '🕐', title: 'What time is it?', sub: 'Read the clock!', diff: 1, grad: 'from-cyan-400 to-sky-600', shadow: '#0369A1', isNew: true },
+  { id: 'order', icon: '📏', title: 'Number Order', sub: 'Smallest to biggest', diff: 2, grad: 'from-violet-400 to-purple-600', shadow: '#6D28D9', isNew: true },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -365,6 +367,18 @@ const MathGame: React.FC<MathGameProps> = ({ profile, progress, onBack, onAnswer
   if (extraOpen === 'clock') {
     return (
       <ClockTime
+        defaultBand={band}
+        progress={progress}
+        onBack={closeExtra}
+        onAnswer={onAnswer}
+        onComplete={onComplete}
+      />
+    );
+  }
+
+  if (extraOpen === 'order') {
+    return (
+      <NumberOrder
         defaultBand={band}
         progress={progress}
         onBack={closeExtra}

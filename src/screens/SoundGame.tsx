@@ -26,15 +26,22 @@ import {
   AR_OPTIONS,
   UR_OPTIONS,
 } from '../data/soundWords';
+import { RHYME_FAMILIES, RhymeWord } from '../data/rhymeWords';
 
 /**
- * SoundGame — "which letters are missing?"
+ * SoundGame — "which letters are missing?" and "which word rhymes?"
  *
- * The child sees a picture and the word with a gap, e.g. a ship and "__ip",
- * and taps the missing letter pair (ch / sh / th, the vowel teams oa / ee / oo / oi,
- * or the vowel-with-R pairs ar / ur).
- * Tapping the picture says the word aloud. The word is always shown together
- * with a picture so the child is never guessing between two real words.
+ * LETTER ROUNDS. The child sees a picture and the word with a gap, e.g. a ship
+ * and "__ip", and taps the missing letter pair (ch / sh / th, the vowel teams
+ * oa / ee / oo / oi, or the vowel-with-R pairs ar / ur). Tapping the picture
+ * says the word aloud. The word is always shown together with a picture so the
+ * child is never guessing between two real words.
+ *
+ * RHYME TIME. The child sees one picture and its word (a cat) and three picture
+ * cards (a hat, a dog, a sun). Tap the one that rhymes. Every card has a small
+ * speaker so the child can hear each word before choosing, because most
+ * children at this age can't read the labels yet. The rhyme families live in
+ * src/data/rhymeWords.ts.
  */
 
 interface SoundGameProps {
@@ -58,6 +65,8 @@ interface SoundMode {
   pool: SoundWord[];
   options: string[];
   learned: string;
+  /** 'rhyme' = the picture-card rhyming round; leave out for the missing-letters rounds */
+  kind?: 'rhyme';
   /** shows a NEW ribbon on the card */
   isNew?: boolean;
 }
@@ -138,7 +147,6 @@ const MODES: SoundMode[] = [
     diff: 1,
     pool: eeWords,
     options: VOWEL_TEAM_OPTIONS,
-    isNew: true,
     learned:
       'When two e letters sit side by side they say the long "ee" sound, as in bee and tree. Ask your child to say the word out loud, stretch the "eee" sound, and then pick the letters.',
   },
@@ -152,7 +160,6 @@ const MODES: SoundMode[] = [
     diff: 2,
     pool: ooWords,
     options: OO_OPTIONS,
-    isNew: true,
     learned:
       'The letters oo make two different sounds: a long "oo" as in moon and spoon, and a short "oo" as in book and foot. Both are in this round, because the spelling is the same. Say each word out loud together.',
   },
@@ -166,7 +173,6 @@ const MODES: SoundMode[] = [
     diff: 2,
     pool: oiWords,
     options: OI_OPTIONS,
-    isNew: true,
     learned:
       'The letters oi make the "oy" sound in coin, oil and point. Ask your child to listen for that sound in the middle of the word before choosing.',
   },
@@ -180,7 +186,6 @@ const MODES: SoundMode[] = [
     diff: 2,
     pool: arWords,
     options: AR_OPTIONS,
-    isNew: true,
     learned:
       'When a is followed by r, the vowel changes: ar says "ah" as in car and star. This round mixes ar with or and er so your child learns to tell them apart. Say the word out loud and listen for the "ah".',
   },
@@ -194,9 +199,23 @@ const MODES: SoundMode[] = [
     diff: 3,
     pool: urWords,
     options: UR_OPTIONS,
-    isNew: true,
     learned:
       'The letters ur make the "er" sound, as in turtle and burger. The same sound can also be spelled er and ir (as in bird), which come later, so this round only asks ur against ar and or.',
+  },
+  {
+    id: 'rhyme',
+    title: 'Rhyme Time',
+    sub: 'cat, hat, bat',
+    icon: '🎵',
+    grad: 'from-orange-400 to-pink-500',
+    shadow: '#C2410C',
+    diff: 1,
+    pool: [],
+    options: [],
+    kind: 'rhyme',
+    isNew: true,
+    learned:
+      'Rhyming words end with the same sound, like cat and hat. Hearing rhymes trains the ear to notice the sounds inside words, which is a first step towards reading. Say each word out loud together, and have fun making up silly rhymes at home. The spelling can differ (feet and meat rhyme), so listen rather than look.',
   },
 ];
 
@@ -205,6 +224,7 @@ const SECTIONS: { title: string; hint: string; ids: string[] }[] = [
   { title: 'Digraphs', hint: 'ch · sh · th', ids: ['mix', 'ch', 'sh', 'th'] },
   { title: 'Vowel teams', hint: 'oa · ee · oo · oi', ids: ['oa', 'ee', 'oo', 'oi'] },
   { title: 'Vowels with R', hint: 'ar · ur', ids: ['ar', 'ur'] },
+  { title: 'Rhymes', hint: 'cat · hat', ids: ['rhyme'] },
 ];
 
 const shuffle = <T,>(items: T[]): T[] => {
@@ -216,15 +236,52 @@ const shuffle = <T,>(items: T[]): T[] => {
   return a;
 };
 
-interface Question {
+/* ------------------------------------------------------------------ */
+/* Questions                                                           */
+/* ------------------------------------------------------------------ */
+
+interface LetterQuestion {
+  kind: 'letters';
   entry: SoundWord;
   options: string[];
 }
 
+interface RhymeQuestion {
+  kind: 'rhyme';
+  target: RhymeWord; // the word shown at the top
+  answer: string; // the word that rhymes with it
+  choices: RhymeWord[]; // three cards, one of them is the answer
+}
+
+type Question = LetterQuestion | RhymeQuestion;
+
+const buildRhymeQuestions = (): RhymeQuestion[] => {
+  // one question per family, so no round repeats the same rhyme
+  const families = shuffle(RHYME_FAMILIES).slice(0, TOTAL);
+  return families.map((family) => {
+    const [target, answer] = shuffle(family);
+    // two wrong cards from two DIFFERENT other families
+    const others = shuffle(RHYME_FAMILIES.filter((f) => f !== family)).slice(0, 2);
+    const wrong = others.map((f) => f[Math.floor(Math.random() * f.length)]);
+    return {
+      kind: 'rhyme' as const,
+      target,
+      answer: answer.word,
+      choices: shuffle([answer, ...wrong]),
+    };
+  });
+};
+
 const buildQuestions = (mode: SoundMode): Question[] =>
-  shuffle(mode.pool)
-    .slice(0, TOTAL)
-    .map((entry) => ({ entry, options: shuffle(mode.options) }));
+  mode.kind === 'rhyme'
+    ? buildRhymeQuestions()
+    : shuffle(mode.pool)
+        .slice(0, TOTAL)
+        .map((entry) => ({ kind: 'letters' as const, entry, options: shuffle(mode.options) }));
+
+/** what Spark's voice says when a question appears */
+const promptFor = (q: Question): string =>
+  q.kind === 'rhyme' ? `Which word rhymes with ${q.target.word}?` : q.entry.word;
 
 /** Splits "ship" around "sh" -> ["", "ip"]. The pattern appears once per word. */
 const splitWord = (w: SoundWord): [string, string] => {
@@ -242,7 +299,10 @@ const OPTION_COLORS = [
 /* Pictures: emoji, or drawn SVG where no good emoji exists            */
 /* ------------------------------------------------------------------ */
 
-const WordPicture: React.FC<{ entry: SoundWord; size: number }> = ({ entry, size }) => {
+const WordPicture: React.FC<{ entry: { word: string; emoji: string; draw?: SoundWord['draw'] }; size: number }> = ({
+  entry,
+  size,
+}) => {
   if (entry.draw === 'chair') {
     return (
       <svg width={size} height={size} viewBox="0 0 100 100" role="img" aria-label="chair">
@@ -317,6 +377,90 @@ const Letter: React.FC<{ ch: string }> = ({ ch }) => (
   </div>
 );
 
+/* ------------------------------------------------------------------ */
+/* A picture card in Rhyme Time                                        */
+/* ------------------------------------------------------------------ */
+
+const RhymeCard: React.FC<{
+  word: RhymeWord;
+  index: number;
+  answer: string;
+  picked: string | null;
+  onPick: (w: string) => void;
+}> = ({ word, index, answer, picked, onPick }) => {
+  const done = picked !== null;
+  const isRight = word.word === answer;
+  const isPicked = picked === word.word;
+
+  let bg = '#fff';
+  let border = '#fff';
+  let shadow = '#D8CFE6';
+  if (done && isRight) {
+    bg = '#DCFCE7';
+    border = '#22C55E';
+    shadow = '#15803D';
+  } else if (done && isPicked) {
+    bg = '#FEE2E2';
+    border = '#EF4444';
+    shadow = '#B91C1C';
+  }
+
+  return (
+    <motion.button
+      onClick={() => onPick(word.word)}
+      disabled={done}
+      aria-label={word.word}
+      style={{
+        position: 'relative',
+        background: bg,
+        border: `4px solid ${border}`,
+        borderRadius: 22,
+        boxShadow: `0 6px 0 ${shadow}`,
+        minHeight: 128,
+        opacity: done && !isRight && !isPicked ? 0.5 : 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 4,
+      }}
+      initial={{ scale: 0, y: 16 }}
+      animate={{ scale: 1, y: 0 }}
+      transition={{ delay: 0.1 + index * 0.06, ...POP }}
+      whileTap={!done ? { scale: 0.95, y: 3 } : {}}
+    >
+      {done && isRight && (
+        <span style={{ position: 'absolute', left: 6, top: 3, fontSize: 18, lineHeight: 1 }}>✅</span>
+      )}
+      {done && isPicked && !isRight && (
+        <span style={{ position: 'absolute', left: 8, top: 3, fontSize: 18, lineHeight: 1, color: '#DC2626' }}>✗</span>
+      )}
+
+      {/* hear this word without choosing it */}
+      <span
+        role="button"
+        tabIndex={0}
+        aria-label={`Hear ${word.word}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          playClick();
+          speak(word.word);
+        }}
+        style={{ position: 'absolute', right: 6, top: 4, fontSize: 16, lineHeight: 1, opacity: 0.6, cursor: 'pointer' }}
+      >
+        🔊
+      </span>
+
+      <div style={{ marginTop: 10 }}>
+        <WordPicture entry={word} size={58} />
+      </div>
+      <span style={{ fontFamily: FONT, fontWeight: 700, fontSize: 19, color: '#1E2A4A', lineHeight: 1 }}>
+        {word.word}
+      </span>
+    </motion.button>
+  );
+};
+
 /* ================================================================== */
 /* The screen                                                          */
 /* ================================================================== */
@@ -363,7 +507,7 @@ const SoundGame: React.FC<SoundGameProps> = ({ progress, onBack, onAnswer, onCom
     setFeedback(null);
     setDone(false);
     awarded.current = false;
-    speak(`${m.title}. ${qs[0].entry.word}`);
+    speak(`${m.title}. ${promptFor(qs[0])}`);
   };
 
   const leaveToMenu = () => {
@@ -389,15 +533,30 @@ const SoundGame: React.FC<SoundGameProps> = ({ progress, onBack, onAnswer, onCom
     setQIndex((i) => i + 1);
     setPicked(null);
     const next = questions[qIndex + 1];
-    timer.current = window.setTimeout(() => speak(next.entry.word), 120);
+    timer.current = window.setTimeout(() => speak(promptFor(next)), 120);
   };
 
   const resolve = (value: string) => {
-    if (picked !== null || !questions[qIndex]) return;
-    const entry = questions[qIndex].entry;
+    const q = questions[qIndex];
+    if (picked !== null || !q) return;
     setPicked(value);
-    const right = value === entry.pattern;
+
+    const right = q.kind === 'rhyme' ? value === q.answer : value === q.entry.pattern;
     onAnswer(right);
+
+    // what we say and show
+    let yes: string;
+    let yesSpoken: string;
+    let no: string;
+    if (q.kind === 'rhyme') {
+      yes = `Yes! ${q.target.word} rhymes with ${q.answer}.`;
+      yesSpoken = yes;
+      no = `${q.target.word} rhymes with ${q.answer}.`;
+    } else {
+      yes = `Yes! ${q.entry.word}.`;
+      yesSpoken = yes;
+      no = `${q.entry.word} has ${q.entry.pattern.toUpperCase()}.`;
+    }
 
     if (right) {
       playCorrect();
@@ -406,20 +565,18 @@ const SoundGame: React.FC<SoundGameProps> = ({ progress, onBack, onAnswer, onCom
       setScore(scoreRef.current);
       const st = streak + 1;
       setStreak(st);
-      const msg = st >= 3 ? `${st} in a row! 🔥` : `Yes! ${entry.word}.`;
-      setFeedback(msg);
-      speak(st >= 3 ? `${st} in a row!` : `Yes! ${entry.word}.`);
+      setFeedback(st >= 3 ? `${st} in a row! 🔥` : yes);
+      speak(st >= 3 ? `${st} in a row!` : yesSpoken);
       timer.current = window.setTimeout(() => {
         setFeedback(null);
         nextQuestion();
-      }, 1100);
+      }, q.kind === 'rhyme' ? 1700 : 1100);
     } else {
       playWrong();
       buzz('oops');
       setStreak(0);
-      const msg = `${entry.word} has ${entry.pattern.toUpperCase()}.`;
-      setFeedback(msg);
-      speak(msg);
+      setFeedback(no);
+      speak(no);
       timer.current = window.setTimeout(() => {
         setFeedback(null);
         nextQuestion();
@@ -580,11 +737,132 @@ const SoundGame: React.FC<SoundGameProps> = ({ progress, onBack, onAnswer, onCom
 
   const current = questions[qIndex];
   if (!current) return null;
-  const { entry, options } = current;
-  const [before, after] = splitWord(entry);
   const answered = picked !== null;
 
-  /* ---------------- playing ---------------- */
+  /* the progress dots + streak row, shared by both kinds of round */
+  const progressRow = (
+    <div className="flex items-center justify-between w-full max-w-sm mt-1 mb-2">
+      <div className="flex gap-1">
+        {Array.from({ length: TOTAL }, (_, i) => (
+          <span
+            key={i}
+            className="rounded-full"
+            style={{
+              width: 9,
+              height: 9,
+              background: i < qIndex ? '#22C55E' : i === qIndex ? '#F97316' : 'rgba(0,0,0,.14)',
+            }}
+          />
+        ))}
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-gray-500 font-bold" style={{ fontFamily: FONT }}>
+          {score} right
+        </span>
+        {streak >= 2 && (
+          <motion.span className="text-xs font-bold text-orange-500" initial={{ scale: 0 }} animate={{ scale: 1 }}>
+            🔥{streak}
+          </motion.span>
+        )}
+      </div>
+    </div>
+  );
+
+  const feedbackRow = (
+    <div className="h-12 flex items-center mt-2">
+      <AnimatePresence>
+        {feedback && (
+          <motion.p
+            className="bg-yellow-100 border-4 border-yellow-300 text-yellow-800 font-bold px-4 py-2 rounded-2xl text-sm text-center max-w-xs"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0 }}
+            transition={POP}
+            style={{ fontFamily: FONT }}
+          >
+            {feedback}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+
+  /* ---------------- playing: Rhyme Time ---------------- */
+  if (current.kind === 'rhyme') {
+    const { target, choices, answer } = current;
+    return (
+      <GameBackground variant="game">
+        <div className="h-full flex flex-col overflow-x-hidden">
+          <Navigation
+            title={`🔤 ${mode.title}`}
+            onBack={() => { playClick(); leaveToMenu(); }}
+            stars={progress.stars}
+            showProgress
+            progress={(qIndex / TOTAL) * 100}
+          />
+
+          <div className="flex-1 flex flex-col items-center px-3 pb-3 min-h-0 overflow-y-auto">
+            {progressRow}
+
+            {/* prompt */}
+            <motion.div
+              key={`p-${qIndex}`}
+              className={`w-full max-w-sm rounded-2xl px-4 py-3 mb-3 text-white border-4 border-white text-center bg-gradient-to-r ${mode.grad}`}
+              style={{ boxShadow: `0 5px 0 ${mode.shadow}`, fontFamily: FONT }}
+              initial={{ y: -12, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={POP}
+            >
+              <span className="text-lg font-bold" style={{ textShadow: '1px 2px 0 rgba(0,0,0,.18)' }}>
+                Which word rhymes? 🎵
+              </span>
+            </motion.div>
+
+            {/* the word to rhyme with — tap to hear */}
+            <motion.button
+              key={`t-${qIndex}`}
+              onClick={() => { buzz('tick'); speak(`Which word rhymes with ${target.word}?`); }}
+              className="bg-white/95 rounded-3xl border-4 border-white flex flex-col items-center"
+              style={{ boxShadow: '0 6px 0 rgba(0,0,0,.10)', padding: '12px 28px 10px', gap: 2 }}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={POP}
+              whileTap={{ scale: 0.95, y: 2 }}
+            >
+              <WordPicture entry={target} size={88} />
+              <span style={{ fontFamily: FONT, fontWeight: 700, fontSize: 34, color: '#1E2A4A', lineHeight: 1 }}>
+                {target.word}
+              </span>
+              <span className="text-xs text-gray-500 font-bold" style={{ fontFamily: FONT }}>
+                🔊 tap to hear
+              </span>
+            </motion.button>
+
+            <p
+              className="font-bold"
+              style={{ fontFamily: FONT, fontSize: 15, color: '#7C3AED', margin: '10px 0 8px' }}
+            >
+              🎵 rhymes with… 🎵
+            </p>
+
+            {/* three picture cards */}
+            <div className="grid grid-cols-3 w-full max-w-sm" style={{ gap: 10 }}>
+              {choices.map((c, i) => (
+                <RhymeCard key={`${qIndex}-${c.word}`} word={c} index={i} answer={answer} picked={picked} onPick={resolve} />
+              ))}
+            </div>
+
+            {feedbackRow}
+          </div>
+        </div>
+      </GameBackground>
+    );
+  }
+
+  /* ---------------- playing: missing letters ---------------- */
+  const { entry, options } = current;
+  const [before, after] = splitWord(entry);
+
   return (
     <GameBackground variant="game">
       <div className="h-full flex flex-col overflow-x-hidden">
@@ -597,32 +875,7 @@ const SoundGame: React.FC<SoundGameProps> = ({ progress, onBack, onAnswer, onCom
         />
 
         <div className="flex-1 flex flex-col items-center px-3 pb-3 min-h-0 overflow-y-auto">
-          {/* progress dots + streak */}
-          <div className="flex items-center justify-between w-full max-w-sm mt-1 mb-2">
-            <div className="flex gap-1">
-              {Array.from({ length: TOTAL }, (_, i) => (
-                <span
-                  key={i}
-                  className="rounded-full"
-                  style={{
-                    width: 9,
-                    height: 9,
-                    background: i < qIndex ? '#22C55E' : i === qIndex ? '#F97316' : 'rgba(0,0,0,.14)',
-                  }}
-                />
-              ))}
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 font-bold" style={{ fontFamily: FONT }}>
-                {score} right
-              </span>
-              {streak >= 2 && (
-                <motion.span className="text-xs font-bold text-orange-500" initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                  🔥{streak}
-                </motion.span>
-              )}
-            </div>
-          </div>
+          {progressRow}
 
           {/* prompt */}
           <motion.div
@@ -728,23 +981,7 @@ const SoundGame: React.FC<SoundGameProps> = ({ progress, onBack, onAnswer, onCom
             })}
           </div>
 
-          {/* feedback */}
-          <div className="h-12 flex items-center mt-2">
-            <AnimatePresence>
-              {feedback && (
-                <motion.p
-                  className="bg-yellow-100 border-4 border-yellow-300 text-yellow-800 font-bold px-4 py-2 rounded-2xl text-sm text-center max-w-xs"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  exit={{ scale: 0 }}
-                  transition={POP}
-                  style={{ fontFamily: FONT }}
-                >
-                  {feedback}
-                </motion.p>
-              )}
-            </AnimatePresence>
-          </div>
+          {feedbackRow}
         </div>
       </div>
     </GameBackground>
