@@ -590,74 +590,92 @@ const SoundGame: React.FC<SoundGameProps> = ({ progress, onBack, onAnswer, onCom
       <GameBackground variant="game">
         <div className="h-full flex flex-col overflow-x-hidden">
           <Navigation title="🔤 Sounds" onBack={() => { playClick(); onBack(); }} stars={progress.stars} />
-          <div className="flex-1 overflow-y-auto px-4 pb-8 pt-2">
-            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-1 text-center" style={{ fontFamily: FONT }}>
-              Find the missing letters! 🔤
+          <div className="flex-1 overflow-y-auto pb-4 pt-1" style={{ padding: '4px 12px 16px' }}>
+            <h2 className="font-bold text-gray-800 text-center" style={{ fontFamily: FONT, fontSize: 18, marginBottom: 8 }}>
+              Pick a sound game! 🔤
             </h2>
-            <p className="text-center text-xs text-gray-500 font-semibold mb-3">
-              Look at the picture, then pick the letters that fit.
-            </p>
 
             {(() => {
               const unlisted = MODES.filter((m) => !SECTIONS.some((sec) => sec.ids.includes(m.id)));
-              const sections = unlisted.length
+              const all = unlisted.length
                 ? [...SECTIONS, { title: 'More', hint: '', ids: unlisted.map((m) => m.id) }]
                 : SECTIONS;
+              // NEW cards go to the top: a section that holds a NEW card comes first,
+              // and inside a section the NEW cards come first.
+              const modesOf = (sec: { ids: string[] }) =>
+                sec.ids
+                  .map((id) => MODES.find((m) => m.id === id))
+                  .filter((m): m is SoundMode => !!m)
+                  .sort((x, y) => Number(!!y.isNew) - Number(!!x.isNew));
+              const sections = all
+                .map((sec) => ({ sec, modes: modesOf(sec) }))
+                .sort((x, y) => Number(y.modes.some((m) => m.isNew)) - Number(x.modes.some((m) => m.isNew)));
               let n = 0; // running card number, for the entrance delay
-              return sections.map((sec) => (
-                <div key={sec.title} className="max-w-lg mx-auto mb-4" data-kind="section">
+              return sections.map(({ sec, modes }) => (
+                <div key={sec.title} className="max-w-lg mx-auto" data-kind="section" style={{ marginBottom: 10 }}>
                   <h3
-                    className="text-sm font-bold text-gray-600 mb-2 px-1 flex items-baseline gap-2"
-                    style={{ fontFamily: FONT }}
+                    className="font-bold text-gray-600 flex items-baseline gap-2"
+                    style={{ fontFamily: FONT, fontSize: 13, padding: '0 2px', marginBottom: 5 }}
                   >
                     {sec.title}
-                    {sec.hint && <span className="text-xs font-semibold text-gray-400">{sec.hint}</span>}
+                    {sec.hint && <span className="font-semibold text-gray-400" style={{ fontSize: 11 }}>{sec.hint}</span>}
                   </h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    {sec.ids
-                      .map((id) => MODES.find((m) => m.id === id))
-                      .filter((m): m is SoundMode => !!m)
-                      .map((m) => {
-                        const i = n++;
-                        return (
-                          <motion.button
-                            key={m.id}
-                            data-kind="mode"
-                            data-id={m.id}
-                            onClick={() => startMode(m)}
-                            className={`relative overflow-hidden rounded-3xl p-4 text-white border-4 border-white bg-gradient-to-br ${m.grad}`}
-                            style={{ boxShadow: `0 8px 0 ${m.shadow}, 0 12px 22px rgba(0,0,0,.18)`, minHeight: 150 }}
-                            initial={{ scale: 0, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: Math.min(i, 8) * 0.05, ...POP }}
-                            whileTap={{ scale: 0.94, y: 4 }}
+                  {/* four small cards per row, so the whole picker fits on one phone screen */}
+                  <div className="flex flex-wrap" style={{ gap: 6 }}>
+                    {modes.map((m) => {
+                      const i = n++;
+                      return (
+                        <motion.button
+                          key={m.id}
+                          data-kind="mode"
+                          data-id={m.id}
+                          onClick={() => startMode(m)}
+                          className={`relative overflow-hidden text-white border-white bg-gradient-to-br ${m.grad}`}
+                          style={{
+                            width: 'calc((100% - 18px) / 4)',
+                            minHeight: 96,
+                            borderRadius: 18,
+                            borderWidth: 3,
+                            borderStyle: 'solid',
+                            boxShadow: `0 5px 0 ${m.shadow}, 0 8px 14px rgba(0,0,0,.16)`,
+                            padding: '8px 3px 6px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 3,
+                          }}
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ delay: Math.min(i, 10) * 0.04, ...POP }}
+                          whileTap={{ scale: 0.94, y: 3 }}
+                        >
+                          {m.isNew && (
+                            <div
+                              data-kind="new"
+                              className="absolute text-center text-white font-bold bg-gradient-to-r from-red-500 to-pink-500 shadow-md"
+                              style={{ top: 7, right: -22, width: 70, transform: 'rotate(40deg)', fontSize: 9, letterSpacing: '1px', padding: '1px 0', borderTop: '1.5px solid #fff', borderBottom: '1.5px solid #fff' }}
+                            >
+                              NEW
+                            </div>
+                          )}
+                          <ItemIcon icon={m.icon} size={32} label={m.title} />
+                          <span
+                            className="font-bold text-center"
+                            style={{ fontFamily: FONT, fontSize: 12, lineHeight: 1.05, textShadow: '1px 1px 0 rgba(0,0,0,.18)' }}
                           >
-                            {m.isNew && (
-                              <div
-                                data-kind="new"
-                                className="absolute text-center text-white font-bold bg-gradient-to-r from-red-500 to-pink-500 shadow-md"
-                                style={{ top: 14, right: -30, width: 100, transform: 'rotate(40deg)', fontSize: 13, letterSpacing: '1px', padding: '2px 0', borderTop: '2px solid #fff', borderBottom: '2px solid #fff' }}
-                              >
-                                NEW
-                              </div>
-                            )}
-                            <div className="flex justify-center mb-2">
-                              <ItemIcon icon={m.icon} size={44} label={m.title} />
-                            </div>
-                            <h3 className="text-lg font-bold" style={{ fontFamily: FONT, textShadow: '2px 2px 0 rgba(0,0,0,.18)' }}>
-                              {m.title}
-                            </h3>
-                            <p className="text-xs opacity-90">{m.sub}</p>
-                            <div className="flex justify-center gap-0.5 mt-1.5">
-                              {[1, 2, 3].map((d) => (
-                                <span key={d} className="text-[11px]" style={{ opacity: d <= m.diff ? 1 : 0.28 }}>
-                                  ⭐
-                                </span>
-                              ))}
-                            </div>
-                          </motion.button>
-                        );
-                      })}
+                            {m.title}
+                          </span>
+                          <span className="flex" style={{ gap: 1 }}>
+                            {[1, 2, 3].map((d) => (
+                              <span key={d} style={{ fontSize: 8, opacity: d <= m.diff ? 1 : 0.28 }}>
+                                ⭐
+                              </span>
+                            ))}
+                          </span>
+                        </motion.button>
+                      );
+                    })}
                   </div>
                 </div>
               ));
