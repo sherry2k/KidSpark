@@ -21,6 +21,7 @@ import { buzz, speak, stopSpeaking, POP } from '../utils/kidJuice';
 import { playClick, playCorrect, playWrong, playComplete, playFlip } from '../utils/sounds';
 import SparkResult from '../components/SparkResult';
 import { memorySizeFor } from '../utils/difficulty';
+import { HELPERS, Helper, HelperTool } from '../data/helperData';
 
 /**
  * MemoryGame — six games instead of three, and four real bugs fixed.
@@ -47,6 +48,10 @@ import { memorySizeFor } from '../utils/difficulty';
  *    the original object.
  *
  * THE ALPHABET © BUG is fixed in memoryData.ts: letters are text now.
+ *
+ * WHO HELPS US? (new) — a helper is shown (a firefighter) with three tool
+ * cards; tap the tool that helper uses. The helpers and tools live in
+ * src/data/helperData.ts.
  */
 
 interface MemoryGameProps {
@@ -56,7 +61,7 @@ interface MemoryGameProps {
   profile?: PlayerProfile;
 }
 
-type GameId = 'match' | 'tap' | 'color' | 'missing' | 'cups' | 'odd';
+type GameId = 'match' | 'tap' | 'color' | 'missing' | 'cups' | 'odd' | 'helpers';
 
 const FONT = "'Fredoka', ui-rounded, system-ui, sans-serif";
 
@@ -1181,10 +1186,232 @@ const CupShuffle: React.FC<GameProps> = ({ onWin, onExit }) => {
 };
 
 /* ================================================================== */
+/* 6. WHO HELPS US? — match the helper to the tool they use            */
+/* ================================================================== */
+
+const HELPER_ROUNDS = 6;
+
+interface HelperQuestion {
+  helper: Helper;
+  answer: HelperTool;
+  choices: HelperTool[]; // three, one of them is the answer
+}
+
+const buildHelperQuestions = (): HelperQuestion[] =>
+  /* one helper per round, so a round never repeats a job */
+  shuffle(HELPERS)
+    .slice(0, HELPER_ROUNDS)
+    .map((helper) => {
+      const answer = helper.tools[rnd(helper.tools.length)];
+      /* two wrong tools from two DIFFERENT other helpers */
+      const wrong = shuffle(HELPERS.filter((h) => h.id !== helper.id))
+        .slice(0, 2)
+        .map((h) => h.tools[rnd(h.tools.length)]);
+      return { helper, answer, choices: shuffle([answer, ...wrong]) };
+    });
+
+/** a tool as a picture: an emoji, or a drawn SVG where the emoji is too new */
+const ToolPicture: React.FC<{ tool: HelperTool; size: number }> = ({ tool, size }) => {
+  if (tool.draw === 'stethoscope') {
+    return (
+      <svg width={size} height={size} viewBox="0 0 100 100" role="img" aria-label="stethoscope">
+        <path d="M26 12 v26 a16 16 0 0 0 32 0 v-26" fill="none" stroke="#475569" strokeWidth="5" strokeLinecap="round" />
+        <circle cx="26" cy="11" r="5" fill="#94A3B8" stroke="#475569" strokeWidth="3" />
+        <circle cx="58" cy="11" r="5" fill="#94A3B8" stroke="#475569" strokeWidth="3" />
+        <path d="M42 54 v8 a18 18 0 0 0 36 0 v-6" fill="none" stroke="#475569" strokeWidth="5" strokeLinecap="round" />
+        <circle cx="78" cy="48" r="9" fill="#E2E8F0" stroke="#2563EB" strokeWidth="5" />
+        <circle cx="78" cy="48" r="3.5" fill="#2563EB" />
+      </svg>
+    );
+  }
+  return <ItemIcon icon={tool.emoji} size={size} label={tool.says} />;
+};
+
+const WhoHelps: React.FC<GameProps> = ({ onWin, onExit }) => {
+  const [questions, setQuestions] = useState<HelperQuestion[]>(() => buildHelperQuestions());
+  const [round, setRound] = useState(0);
+  const [wrongIds, setWrongIds] = useState<string[]>([]); // tools already tried this round
+  const [rightId, setRightId] = useState<string | null>(null);
+  const [mistakes, setMistakes] = useState(0);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+  const timers = useRef<number[]>([]);
+  const awarded = useRef(false);
+
+  const clear = () => {
+    timers.current.forEach(window.clearTimeout);
+    timers.current = [];
+  };
+  useEffect(() => clear, []);
+
+  const q = questions[round];
+
+  useEffect(() => {
+    if (q) speak(`Which one does the ${q.helper.name} use?`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [round]);
+
+  const restart = () => {
+    clear();
+    setQuestions(buildHelperQuestions());
+    setRound(0);
+    setWrongIds([]);
+    setRightId(null);
+    setMistakes(0);
+    setFeedback(null);
+    setDone(false);
+    awarded.current = false;
+  };
+
+  const pick = (tool: HelperTool) => {
+    if (!q || rightId || wrongIds.includes(tool.id)) return;
+
+    if (tool.id === q.answer.id) {
+      playCorrect();
+      playWin();
+      buzz('soft');
+      setRightId(tool.id);
+      const line = `Yes! The ${q.helper.name} uses ${q.answer.says}.`;
+      setFeedback(line);
+      speak(line);
+      timers.current.push(
+        window.setTimeout(() => {
+          setFeedback(null);
+          if (round + 1 >= HELPER_ROUNDS) {
+            setDone(true);
+            playComplete();
+            buzz('success');
+            if (!awarded.current) {
+              awarded.current = true;
+              onWin(starsFor(mistakes));
+            }
+          } else {
+            setRound((r) => r + 1);
+            setWrongIds([]);
+            setRightId(null);
+          }
+        }, 1800)
+      );
+    } else {
+      /* a wrong tool is crossed out and the child tries again */
+      playOops();
+      buzz('oops');
+      setMistakes((m) => m + 1);
+      setWrongIds((w) => [...w, tool.id]);
+      const line = `Not ${tool.says}. Try again!`;
+      setFeedback(line);
+      speak(line);
+      timers.current.push(window.setTimeout(() => setFeedback(null), 1400));
+    }
+  };
+
+  if (done) {
+    return (
+      <WinCard
+        title="Great helpers! 🦸"
+        stars={starsFor(mistakes)}
+        detail={mistakes === 0 ? 'Every tool right first time!' : undefined}
+        learned="Community helpers · linking tools to jobs · early social studies"
+        onAgain={restart}
+        onMenu={onExit}
+      />
+    );
+  }
+  if (!q) return null;
+
+  return (
+    <div className="flex-1 flex flex-col items-center px-4 pb-4 min-h-0 overflow-y-auto">
+      <div className="flex gap-1 my-2">
+        {Array.from({ length: HELPER_ROUNDS }, (_, i) => (
+          <span key={i} className="rounded-full" style={{ width: 10, height: 10, background: i < round ? '#22C55E' : i === round ? '#F97316' : 'rgba(0,0,0,.15)' }} />
+        ))}
+      </div>
+
+      <p className="text-lg font-bold text-gray-700 mb-2 text-center" style={{ fontFamily: FONT }}>
+        Which one does the {q.helper.name} use?
+      </p>
+
+      {/* the helper — tap to hear the question again */}
+      <motion.button
+        key={`h-${round}`}
+        onClick={() => { buzz('tick'); speak(`Which one does the ${q.helper.name} use?`); }}
+        className="bg-white/95 rounded-3xl border-4 border-white flex flex-col items-center"
+        style={{ boxShadow: '0 6px 0 rgba(0,0,0,.10)', padding: '12px 30px 10px', gap: 2 }}
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={POP}
+        whileTap={{ scale: 0.95, y: 2 }}
+      >
+        <ItemIcon icon={q.helper.emoji} size={84} label={q.helper.name} />
+        <span style={{ fontFamily: FONT, fontWeight: 700, fontSize: 24, color: '#1E2A4A', lineHeight: 1.1 }}>
+          {q.helper.name}
+        </span>
+        <span className="text-xs text-gray-500 font-bold" style={{ fontFamily: FONT }}>🔊 tap to hear</span>
+      </motion.button>
+
+      <p className="font-bold" style={{ fontFamily: FONT, fontSize: 15, color: '#4F46E5', margin: '12px 0 8px' }}>
+        🧰 uses… 🧰
+      </p>
+
+      <div className="grid grid-cols-3 w-full max-w-sm" style={{ gap: 10 }}>
+        {q.choices.map((t, i) => {
+          const isRight = rightId === t.id;
+          const isWrong = wrongIds.includes(t.id);
+          return (
+            <motion.button
+              key={`${round}-${t.id}`}
+              onClick={() => pick(t)}
+              disabled={!!rightId || isWrong}
+              aria-label={t.says}
+              className="rounded-2xl flex flex-col items-center justify-center"
+              style={{
+                background: isRight ? '#DCFCE7' : isWrong ? '#FEE2E2' : '#fff',
+                border: `4px solid ${isRight ? '#22C55E' : isWrong ? '#EF4444' : '#fff'}`,
+                boxShadow: `0 6px 0 ${isRight ? '#15803D' : isWrong ? '#B91C1C' : '#D8CFE6'}`,
+                minHeight: 118,
+                gap: 6,
+                opacity: isWrong ? 0.55 : rightId && !isRight ? 0.5 : 1,
+              }}
+              initial={{ scale: 0, y: 16 }}
+              animate={{ scale: 1, y: 0, x: isWrong ? [-5, 5, -5, 0] : 0 }}
+              transition={{ delay: isWrong ? 0 : 0.1 + i * 0.06, ...POP }}
+              whileTap={!rightId && !isWrong ? { scale: 0.95, y: 3 } : {}}
+            >
+              <ToolPicture tool={t} size={56} />
+              <span style={{ fontFamily: FONT, fontWeight: 700, fontSize: 12, color: '#475569', lineHeight: 1.1, textAlign: 'center', padding: '0 4px' }}>
+                {t.says}
+              </span>
+            </motion.button>
+          );
+        })}
+      </div>
+
+      <div className="h-14 flex items-center mt-3">
+        <AnimatePresence>
+          {feedback && (
+            <motion.p
+              className="bg-yellow-100 border-4 border-yellow-300 text-yellow-800 font-bold px-4 py-2 rounded-2xl text-sm text-center max-w-xs"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0 }}
+              transition={POP}
+              style={{ fontFamily: FONT }}
+            >
+              {feedback}
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+};
+
+/* ================================================================== */
 /* Shell                                                               */
 /* ================================================================== */
 
-const GAMES: { id: GameId; icon: string; title: string; sub: string; diff: number; grad: string; shadow: string }[] = [
+const GAMES: { id: GameId; icon: string; title: string; sub: string; diff: number; grad: string; shadow: string; isNew?: boolean }[] = [
+  { id: 'helpers', icon: '👨‍🚒', title: 'Who Helps Us?', sub: 'Which tool do they use?', diff: 1, grad: 'from-sky-500 to-indigo-500', shadow: '#3730A3', isNew: true },
   { id: 'match', icon: '🧠', title: 'Memory Match', sub: 'Find the pairs!', diff: 1, grad: 'from-purple-500 to-pink-500', shadow: '#6B21A8' },
   { id: 'missing', icon: '🫣', title: "What's Missing?", sub: 'One has vanished!', diff: 1, grad: 'from-fuchsia-500 to-purple-600', shadow: '#6B21A8' },
   { id: 'cups', icon: '🥤', title: 'Where Did It Go?', sub: 'Follow the cup!', diff: 2, grad: 'from-amber-400 to-orange-500', shadow: '#C2410C' },
@@ -1241,13 +1468,21 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete, p
                 <motion.button
                   key={g.id}
                   onClick={() => { playClick(); unlockAudio(); buzz('tick'); setWhich(g.id); }}
-                  className={`rounded-3xl p-4 text-white border-4 border-white bg-gradient-to-br ${g.grad}`}
+                  className={`relative overflow-hidden rounded-3xl p-4 text-white border-4 border-white bg-gradient-to-br ${g.grad}`}
                   style={{ boxShadow: `0 8px 0 ${g.shadow}, 0 12px 22px rgba(0,0,0,.18)`, minHeight: 150 }}
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.24, delay: Math.min(i, 5) * 0.035 }}
                   whileTap={{ scale: 0.94, y: 4 }}
                 >
+                  {g.isNew && (
+                    <div
+                      className="absolute text-center text-white font-bold bg-gradient-to-r from-red-500 to-pink-500 shadow-md"
+                      style={{ top: 12, right: -26, width: 86, transform: 'rotate(40deg)', fontSize: 11, letterSpacing: '1px', padding: '2px 0', borderTop: '1.5px solid #fff', borderBottom: '1.5px solid #fff' }}
+                    >
+                      NEW
+                    </div>
+                  )}
                   <div className="flex justify-center mb-2">
                     <ItemIcon icon={g.icon} size={46} label={g.title} />
                   </div>
@@ -1273,6 +1508,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ progress, onBack, onComplete, p
         {which === 'color' && <ColorMemory onWin={onComplete} onExit={exit} />}
         {which === 'missing' && <WhatsMissing onWin={onComplete} onExit={exit} />}
         {which === 'cups' && <CupShuffle onWin={onComplete} onExit={exit} />}
+        {which === 'helpers' && <WhoHelps onWin={onComplete} onExit={exit} />}
       </div>
     </GameBackground>
   );

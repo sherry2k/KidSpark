@@ -27,9 +27,15 @@ import {
   UR_OPTIONS,
 } from '../data/soundWords';
 import { RHYME_FAMILIES, RhymeWord } from '../data/rhymeWords';
+import { FIRST_WORDS, FIRST_LETTERS, CONFUSABLE, FirstWord } from '../data/firstSounds';
 
 /**
  * SoundGame — "which letters are missing?" and "which word rhymes?"
+ *
+ * FIRST SOUND. The child sees one picture (a cat) and three letters (B, C, M)
+ * and taps the letter the word starts with. The word is only spelled out AFTER
+ * the answer, so the child has to listen and think, not read. The words live in
+ * src/data/firstSounds.ts.
  *
  * LETTER ROUNDS. The child sees a picture and the word with a gap, e.g. a ship
  * and "__ip", and taps the missing letter pair (ch / sh / th, the vowel teams
@@ -65,8 +71,8 @@ interface SoundMode {
   pool: SoundWord[];
   options: string[];
   learned: string;
-  /** 'rhyme' = the picture-card rhyming round; leave out for the missing-letters rounds */
-  kind?: 'rhyme';
+  /** 'rhyme' = the picture-card rhyming round, 'first' = the first-letter round; leave out for the missing-letters rounds */
+  kind?: 'rhyme' | 'first';
   /** shows a NEW ribbon on the card */
   isNew?: boolean;
 }
@@ -213,9 +219,23 @@ const MODES: SoundMode[] = [
     pool: [],
     options: [],
     kind: 'rhyme',
-    isNew: true,
     learned:
       'Rhyming words end with the same sound, like cat and hat. Hearing rhymes trains the ear to notice the sounds inside words, which is a first step towards reading. Say each word out loud together, and have fun making up silly rhymes at home. The spelling can differ (feet and meat rhyme), so listen rather than look.',
+  },
+  {
+    id: 'first',
+    title: 'First Sound',
+    sub: 'cat starts with C',
+    icon: '🔡',
+    grad: 'from-teal-400 to-cyan-500',
+    shadow: '#0E7490',
+    diff: 1,
+    pool: [],
+    options: [],
+    kind: 'first',
+    isNew: true,
+    learned:
+      'Hearing the first sound of a word is one of the strongest early-reading skills. Ask your child to say the word slowly ("c-c-cat"), listen to the very first sound, and then find the letter that makes it. A few letters sound alike (c and k, for example); those are never offered together.',
   },
 ];
 
@@ -225,6 +245,7 @@ const SECTIONS: { title: string; hint: string; ids: string[] }[] = [
   { title: 'Vowel teams', hint: 'oa · ee · oo · oi', ids: ['oa', 'ee', 'oo', 'oi'] },
   { title: 'Vowels with R', hint: 'ar · ur', ids: ['ar', 'ur'] },
   { title: 'Rhymes', hint: 'cat · hat', ids: ['rhyme'] },
+  { title: 'First sounds', hint: 'b · c · d', ids: ['first'] },
 ];
 
 const shuffle = <T,>(items: T[]): T[] => {
@@ -253,7 +274,14 @@ interface RhymeQuestion {
   choices: RhymeWord[]; // three cards, one of them is the answer
 }
 
-type Question = LetterQuestion | RhymeQuestion;
+interface FirstQuestion {
+  kind: 'first';
+  entry: FirstWord; // the picture
+  letter: string; // the right letter (lower case)
+  options: string[]; // three letters, one of them is the answer
+}
+
+type Question = LetterQuestion | RhymeQuestion | FirstQuestion;
 
 const buildRhymeQuestions = (): RhymeQuestion[] => {
   // one question per family, so no round repeats the same rhyme
@@ -272,16 +300,46 @@ const buildRhymeQuestions = (): RhymeQuestion[] => {
   });
 };
 
+const buildFirstQuestions = (): FirstQuestion[] => {
+  // eight different letters, so a round never repeats a letter
+  const seen = new Set<string>();
+  const picked: FirstWord[] = [];
+  for (const entry of shuffle(FIRST_WORDS)) {
+    if (seen.has(entry.letter)) continue;
+    seen.add(entry.letter);
+    picked.push(entry);
+    if (picked.length === TOTAL) break;
+  }
+  return picked.map((entry) => {
+    const banned = new Set([entry.letter, ...(CONFUSABLE[entry.letter] ?? [])]);
+    const wrong: string[] = [];
+    for (const l of shuffle(FIRST_LETTERS)) {
+      if (banned.has(l)) continue;
+      // two wrong letters that don't sound alike each other either
+      if (wrong.some((x) => (CONFUSABLE[x] ?? []).includes(l))) continue;
+      wrong.push(l);
+      if (wrong.length === 2) break;
+    }
+    return { kind: 'first' as const, entry, letter: entry.letter, options: shuffle([entry.letter, ...wrong]) };
+  });
+};
+
 const buildQuestions = (mode: SoundMode): Question[] =>
   mode.kind === 'rhyme'
     ? buildRhymeQuestions()
+    : mode.kind === 'first'
+    ? buildFirstQuestions()
     : shuffle(mode.pool)
         .slice(0, TOTAL)
         .map((entry) => ({ kind: 'letters' as const, entry, options: shuffle(mode.options) }));
 
 /** what Spark's voice says when a question appears */
 const promptFor = (q: Question): string =>
-  q.kind === 'rhyme' ? `Which word rhymes with ${q.target.word}?` : q.entry.word;
+  q.kind === 'rhyme'
+    ? `Which word rhymes with ${q.target.word}?`
+    : q.kind === 'first'
+    ? `What does ${q.entry.word} start with?`
+    : q.entry.word;
 
 /** Splits "ship" around "sh" -> ["", "ip"]. The pattern appears once per word. */
 const splitWord = (w: SoundWord): [string, string] => {
@@ -541,7 +599,8 @@ const SoundGame: React.FC<SoundGameProps> = ({ progress, onBack, onAnswer, onCom
     if (picked !== null || !q) return;
     setPicked(value);
 
-    const right = q.kind === 'rhyme' ? value === q.answer : value === q.entry.pattern;
+    const right =
+      q.kind === 'rhyme' ? value === q.answer : q.kind === 'first' ? value === q.letter : value === q.entry.pattern;
     onAnswer(right);
 
     // what we say and show
@@ -552,6 +611,10 @@ const SoundGame: React.FC<SoundGameProps> = ({ progress, onBack, onAnswer, onCom
       yes = `Yes! ${q.target.word} rhymes with ${q.answer}.`;
       yesSpoken = yes;
       no = `${q.target.word} rhymes with ${q.answer}.`;
+    } else if (q.kind === 'first') {
+      yes = `Yes! ${q.entry.word} starts with ${q.letter.toUpperCase()}.`;
+      yesSpoken = yes;
+      no = `${q.entry.word} starts with ${q.letter.toUpperCase()}.`;
     } else {
       yes = `Yes! ${q.entry.word}.`;
       yesSpoken = yes;
@@ -570,7 +633,7 @@ const SoundGame: React.FC<SoundGameProps> = ({ progress, onBack, onAnswer, onCom
       timer.current = window.setTimeout(() => {
         setFeedback(null);
         nextQuestion();
-      }, q.kind === 'rhyme' ? 1700 : 1100);
+      }, q.kind === 'rhyme' ? 1700 : q.kind === 'first' ? 1500 : 1100);
     } else {
       playWrong();
       buzz('oops');
@@ -868,6 +931,113 @@ const SoundGame: React.FC<SoundGameProps> = ({ progress, onBack, onAnswer, onCom
               {choices.map((c, i) => (
                 <RhymeCard key={`${qIndex}-${c.word}`} word={c} index={i} answer={answer} picked={picked} onPick={resolve} />
               ))}
+            </div>
+
+            {feedbackRow}
+          </div>
+        </div>
+      </GameBackground>
+    );
+  }
+
+  /* ---------------- playing: First Sound ---------------- */
+  if (current.kind === 'first') {
+    const { entry, options, letter } = current;
+    return (
+      <GameBackground variant="game">
+        <div className="h-full flex flex-col overflow-x-hidden">
+          <Navigation
+            title={`🔤 ${mode.title}`}
+            onBack={() => { playClick(); leaveToMenu(); }}
+            stars={progress.stars}
+            showProgress
+            progress={(qIndex / TOTAL) * 100}
+          />
+
+          <div className="flex-1 flex flex-col items-center px-3 pb-3 min-h-0 overflow-y-auto">
+            {progressRow}
+
+            <motion.div
+              key={`p-${qIndex}`}
+              className={`w-full max-w-sm rounded-2xl px-4 py-3 mb-3 text-white border-4 border-white text-center bg-gradient-to-r ${mode.grad}`}
+              style={{ boxShadow: `0 5px 0 ${mode.shadow}`, fontFamily: FONT }}
+              initial={{ y: -12, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={POP}
+            >
+              <span className="text-lg font-bold" style={{ textShadow: '1px 2px 0 rgba(0,0,0,.18)' }}>
+                What does it start with?
+              </span>
+            </motion.div>
+
+            {/* picture — tap to hear the word; the spelling only appears after the answer */}
+            <motion.button
+              key={`pic-${qIndex}`}
+              onClick={() => { buzz('tick'); speak(entry.word); }}
+              className="bg-white/95 rounded-3xl border-4 border-white flex flex-col items-center"
+              style={{ boxShadow: '0 6px 0 rgba(0,0,0,.10)', padding: '14px 32px 10px', gap: 4, minWidth: 168 }}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={POP}
+              whileTap={{ scale: 0.95, y: 2 }}
+            >
+              <WordPicture entry={entry} size={104} />
+              <span
+                style={{
+                  fontFamily: FONT,
+                  fontWeight: 700,
+                  fontSize: 26,
+                  lineHeight: 1,
+                  height: 26,
+                  color: '#1E2A4A',
+                }}
+              >
+                {answered ? entry.word : ''}
+              </span>
+              <span className="text-xs text-gray-500 font-bold" style={{ fontFamily: FONT }}>
+                🔊 tap to hear
+              </span>
+            </motion.button>
+
+            <p className="font-bold" style={{ fontFamily: FONT, fontSize: 15, color: '#0E7490', margin: '12px 0 8px' }}>
+              🔤 it starts with… 🔤
+            </p>
+
+            {/* three letters */}
+            <div className="grid grid-cols-3 w-full max-w-sm" style={{ gap: 12 }}>
+              {options.map((opt, i) => {
+                const isRight = opt === letter;
+                const isPicked = picked === opt;
+                const c = OPTION_COLORS[i % OPTION_COLORS.length];
+                const bg = !answered ? c.bg : isRight ? '#22C55E' : isPicked ? '#DC2626' : '#D8DCE8';
+                const sh = !answered ? c.sh : isRight ? '#047857' : isPicked ? '#991B1B' : '#9AA0A6';
+                return (
+                  <motion.button
+                    key={`${qIndex}-${opt}`}
+                    onClick={() => resolve(opt)}
+                    disabled={answered}
+                    aria-label={opt}
+                    className="rounded-2xl border-4 border-white flex items-center justify-center"
+                    style={{
+                      background: bg,
+                      boxShadow: `0 6px 0 ${sh}`,
+                      minHeight: 84,
+                      color: '#fff',
+                      fontFamily: FONT,
+                      fontWeight: 700,
+                      fontSize: 40,
+                      lineHeight: 1,
+                    }}
+                    initial={{ scale: 0, y: 16 }}
+                    animate={{ scale: 1, y: 0 }}
+                    transition={{ delay: 0.1 + i * 0.06, ...POP }}
+                    whileTap={!answered ? { scale: 0.95, y: 3 } : {}}
+                  >
+                    {opt.toUpperCase()}
+                    <span style={{ fontSize: 28, opacity: 0.85, marginLeft: 2 }}>{opt}</span>
+                  </motion.button>
+                );
+              })}
             </div>
 
             {feedbackRow}
