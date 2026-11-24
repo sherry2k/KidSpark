@@ -71,7 +71,7 @@ const GAME_MODE_STYLES: Record<string, { gradient: string; shadow: string; diffi
 };
 
 /* games that show a NEW ribbon on their card. Remove an id here after a few weeks. */
-const NEW_MODES = ['math', 'learn', 'match', 'sounds'];
+const NEW_MODES = ['math', 'memory', 'match', 'sounds'];
 
 /* the order the cards appear on the Home screen. Any game not listed here goes to the end. */
 const HOME_ORDER = [
