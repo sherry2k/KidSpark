@@ -77,6 +77,10 @@ interface SoundMode {
   isNew?: boolean;
 }
 
+/** the NEW ribbon on Rhyme Time and First Sound disappears by itself after this day */
+const NEW_UNTIL = '2026-12-01';
+const FRESH = Date.now() < Date.parse(NEW_UNTIL);
+
 const MODES: SoundMode[] = [
   {
     id: 'mix',
@@ -219,6 +223,7 @@ const MODES: SoundMode[] = [
     pool: [],
     options: [],
     kind: 'rhyme',
+    isNew: FRESH,
     learned:
       'Rhyming words end with the same sound, like cat and hat. Hearing rhymes trains the ear to notice the sounds inside words, which is a first step towards reading. Say each word out loud together, and have fun making up silly rhymes at home. The spelling can differ (feet and meat rhyme), so listen rather than look.',
   },
@@ -233,7 +238,7 @@ const MODES: SoundMode[] = [
     pool: [],
     options: [],
     kind: 'first',
-    isNew: true,
+    isNew: FRESH,
     learned:
       'Hearing the first sound of a word is one of the strongest early-reading skills. Ask your child to say the word slowly ("c-c-cat"), listen to the very first sound, and then find the letter that makes it. A few letters sound alike (c and k, for example); those are never offered together.',
   },
@@ -244,8 +249,7 @@ const SECTIONS: { title: string; hint: string; ids: string[] }[] = [
   { title: 'Digraphs', hint: 'ch · sh · th', ids: ['mix', 'ch', 'sh', 'th'] },
   { title: 'Vowel teams', hint: 'oa · ee · oo · oi', ids: ['oa', 'ee', 'oo', 'oi'] },
   { title: 'Vowels with R', hint: 'ar · ur', ids: ['ar', 'ur'] },
-  { title: 'Rhymes', hint: 'cat · hat', ids: ['rhyme'] },
-  { title: 'First sounds', hint: 'b · c · d', ids: ['first'] },
+  { title: 'Rhymes & first sounds', hint: 'cat · hat · b · c', ids: ['rhyme', 'first'] },
 ];
 
 const shuffle = <T,>(items: T[]): T[] => {
@@ -683,7 +687,7 @@ const SoundGame: React.FC<SoundGameProps> = ({ progress, onBack, onAnswer, onCom
                     {sec.title}
                     {sec.hint && <span className="font-semibold text-gray-400" style={{ fontSize: 11 }}>{sec.hint}</span>}
                   </h3>
-                  {/* four small cards per row, so the whole picker fits on one phone screen */}
+                  {/* four cards per row, so the whole picker still fits on one phone screen */}
                   <div className="flex flex-wrap" style={{ gap: 6 }}>
                     {modes.map((m) => {
                       const i = n++;
@@ -696,17 +700,17 @@ const SoundGame: React.FC<SoundGameProps> = ({ progress, onBack, onAnswer, onCom
                           className={`relative overflow-hidden text-white border-white bg-gradient-to-br ${m.grad}`}
                           style={{
                             width: 'calc((100% - 18px) / 4)',
-                            minHeight: 96,
+                            minHeight: 114,
                             borderRadius: 18,
                             borderWidth: 3,
                             borderStyle: 'solid',
                             boxShadow: `0 5px 0 ${m.shadow}, 0 8px 14px rgba(0,0,0,.16)`,
-                            padding: '8px 3px 6px',
+                            padding: '10px 3px 8px',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: 3,
+                            gap: 4,
                           }}
                           initial={{ scale: 0, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
@@ -722,16 +726,16 @@ const SoundGame: React.FC<SoundGameProps> = ({ progress, onBack, onAnswer, onCom
                               NEW
                             </div>
                           )}
-                          <ItemIcon icon={m.icon} size={32} label={m.title} />
+                          <ItemIcon icon={m.icon} size={40} label={m.title} />
                           <span
                             className="font-bold text-center"
-                            style={{ fontFamily: FONT, fontSize: 12, lineHeight: 1.05, textShadow: '1px 1px 0 rgba(0,0,0,.18)' }}
+                            style={{ fontFamily: FONT, fontSize: 13, lineHeight: 1.05, textShadow: '1px 1px 0 rgba(0,0,0,.18)' }}
                           >
                             {m.title}
                           </span>
                           <span className="flex" style={{ gap: 1 }}>
                             {[1, 2, 3].map((d) => (
-                              <span key={d} style={{ fontSize: 8, opacity: d <= m.diff ? 1 : 0.28 }}>
+                              <span key={d} style={{ fontSize: 9, opacity: d <= m.diff ? 1 : 0.28 }}>
                                 ⭐
                               </span>
                             ))}
