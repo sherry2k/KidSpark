@@ -5,7 +5,7 @@ import Navigation from '../components/Navigation';
 import ItemIcon from '../components/mechanics/ItemIcon';
 import { GameProgress } from '../store/gameStore';
 import { buzz, POP } from '../utils/kidJuice';
-import { playClick, playComplete } from '../utils/sounds';
+import { playClick, playCorrect, playComplete } from '../utils/sounds';
 import { playMusicNote, pauseMusicAudio } from '../utils/musicAudio';
 import { NOTES, SONGS, Song, starsFor } from '../data/musicData';
 import SparkResult from '../components/SparkResult';
@@ -13,6 +13,9 @@ import SparkResult from '../components/SparkResult';
 /**
  * MusicGame — the Music hub.
  *
+ *  Echo the Tune      NEW: the app plays a short tune on the bars, the child plays it back.
+ *                     Six rounds, a little longer each time. A wrong bar means the tune is
+ *                     played again, so nobody gets stuck.
  *  Colour Xylophone   free play: eight coloured bars, tap them or slide a finger across.
  *  Play a Song        the next bar glows, the child taps it, and a tune comes out.
  *                     "Listen" plays the song first. Wrong bars never block: the
@@ -36,10 +39,14 @@ interface MusicGameProps {
 const FONT = "'Fredoka', ui-rounded, system-ui, sans-serif";
 const LISTEN_GAP_MS = 520; // time between notes when the app plays the song
 
-type View = 'hub' | 'xylo' | 'song';
+/** the NEW ribbon on Echo the Tune disappears by itself after this day */
+const NEW_UNTIL = '2026-12-03';
+const FRESH = Date.now() < Date.parse(NEW_UNTIL);
+
+type View = 'hub' | 'xylo' | 'song' | 'echo';
 
 /* ============================================================
-   The bars. Used by both the free-play xylophone and the song game.
+   The bars. Used by the free-play xylophone, the song game and Echo the Tune.
    ============================================================ */
 
 interface BarsProps {
@@ -176,6 +183,316 @@ const MiniBars: React.FC = () => (
     ))}
   </div>
 );
+
+/* ============================================================
+   Echo the Tune — listen, then play it back
+   ============================================================ */
+
+/** how many notes each round has: a little longer as the game goes on */
+const ECHO_LENGTHS = [2, 2, 3, 3, 4, 5];
+const ECHO_ROUNDS = ECHO_LENGTHS.length;
+const ECHO_GAP_MS = 640; // time between notes when the app plays the tune
+
+/** early rounds use only a few notes that sound good together (Do, Mi, Sol), later rounds use more */
+const echoPool = (round: number): number[] =>
+  round < 2 ? [0, 2, 4] : round < 4 ? [0, 1, 2, 3, 4] : [0, 1, 2, 3, 4, 5, 6, 7];
+
+const makeTune = (round: number): number[] => {
+  const pool = echoPool(round);
+  const len = ECHO_LENGTHS[round];
+  for (let tries = 0; tries < 50; tries++) {
+    const out: number[] = [];
+    while (out.length < len) {
+      const n = pool[Math.floor(Math.random() * pool.length)];
+      // never the same note three times in a row
+      if (out.length >= 2 && out[out.length - 1] === n && out[out.length - 2] === n) continue;
+      out.push(n);
+    }
+    // a tune of 3 or more notes should have at least two different notes
+    if (len < 3 || new Set(out).size > 1) return out;
+  }
+  return pool.slice(0, len);
+};
+
+/** stars from the number of wrong bars in the whole game */
+const echoStars = (wrong: number) => (wrong <= 2 ? 3 : wrong <= 6 ? 2 : 1);
+
+interface EchoProps {
+  progress: GameProgress;
+  onBack: () => void;
+  onAnswer: (correct: boolean) => void;
+  onComplete: (stars: number) => void;
+}
+
+const EchoTune: React.FC<EchoProps> = ({ progress, onBack, onAnswer, onComplete }) => {
+  const [round, setRound] = useState(0);
+  const [tune, setTune] = useState<number[]>([]);
+  const [phase, setPhase] = useState<'listen' | 'play' | 'between'>('listen');
+  const [pos, setPos] = useState(0);
+  const [lit, setLit] = useState<Record<number, boolean>>({});
+  const [wrongBar, setWrongBar] = useState<number | null>(null);
+  const [wrongTotal, setWrongTotal] = useState(0);
+  const [message, setMessage] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  const tuneRef = useRef<number[]>([]);
+  const posRef = useRef(0);
+  const roundRef = useRef(0);
+  const roundWrong = useRef(0);
+  const wrongRef = useRef(0);
+  const awarded = useRef(false);
+  const timers = useRef<number[]>([]);
+  const litTimers = useRef<Record<number, number>>({});
+
+  const later = (fn: () => void, ms: number) => {
+    timers.current.push(window.setTimeout(fn, ms));
+  };
+  const clearAll = () => {
+    timers.current.forEach((t) => window.clearTimeout(t));
+    timers.current = [];
+    Object.values(litTimers.current).forEach((t) => window.clearTimeout(t));
+    litTimers.current = {};
+  };
+
+  useEffect(() => {
+    startRound(0);
+    return () => {
+      clearAll();
+      pauseMusicAudio();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const ring = (note: number, volume = 0.5) => {
+    playMusicNote(NOTES[note].freq, { volume });
+    setLit((l) => ({ ...l, [note]: true }));
+    if (litTimers.current[note] !== undefined) window.clearTimeout(litTimers.current[note]);
+    litTimers.current[note] = window.setTimeout(() => setLit((l) => ({ ...l, [note]: false })), 260);
+  };
+
+  /** the app plays the tune; then it is the child's turn */
+  const playTune = (notes: number[], intro = 450) => {
+    setPhase('listen');
+    setMessage('Listen… 👂');
+    posRef.current = 0;
+    setPos(0);
+    notes.forEach((n, i) => later(() => ring(n, 0.45), intro + i * ECHO_GAP_MS));
+    later(() => {
+      setPhase('play');
+      setMessage('Your turn! 👇');
+    }, intro + notes.length * ECHO_GAP_MS + 150);
+  };
+
+  const startRound = (r: number) => {
+    const t = makeTune(r);
+    tuneRef.current = t;
+    setTune(t);
+    roundRef.current = r;
+    setRound(r);
+    roundWrong.current = 0;
+    playTune(t, 600);
+  };
+
+  const hear = () => {
+    if (phase !== 'play') return;
+    clearAll();
+    playTune(tuneRef.current, 200);
+  };
+
+  const finish = () => {
+    if (awarded.current) return;
+    awarded.current = true;
+    playComplete();
+    buzz('success');
+    onComplete(echoStars(wrongRef.current));
+    later(() => setDone(true), 700);
+  };
+
+  const hit = (note: number) => {
+    if (phase !== 'play') return;
+    const want = tuneRef.current[posRef.current];
+
+    if (note === want) {
+      ring(note);
+      buzz('tick');
+      posRef.current += 1;
+      setPos(posRef.current);
+      if (posRef.current >= tuneRef.current.length) {
+        // the whole tune was played back
+        setPhase('between');
+        onAnswer(roundWrong.current === 0);
+        setMessage(roundWrong.current === 0 ? 'Perfect! 🎉' : 'You got it! 🎉');
+        later(() => playCorrect(), 250);
+        later(() => {
+          if (roundRef.current + 1 >= ECHO_ROUNDS) finish();
+          else startRound(roundRef.current + 1);
+        }, 1400);
+      }
+    } else {
+      // wrong bar: it sounds softly, then the tune is played again
+      ring(note, 0.22);
+      buzz('oops');
+      wrongRef.current += 1;
+      roundWrong.current += 1;
+      setWrongTotal(wrongRef.current);
+      setWrongBar(note);
+      later(() => setWrongBar(null), 400);
+      setPhase('listen');
+      setMessage('Listen again! 👂');
+      later(() => playTune(tuneRef.current, 100), 700);
+    }
+  };
+
+  /* ---------------- result ---------------- */
+  if (done) {
+    const stars = echoStars(wrongTotal);
+    return (
+      <GameBackground variant="game">
+        <div className="h-full flex flex-col overflow-x-hidden">
+          <Navigation title="🎵 Echo the Tune" onBack={() => { playClick(); onBack(); }} stars={progress.stars} />
+          <div className="flex-1 overflow-y-auto px-5 pb-8">
+            <div className="max-w-md mx-auto text-center">
+              <SparkResult stars={stars} />
+              <p className="text-2xl font-bold text-gray-800 mt-2" style={{ fontFamily: FONT }}>
+                {stars === 3 ? 'Super ears!' : 'Lovely listening!'} 🎉
+              </p>
+
+              <div className="flex justify-center gap-1 mt-3">
+                {[0, 1, 2].map((i) => (
+                  <motion.span
+                    key={i}
+                    className="text-4xl"
+                    style={{ opacity: i < stars ? 1 : 0.2 }}
+                    initial={{ scale: 0, rotate: -90 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ delay: 0.15 + i * 0.14, type: 'spring' }}
+                  >
+                    ⭐
+                  </motion.span>
+                ))}
+              </div>
+
+              <div className="mt-4 bg-white/90 border-4 border-white rounded-2xl p-3 text-left">
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">For grown-ups</p>
+                <p className="text-sm text-gray-600 font-semibold">
+                  Repeating a tune by ear trains listening and memory for a sequence of sounds, a first step towards playing
+                  and singing music. The tunes start with two notes and grow longer. A wrong bar just plays the tune again.
+                </p>
+              </div>
+
+              <div className="flex gap-3 mt-5 justify-center">
+                <motion.button
+                  onClick={() => {
+                    playClick();
+                    clearAll();
+                    setLit({});
+                    setDone(false);
+                    setWrongTotal(0);
+                    wrongRef.current = 0;
+                    awarded.current = false;
+                    startRound(0);
+                  }}
+                  className="rounded-2xl px-6 py-4 bg-white text-gray-700 font-bold border-4 border-white"
+                  style={{ boxShadow: '0 5px 0 rgba(0,0,0,.12)', fontFamily: FONT }}
+                  whileTap={{ scale: 0.95, y: 3 }}
+                >
+                  🔄 Again
+                </motion.button>
+                <motion.button
+                  onClick={() => { playClick(); onBack(); }}
+                  className="rounded-2xl px-6 py-4 text-white font-bold border-4 border-white"
+                  style={{ background: 'linear-gradient(135deg,#C026D3,#7C3AED)', boxShadow: '0 5px 0 #5B21B6', fontFamily: FONT }}
+                  whileTap={{ scale: 0.95, y: 3 }}
+                >
+                  🎵 Music
+                </motion.button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </GameBackground>
+    );
+  }
+
+  /* ---------------- playing ---------------- */
+  return (
+    <GameBackground variant="game">
+      <div className="h-full flex flex-col overflow-x-hidden">
+        <Navigation
+          title="🎵 Echo the Tune"
+          onBack={() => { playClick(); onBack(); }}
+          stars={progress.stars}
+          showProgress
+          progress={(round / ECHO_ROUNDS) * 100}
+        />
+
+        <div className="flex-1 flex flex-col px-2 pb-3 min-h-0">
+          {/* round dots */}
+          <div className="flex justify-center gap-1 mt-1">
+            {Array.from({ length: ECHO_ROUNDS }, (_, i) => (
+              <span
+                key={i}
+                className="rounded-full"
+                style={{ width: 10, height: 10, background: i < round ? '#22C55E' : i === round ? '#F97316' : 'rgba(0,0,0,.15)' }}
+              />
+            ))}
+          </div>
+
+          {/* the tune as dots: one per note, coloured when played back */}
+          <div className="flex flex-wrap justify-center gap-[5px] mt-2 mb-1" aria-hidden>
+            {tune.map((n, i) => (
+              <span
+                key={i}
+                className="rounded-full"
+                style={{
+                  width: 16,
+                  height: 16,
+                  background: i < pos ? NOTES[n].color : '#E5E7EB',
+                  border: phase === 'play' && i === pos ? '3px solid #1F2937' : '2px solid #fff',
+                }}
+              />
+            ))}
+          </div>
+
+          <div className="h-6 flex items-center justify-center">
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={message ?? 'none'}
+                className="text-sm font-bold text-gray-700"
+                style={{ fontFamily: FONT }}
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                {message ?? ''}
+              </motion.p>
+            </AnimatePresence>
+          </div>
+
+          <Bars target={null} lit={lit} wrong={wrongBar} slide={false} onHit={hit} />
+
+          <div className="flex justify-center mt-3">
+            <motion.button
+              onClick={() => { playClick(); hear(); }}
+              disabled={phase !== 'play'}
+              className="rounded-2xl px-5 py-2.5 text-white font-bold border-4 border-white"
+              style={{
+                background: 'linear-gradient(135deg,#0EA5E9,#2563EB)',
+                boxShadow: '0 5px 0 #1D4ED8',
+                fontFamily: FONT,
+                opacity: phase === 'play' ? 1 : 0.55,
+              }}
+              whileTap={{ scale: 0.95, y: 3 }}
+            >
+              🔊 Hear it again
+            </motion.button>
+          </div>
+        </div>
+      </div>
+    </GameBackground>
+  );
+};
 
 /* ============================================================
    The screen
@@ -333,9 +650,68 @@ const MusicGame: React.FC<MusicGameProps> = ({ progress, onBack, onAnswer, onCom
   };
 
   /* ============================================================
+     Echo the Tune
+     ============================================================ */
+  if (view === 'echo') {
+    return <EchoTune progress={progress} onBack={toHub} onAnswer={onAnswer} onComplete={onComplete} />;
+  }
+
+  /* ============================================================
      Hub
      ============================================================ */
   if (view === 'hub') {
+    /* the Echo card: shown first while it is NEW, at the bottom afterwards */
+    const echoSection = (
+      <div className="max-w-lg mx-auto mb-4">
+        <h3 className="text-sm font-bold text-gray-600 mb-2 px-1 flex items-baseline gap-2" style={{ fontFamily: FONT }}>
+          Listen &amp; Repeat
+          <span className="text-xs font-semibold text-gray-400">copy the tune</span>
+        </h3>
+        <motion.button
+          data-kind="mode"
+          data-id="echo"
+          onClick={() => { playClick(); setView('echo'); }}
+          className="relative overflow-hidden w-full rounded-3xl text-white border-4 border-white bg-gradient-to-br from-cyan-400 to-blue-500"
+          style={{
+            boxShadow: '0 8px 0 #0369A1, 0 12px 22px rgba(0,0,0,.18)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+            padding: '14px 18px',
+            textAlign: 'left',
+          }}
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={POP}
+          whileTap={{ scale: 0.96, y: 4 }}
+        >
+          {FRESH && (
+            <div
+              data-kind="new"
+              className="absolute text-center text-white font-bold bg-gradient-to-r from-red-500 to-pink-500 shadow-md"
+              style={{ top: 14, right: -30, width: 100, transform: 'rotate(40deg)', fontSize: 12, letterSpacing: '1px', padding: '2px 0', borderTop: '2px solid #fff', borderBottom: '2px solid #fff' }}
+            >
+              NEW
+            </div>
+          )}
+          <ItemIcon icon="👂" size={50} label="Echo the Tune" />
+          <div>
+            <h3 className="text-lg font-bold leading-tight" style={{ fontFamily: FONT, textShadow: '2px 2px 0 rgba(0,0,0,.18)' }}>
+              Echo the Tune
+            </h3>
+            <p className="text-xs opacity-90">Listen, then play it back!</p>
+            <div className="flex gap-0.5 mt-1">
+              {[1, 2, 3].map((d) => (
+                <span key={d} className="text-[11px]" style={{ opacity: d <= 2 ? 1 : 0.28 }}>
+                  ⭐
+                </span>
+              ))}
+            </div>
+          </div>
+        </motion.button>
+      </div>
+    );
+
     return (
       <GameBackground variant="game">
         <div className="h-full flex flex-col overflow-x-hidden">
@@ -345,6 +721,8 @@ const MusicGame: React.FC<MusicGameProps> = ({ progress, onBack, onAnswer, onCom
               Make some music! 🎶
             </h2>
             <p className="text-center text-xs text-gray-500 font-semibold mb-3">Tap the bars and listen.</p>
+
+            {FRESH && echoSection}
 
             <div className="max-w-lg mx-auto mb-4">
               <h3 className="text-sm font-bold text-gray-600 mb-2 px-1" style={{ fontFamily: FONT }}>
@@ -406,6 +784,8 @@ const MusicGame: React.FC<MusicGameProps> = ({ progress, onBack, onAnswer, onCom
                 ))}
               </div>
             </div>
+
+            {!FRESH && echoSection}
           </div>
         </div>
       </GameBackground>

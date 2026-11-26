@@ -9,6 +9,17 @@ import { GameProgress, PlayerProfile } from '../store/gameStore';
 import { wordsForLevel } from '../utils/difficulty';
 import { playClick, playCorrect, playWrong, playComplete } from '../utils/sounds';
 import SparkResult from '../components/SparkResult';
+import MissingLetter from './MissingLetter';
+
+/**
+ * Words — now a small hub with two games:
+ *
+ *   Build the Word   the game you already had: tap the scrambled letters in order.
+ *   Missing Letter   NEW: a picture and its word with one letter missing (see MissingLetter.tsx).
+ *
+ * Both use the same word list (wordBuilderWords) and the same age level.
+ * The NEW ribbon on Missing Letter goes away by itself after NEW_UNTIL.
+ */
 
 interface WordBuilderProps {
   profile?: PlayerProfile;
@@ -17,7 +28,12 @@ interface WordBuilderProps {
   onComplete: (stars: number) => void;
 }
 
-const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete, profile }) => {
+/* ================================================================== */
+/* Build the Word — unchanged, except that "Home" now returns to the   */
+/* Words menu                                                          */
+/* ================================================================== */
+
+const BuildGame: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete, profile }) => {
   const { wordBuilderWords: allWords } = useContent();
   const wordBuilderWords = wordsForLevel(allWords, profile?.difficulty);
   const totalWords = 8;
@@ -51,7 +67,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete,
 
     // 🎵 Play click when adding letter
     playClick();
-    
+
     const newSelected = [...selectedLetters, index];
     setSelectedLetters(newSelected);
 
@@ -88,10 +104,10 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete,
           } else {
             const finalScore = score + 1;
             const stars = finalScore >= totalWords * 0.8 ? 3 : finalScore >= totalWords * 0.5 ? 2 : 1;
-            
+
             // 🎵 All words complete!
             playComplete();
-            
+
             setIsFinished(true);
             setShowCelebration(true);
             onComplete(stars);
@@ -126,7 +142,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete,
               <p className="text-sm mt-1 opacity-90">Words Correct</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <motion.button 
+              <motion.button
                 onClick={() => { playClick(); onBack(); }}
                 className="bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-2xl py-4 font-bold shadow-lg border-4 border-white"
                 style={{
@@ -135,7 +151,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete,
                 }}
                 whileTap={{ scale: 0.95 }}
               >
-                🏠 Home
+                📝 Words
               </motion.button>
               <motion.button
                 onClick={() => {
@@ -169,7 +185,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete,
     <GameBackground variant="game">
       <div className="h-full flex flex-col">
         <Navigation
-          title="📝 Words"
+          title="📝 Build the Word"
           onBack={() => { playClick(); onBack(); }}
           stars={progress.stars}
           showProgress
@@ -215,7 +231,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete,
               >
                 <motion.div
                   className="text-8xl md:text-9xl mb-3 text-center"
-                  animate={{ 
+                  animate={{
                     scale: [1, 1.1, 1],
                     rotate: [0, -5, 5, 0]
                   }}
@@ -229,7 +245,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete,
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                 >
-                  <h2 
+                  <h2
                     className="text-2xl md:text-3xl font-bold text-gray-800 mb-2"
                     style={{ fontFamily: "'Bubblegum One', cursive" }}
                   >
@@ -273,12 +289,12 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete,
                             ? 'bg-gradient-to-br from-blue-400 to-blue-500 border-white text-white'
                             : 'bg-gray-100 border-gray-300 border-dashed text-gray-400'
                         }`}
-                        style={{ 
+                        style={{
                           fontFamily: "'Bubblegum One', cursive",
                           width: '65px',
                           height: '75px',
-                          boxShadow: filled 
-                            ? '0 6px 0 #1E40AF, 0 8px 15px rgba(0,0,0,0.15)' 
+                          boxShadow: filled
+                            ? '0 6px 0 #1E40AF, 0 8px 15px rgba(0,0,0,0.15)'
                             : 'inset 0 2px 4px rgba(0,0,0,0.05)',
                           textShadow: filled ? '2px 2px 0 rgba(0,0,0,0.15)' : 'none'
                         }}
@@ -288,8 +304,8 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete,
                         whileTap={filled ? { scale: 0.95, y: 3 } : {}}
                       >
                         {filled ? (
-                          <motion.span 
-                            initial={{ scale: 0, rotate: -180 }} 
+                          <motion.span
+                            initial={{ scale: 0, rotate: -180 }}
                             animate={{ scale: 1, rotate: 0 }}
                             transition={{ type: 'spring' }}
                           >
@@ -303,7 +319,7 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete,
                   })}
                 </div>
 
-                <p 
+                <p
                   className="text-center text-base md:text-lg font-bold text-gray-700 mb-3"
                   style={{ fontFamily: "'Bubblegum One', cursive" }}
                 >
@@ -325,18 +341,18 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete,
                             ? 'bg-gray-200 text-gray-400 cursor-default'
                             : 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white cursor-pointer'
                         }`}
-                        style={{ 
+                        style={{
                           fontFamily: "'Bubblegum One', cursive",
                           width: '65px',
                           height: '70px',
-                          boxShadow: isUsed 
-                            ? 'none' 
+                          boxShadow: isUsed
+                            ? 'none'
                             : '0 6px 0 #C2410C, 0 8px 15px rgba(0,0,0,0.15)',
                           textShadow: !isUsed ? '2px 2px 0 rgba(0,0,0,0.2)' : 'none'
                         }}
                         whileHover={!isUsed ? { scale: 1.1, y: -3 } : {}}
-                        whileTap={!isUsed ? { 
-                          scale: 0.95, 
+                        whileTap={!isUsed ? {
+                          scale: 0.95,
                           y: 3,
                           boxShadow: '0 2px 0 #C2410C, 0 4px 10px rgba(0,0,0,0.15)'
                         } : {}}
@@ -371,6 +387,101 @@ const WordBuilder: React.FC<WordBuilderProps> = ({ progress, onBack, onComplete,
               </motion.div>
             </motion.div>
           </AnimatePresence>
+        </div>
+      </div>
+    </GameBackground>
+  );
+};
+
+/* ================================================================== */
+/* The Words menu                                                      */
+/* ================================================================== */
+
+/** the NEW ribbon on Missing Letter disappears by itself after this day */
+const NEW_UNTIL = '2026-12-03';
+const FRESH = Date.now() < Date.parse(NEW_UNTIL);
+
+const FONT = "'Fredoka', ui-rounded, system-ui, sans-serif";
+
+type Mode = 'menu' | 'build' | 'missing';
+
+const CARDS: {
+  id: Exclude<Mode, 'menu'>;
+  title: string;
+  sub: string;
+  icon: string;
+  grad: string;
+  shadow: string;
+  stars: number;
+  isNew: boolean;
+}[] = [
+  { id: 'missing', title: 'Missing Letter', sub: 'Find the missing letter!', icon: '🔍', grad: 'from-sky-400 to-blue-500', shadow: '#1D4ED8', stars: 1, isNew: FRESH },
+  { id: 'build', title: 'Build the Word', sub: 'Put the letters in order!', icon: '🧩', grad: 'from-purple-500 to-pink-500', shadow: '#6B21A8', stars: 2, isNew: false },
+];
+
+const WordBuilder: React.FC<WordBuilderProps> = (props) => {
+  const [mode, setMode] = useState<Mode>('menu');
+
+  if (mode === 'build') return <BuildGame {...props} onBack={() => setMode('menu')} />;
+  if (mode === 'missing') return <MissingLetter {...props} onBack={() => setMode('menu')} />;
+
+  /* NEW cards first */
+  const cards = [...CARDS].sort((a, b) => Number(b.isNew) - Number(a.isNew));
+
+  return (
+    <GameBackground variant="game">
+      <div className="h-full flex flex-col overflow-x-hidden">
+        <Navigation title="📝 Words" onBack={() => { playClick(); props.onBack(); }} stars={props.progress.stars} />
+        <div className="flex-1 overflow-y-auto" style={{ padding: '8px 16px 32px' }}>
+          <h2 className="font-bold text-gray-800 text-center" style={{ fontFamily: FONT, fontSize: 20, marginBottom: 14 }}>
+            Choose a word game! 📝
+          </h2>
+
+          <div className="grid grid-cols-2 max-w-lg mx-auto" style={{ gap: 12 }}>
+            {cards.map((c, i) => (
+              <motion.button
+                key={c.id}
+                onClick={() => { playClick(); setMode(c.id); }}
+                className={`relative overflow-hidden text-white border-white bg-gradient-to-br ${c.grad}`}
+                style={{
+                  borderRadius: 24,
+                  borderWidth: 4,
+                  borderStyle: 'solid',
+                  boxShadow: `0 8px 0 ${c.shadow}, 0 12px 22px rgba(0,0,0,.18)`,
+                  minHeight: 160,
+                  padding: '16px 8px 12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                }}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: i * 0.06, type: 'spring' }}
+                whileTap={{ scale: 0.94, y: 4 }}
+              >
+                {c.isNew && (
+                  <div
+                    className="absolute text-center text-white font-bold bg-gradient-to-r from-red-500 to-pink-500 shadow-md"
+                    style={{ top: 14, right: -28, width: 92, transform: 'rotate(40deg)', fontSize: 11, letterSpacing: '1px', padding: '2px 0', borderTop: '1.5px solid #fff', borderBottom: '1.5px solid #fff' }}
+                  >
+                    NEW
+                  </div>
+                )}
+                <span style={{ fontSize: 52, lineHeight: 1 }}>{c.icon}</span>
+                <span className="font-bold" style={{ fontFamily: FONT, fontSize: 17, lineHeight: 1.1, textShadow: '2px 2px 0 rgba(0,0,0,.18)' }}>
+                  {c.title}
+                </span>
+                <span style={{ fontSize: 12, opacity: 0.92, lineHeight: 1.15 }}>{c.sub}</span>
+                <span className="flex" style={{ gap: 2, marginTop: 2 }}>
+                  {[1, 2, 3].map((d) => (
+                    <span key={d} style={{ fontSize: 11, opacity: d <= c.stars ? 1 : 0.28 }}>⭐</span>
+                  ))}
+                </span>
+              </motion.button>
+            ))}
+          </div>
         </div>
       </div>
     </GameBackground>
